@@ -6,7 +6,6 @@ import {
   updateProfile,
   changePassword,
   verifyEmail,
-  googleLogin,
 } from "../controllers/authController";
 import { protect } from "../middleware/auth";
 
@@ -15,7 +14,6 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/login", login);
 router.post("/verify-email", verifyEmail);
-router.post("/google", googleLogin);
 router.get("/me", protect, getMe);
 router.put("/profile", protect, updateProfile);
 router.put("/password", protect, changePassword);
