@@ -47,12 +47,12 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    const success = await login(email, password);
+    const res = await login(email, password);
 
-    if (success) {
+    if (res.success) {
       navigate("/home");
     } else {
-      setError("Invalid email or password");
+      setError(res.message || "Invalid email or password");
     }
   };
 

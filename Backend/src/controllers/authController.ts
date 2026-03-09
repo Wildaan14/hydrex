@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
+import crypto from "crypto";
 import User from "../models/User";
 import { generateToken, AuthRequest } from "../middleware/auth";
+import sendEmail from "../utils/email";
+
 
 // @desc    Register new user
 // @route   POST /api/auth/register
@@ -32,25 +35,32 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       country,
     });
 
-    // Generate token
-    const token = generateToken(user._id.toString());
+    // Generate Verification Token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    user.verificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours expires
+    await user.save({ validateBeforeSave: false });
 
-    res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      data: {
-        user: {
-          id: user._id,
-          email: user.email,
-          name: user.name,
-          company: user.company,
-          role: user.role,
-          avatar: user.avatar,
-          verified: user.verified,
-        },
-        token,
-      },
-    });
+    // Send email
+    const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${verificationToken}`;
+    const message = `Halo ${user.name},\n\nTerima kasih telah mendaftar di HydrEx! Silakan klik link berikut untuk memverifikasi akun Anda:\n\n${verifyUrl}\n\nLink ini akan kadaluarsa dalam 24 jam.`;
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Verifikasi Akun HydrEx Anda',
+        message
+      });
+      res.status(201).json({
+        success: true,
+        message: "Registrasi berhasil! Silakan cek email Anda untuk instruksi verifikasi.",
+      });
+    } catch (err) {
+      user.verificationToken = undefined;
+      user.verificationTokenExpires = undefined;
+      await user.save({ validateBeforeSave: false });
+      res.status(500).json({ success: false, message: 'Gagal mengirim email verifikasi.' });
+    }
   } catch (error) {
     console.error("Register error:", error);
     res.status(500).json({
@@ -97,6 +107,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Check if user has verified their email
+    if (!user.isEmailVerified) {
+      res.status(403).json({
+        success: false,
+        message: "Mohon periksa email Anda dan lakukan verifikasi sebelum login.",
+      });
+      return;
+    }
+
     // Generate token
     const token = generateToken(user._id.toString());
 
@@ -126,6 +145,34 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       message: "Error logging in",
       error: error instanceof Error ? error.message : "Unknown error",
     });
+  }
+};
+
+// @desc    Verify Email User
+// @route   POST /api/auth/verify-email
+// @access  Public
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const hashedToken = crypto.createHash('sha256').update(req.body.token).digest('hex');
+    const user = (await User.findOne({ 
+      verificationToken: hashedToken,
+      verificationTokenExpires: { $gt: new Date() }
+    })) as any;
+
+    if (!user) {
+      res.status(400).json({ success: false, message: "Link verifikasi tidak valid atau sudah kadaluarsa" });
+      return;
+    }
+
+    user.verified = true;
+    user.isEmailVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    res.json({ success: true, message: "Email berhasil diverifikasi! Silakan login." });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Terjadi kesalahan saat memverifikasi email." });
   }
 };
 

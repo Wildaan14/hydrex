@@ -12,6 +12,9 @@ export interface IUserModel extends Document {
   address?: string;
   country?: string;
   verified: boolean;
+  isEmailVerified: boolean;
+  verificationToken?: string;
+  verificationTokenExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -28,7 +31,7 @@ const UserSchema = new Schema<IUserModel>(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: true,
       minlength: 6,
       select: false,
     },
@@ -62,6 +65,12 @@ const UserSchema = new Schema<IUserModel>(
       type: Boolean,
       default: false,
     },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: String,
+    verificationTokenExpires: Date,
   },
   {
     timestamps: true,
@@ -70,7 +79,7 @@ const UserSchema = new Schema<IUserModel>(
 
 // Hash password before saving
 UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
+  if (!this.isModified("password") || !this.password) {
     return next();
   }
   const salt = await bcrypt.genSalt(10);
@@ -82,6 +91,7 @@ UserSchema.pre("save", async function (next) {
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string,
 ): Promise<boolean> {
+  if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
 

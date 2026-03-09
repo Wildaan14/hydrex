@@ -41,12 +41,7 @@ export const RegisterPage: React.FC = () => {
   const [error, setError] = useState("");
   
   // Email verification states
-  const [verificationCode, setVerificationCode] = useState("");
-  const [sentCode, setSentCode] = useState("");
-  const [verificationInput, setVerificationInput] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const [canResend, setCanResend] = useState(false);
 
   const handleSelectType = (type: AccountType) => {
     setAccountType(type);
@@ -60,34 +55,6 @@ export const RegisterPage: React.FC = () => {
       setStep("select-type");
     }
     setError("");
-    setVerificationInput("");
-  };
-
-  // Fungsi untuk mengirim kode verifikasi
-  const sendVerificationCode = () => {
-    const code = generateVerificationCode();
-    setSentCode(code);
-    
-    // Simulasi kirim email (dalam production, gunakan email service seperti SendGrid, AWS SES, etc.)
-    console.log(`📧 Kode verifikasi dikirim ke ${email}: ${code}`);
-    
-    // Set countdown 60 detik
-    setCountdown(60);
-    setCanResend(false);
-    
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setCanResend(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    // Tampilkan alert untuk development (hapus di production)
-    alert(`Development Mode: Kode verifikasi Anda adalah: ${code}\n\nDalam production, kode ini akan dikirim ke email ${email}`);
   };
 
   const handleContinueToVerification = async (e: React.FormEvent) => {
@@ -120,49 +87,21 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
-    // Lanjut ke step verifikasi email
-    setStep("verify-email");
-    sendVerificationCode();
-  };
-
-  const handleVerifyAndRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!verificationInput.trim()) {
-      setError("Silakan masukkan kode verifikasi");
-      return;
-    }
-
-    if (verificationInput !== sentCode) {
-      setError("Kode verifikasi tidak valid. Silakan periksa kembali.");
-      return;
-    }
-
-    // Kode verifikasi benar, lanjut registrasi
     setIsVerifying(true);
-
     try {
       const role: UserRole = accountType === "company" ? "company" : "user";
-      const success = await register(name, email, password, role);
+      const res = await register(name, email, password, role);
 
-      if (success) {
-        // Berhasil registrasi, redirect ke home
-        navigate("/home");
+      if (res.success) {
+        setStep("verify-email");
       } else {
-        setError("Email sudah terdaftar. Silakan gunakan email lain.");
-        setStep("fill-data");
+        setError(res.message || "Email sudah terdaftar. Silakan gunakan email lain.");
       }
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
       setIsVerifying(false);
     }
-  };
-
-  const handleResendCode = () => {
-    if (!canResend) return;
-    sendVerificationCode();
   };
 
   return (
@@ -643,107 +582,15 @@ export const RegisterPage: React.FC = () => {
                 </p>
               </div>
 
-              <form onSubmit={handleVerifyAndRegister} className="space-y-6">
-                <div>
-                  <label
-                    className="block text-sm font-medium mb-2 text-center"
-                    style={{ color: theme.textSecondary }}
-                  >
-                    Masukkan Kode Verifikasi (6 digit)
-                  </label>
-                  <input
-                    type="text"
-                    value={verificationInput}
-                    onChange={(e) => {
-                      // Only allow numbers and max 6 digits
-                      const value = e.target.value.replace(/\D/g, "").slice(0, 6);
-                      setVerificationInput(value);
-                    }}
-                    maxLength={6}
-                    className="w-full px-4 py-4 rounded-xl text-white text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={{
-                      backgroundColor: theme.bgCard,
-                      border: `1px solid ${theme.border}`,
-                      letterSpacing: "0.5em",
-                    }}
-                    placeholder="• • • • • •"
-                  />
-                </div>
-
-                {/* Countdown & Resend */}
-                <div className="text-center">
-                  {countdown > 0 ? (
-                    <div className="flex items-center justify-center gap-2" style={{ color: theme.textMuted }}>
-                      <Clock className="w-4 h-4" />
-                      <span className="text-sm">
-                        Kirim ulang kode dalam {countdown} detik
-                      </span>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleResendCode}
-                      disabled={!canResend}
-                      className="text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
-                      style={{ color: theme.primary }}
-                    >
-                      Kirim Ulang Kode
-                    </button>
-                  )}
-                </div>
-
-                {/* Info Box */}
-                <div
-                  className="p-4 rounded-xl flex items-start gap-3"
-                  style={{
-                    backgroundColor: `${theme.primary}10`,
-                    border: `1px solid ${theme.primary}30`,
-                  }}
-                >
-                  <Shield className="w-5 h-5 flex-shrink-0" style={{ color: theme.primary }} />
-                  <div>
-                    <p className="text-sm font-medium mb-1" style={{ color: theme.textPrimary }}>
-                      Mengapa perlu verifikasi?
-                    </p>
-                    <p className="text-xs" style={{ color: theme.textSecondary }}>
-                      Verifikasi email memastikan keamanan akun Anda dan mencegah penyalahgunaan.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isVerifying || verificationInput.length !== 6}
-                  className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-                  style={{
-                    background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
-                  }}
-                >
-                  {isVerifying ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Memverifikasi...
-                    </>
-                  ) : (
-                    <>
-                      Verifikasi & Buat Akun
-                      <CheckCircle className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-              </form>
-
-              <p className="text-center mt-6 text-xs" style={{ color: theme.textMuted }}>
-                Tidak menerima email?{" "}
-                <button
-                  onClick={handleResendCode}
-                  disabled={!canResend}
-                  className="font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
-                  style={{ color: theme.primary }}
-                >
-                  Periksa folder spam
-                </button>
-              </p>
+              <button
+                onClick={() => navigate("/login")}
+                className="w-full mt-6 py-3 px-4 rounded-xl font-semibold text-white transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                style={{
+                  background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                }}
+              >
+                Ke Halaman Login
+              </button>
             </motion.div>
           )}
         </motion.div>

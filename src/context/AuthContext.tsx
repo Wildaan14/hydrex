@@ -22,12 +22,13 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{success: boolean; message: string}>;
   logout: () => void;
-  register: (name: string, email: string, password: string, role: UserRole) => Promise<boolean>;
+  register: (name: string, email: string, password: string, role: UserRole, company?: string, phone?: string, address?: string, country?: string) => Promise<{success: boolean; message: string}>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 
 // Default demo users
 const defaultUsers: StoredUser[] = [
@@ -100,96 +101,84 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Use Vite env variable or fallback
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
   // Check for existing session on mount
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       try {
-        const savedUser = localStorage.getItem("hydrex-user");
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
+        const token = localStorage.getItem("hydrex-token");
+        if (token) {
+          const res = await fetch(`${API_URL}/api/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            setUser(data.data.user);
+          } else {
+            localStorage.removeItem("hydrex-token");
+          }
         }
       } catch (error) {
         console.error("Error checking auth:", error);
-        localStorage.removeItem("hydrex-user");
       } finally {
         setIsLoading(false);
       }
     };
-
     checkAuth();
-  }, []);
+  }, [API_URL]);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{success: boolean; message: string}> => {
     setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    const users = getStoredUsers();
-    const foundUser = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
-
-    if (foundUser) {
-      setUser(foundUser.user);
-      localStorage.setItem("hydrex-user", JSON.stringify(foundUser.user));
+    try {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem("hydrex-token", data.data.token);
+        setUser(data.data.user);
+      }
+      return { success: data.success, message: data.message };
+    } catch (err) {
+      return { success: false, message: "Terjadi kesalahan koneksi" };
+    } finally {
       setIsLoading(false);
-      return true;
     }
-
-    setIsLoading(false);
-    return false;
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("hydrex-user");
+    localStorage.removeItem("hydrex-token");
   };
 
   const register = async (
     name: string,
     email: string,
     password: string,
-    role: UserRole
-  ): Promise<boolean> => {
+    role: UserRole,
+    company?: string,
+    phone?: string,
+    address?: string,
+    country?: string
+  ): Promise<{success: boolean; message: string}> => {
     setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    const users = getStoredUsers();
-    
-    // Check if email already exists
-    const existingUser = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (existingUser) {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role, company, phone, address, country }),
+      });
+      const data = await res.json();
+      return { success: data.success, message: data.message };
+    } catch (error) {
+      return { success: false, message: "Terjadi kesalahan jaringan" };
+    } finally {
       setIsLoading(false);
-      return false;
     }
-
-    // Create new user
-    const newUser: User = {
-      id: String(Date.now()),
-      name,
-      email,
-      role,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-
-    // Add to users list
-    const newStoredUser: StoredUser = {
-      email,
-      password,
-      user: newUser,
-    };
-
-    users.push(newStoredUser);
-    saveUsers(users);
-
-    // Auto login after registration
-    setUser(newUser);
-    localStorage.setItem("hydrex-user", JSON.stringify(newUser));
-    setIsLoading(false);
-    return true;
   };
 
   return (

@@ -26,6 +26,7 @@ import { AdminPage } from "./pages/AdminPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import WaterPricingRegulations from "./pages/WaterPricingRegulations";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
                   {/* ==================== PUBLIC ROUTES ==================== */}
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/verify-email" element={<VerifyEmailPage />} />
 
                   {/* ==================== PROTECTED ROUTES WITH LAYOUT ==================== */}
                   <Route element={<AppLayout />}>
