@@ -2,580 +2,626 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Leaf,
   Home,
   ShoppingCart,
   FolderKanban,
   Calculator,
+  MessageSquare,
   Newspaper,
+  GraduationCap,
   FileText,
   BarChart3,
-  TrendingUp,
   Shield,
   Settings,
   LogOut,
   Menu,
   X,
   Bell,
-  Search,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   User,
   Building2,
   Crown,
-  Moon,
-  Sun,
   Globe,
-  HelpCircle,
-  MessageCircle,
+  TrendingUp,
+  Sun,
+  Moon,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { useLanguage } from "../components/LanguageProvider";
+import { useLanguage } from "../context/LanguageContext";
+import { useTheme } from "./ThemeProvider";
 
 interface NavItem {
-  nameId: string;
+  name: string;
   nameEn: string;
   path: string;
   icon: React.ReactNode;
   roles?: ("admin" | "user" | "company")[];
-  badge?: string;
 }
 
 const navItems: NavItem[] = [
-  {
-    nameId: "Beranda",
-    nameEn: "Home",
-    path: "/home",
-    icon: <Home className="w-5 h-5" />,
-  },
-  {
-    nameId: "Marketplace",
-    nameEn: "Marketplace",
-    path: "/marketplace",
-    icon: <ShoppingCart className="w-5 h-5" />,
-    badge: "Hot",
-  },
-  {
-    nameId: "Proyek",
-    nameEn: "Projects",
-    path: "/projects",
-    icon: <FolderKanban className="w-5 h-5" />,
-  },
-  {
-    nameId: "Kalkulator",
-    nameEn: "Calculator",
-    path: "/calculator",
-    icon: <Calculator className="w-5 h-5" />,
-  },
-  {
-    nameId: "Berita",
-    nameEn: "News",
-    path: "/news",
-    icon: <Newspaper className="w-5 h-5" />,
-  },
-  {
-    nameId: "Laporan",
-    nameEn: "Reports",
-    path: "/reports",
-    icon: <FileText className="w-5 h-5" />,
-  },
-  {
-    nameId: "MRV Dashboard",
-    nameEn: "MRV Dashboard",
-    path: "/mrv-dashboard",
-    icon: <BarChart3 className="w-5 h-5" />,
-    roles: ["admin", "company"],
-  },
-  {
-    nameId: "ESG Scoring",
-    nameEn: "ESG Scoring",
-    path: "/esg-scoring",
-    icon: <TrendingUp className="w-5 h-5" />,
-    roles: ["admin", "company"],
-  },
-  {
-    nameId: "Admin Panel",
-    nameEn: "Admin Panel",
-    path: "/admin",
-    icon: <Shield className="w-5 h-5" />,
-    roles: ["admin"],
-  },
+  { name: "Beranda", nameEn: "Home", path: "/home", icon: <Home size={17} /> },
+  { name: "Marketplace", nameEn: "Marketplace", path: "/marketplace", icon: <ShoppingCart size={17} /> },
+  { name: "Proyek", nameEn: "Projects", path: "/projects", icon: <FolderKanban size={17} /> },
+  { name: "Kalkulator", nameEn: "Calculator", path: "/calculator", icon: <Calculator size={17} /> },
+  { name: "Forum", nameEn: "Forum", path: "/forum", icon: <MessageSquare size={17} /> },
+  { name: "Berita", nameEn: "News", path: "/news", icon: <Newspaper size={17} /> },
+  { name: "Edukasi", nameEn: "Education", path: "/education", icon: <GraduationCap size={17} /> },
+  { name: "Laporan", nameEn: "Reports", path: "/reports", icon: <FileText size={17} /> },
+  { name: "MRV Dashboard", nameEn: "MRV Dashboard", path: "/mrv-dashboard", icon: <BarChart3 size={17} />, roles: ["admin", "company"] },
+  { name: "ESG Scoring", nameEn: "ESG Scoring", path: "/esg-scoring", icon: <TrendingUp size={17} />, roles: ["admin", "company"] },
+  { name: "Admin Panel", nameEn: "Admin", path: "/admin", icon: <Shield size={17} />, roles: ["admin"] },
 ];
+
+// ── Design tokens ────────────────────────────────────────────────────────────
+const dark = {
+  primary: "#06d6a0",        // vibrant teal-green
+  primaryGlow: "rgba(6,214,160,0.15)",
+  bg: "#0b0f1a",             // very deep navy
+  sidebar: "#0f1523",        // slightly lighter navy
+  sidebarBorder: "rgba(255,255,255,0.05)",
+  header: "rgba(11,15,26,0.85)",
+  card: "#141927",
+  border: "rgba(255,255,255,0.06)",
+  text: "#e8edf5",
+  textSub: "#7c8db5",
+  textMuted: "#3d4f72",
+  active: "rgba(6,214,160,0.1)",
+  hover: "rgba(255,255,255,0.04)",
+  accent: "#4a6cf7",         // blue accent
+};
+const light = {
+  primary: "#059669",
+  primaryGlow: "rgba(5,150,105,0.12)",
+  bg: "#f0f4f8",
+  sidebar: "#ffffff",
+  sidebarBorder: "rgba(0,0,0,0.06)",
+  header: "rgba(255,255,255,0.9)",
+  card: "#ffffff",
+  border: "rgba(0,0,0,0.07)",
+  text: "#0f172a",
+  textSub: "#5a6882",
+  textMuted: "#9ba8c0",
+  active: "rgba(5,150,105,0.08)",
+  hover: "rgba(0,0,0,0.03)",
+  accent: "#2563eb",
+};
+
+const SIDEBAR_FULL = 216;
+const SIDEBAR_MINI = 56;
+const HEADER_H = 60;
 
 export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const { language, setLanguage } = useLanguage();
+  const { theme: colorTheme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const t = colorTheme === "dark" ? dark : light;
+  const isDark = colorTheme === "dark";
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(true);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const sidebarW = collapsed ? SIDEBAR_MINI : SIDEBAR_FULL;
+
+  const handleLogout = () => { logout(); navigate("/login"); };
+
+  const filteredItems = navItems.filter(
+    (i) => !i.roles || (user && i.roles.includes(user.role))
+  );
+
+  const getRoleIcon = (sz = 14) => {
+    if (user?.role === "admin") return <Crown size={sz} style={{ color: "#f59e0b" }} />;
+    if (user?.role === "company") return <Building2 size={sz} style={{ color: "#60a5fa" }} />;
+    return <User size={sz} style={{ color: t.primary }} />;
   };
 
-  const getRoleIcon = () => {
-    switch (user?.role) {
-      case "admin":
-        return <Crown className="w-4 h-4 text-yellow-500" />;
-      case "company":
-        return <Building2 className="w-4 h-4 text-blue-500" />;
-      default:
-        return <User className="w-4 h-4 text-primary" />;
-    }
-  };
+  // ── Sidebar content ──────────────────────────────────────────────────────
+  const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
+    <div className="flex flex-col" style={{ height: "100%" }}>
 
-  const getRoleName = () => {
-    if (language === "id") {
-      switch (user?.role) {
-        case "admin":
-          return "Administrator";
-        case "company":
-          return "Perusahaan";
-        default:
-          return "Individual";
-      }
-    } else {
-      switch (user?.role) {
-        case "admin":
-          return "Administrator";
-        case "company":
-          return "Company";
-        default:
-          return "Individual";
-      }
-    }
-  };
-
-  const getRoleBadgeColor = () => {
-    switch (user?.role) {
-      case "admin":
-        return "bg-gradient-to-r from-yellow-500 to-amber-500";
-      case "company":
-        return "bg-gradient-to-r from-blue-500 to-cyan-500";
-      default:
-        return "bg-gradient-to-r from-emerald-500 to-green-500";
-    }
-  };
-
-  const filteredNavItems = navItems.filter((item) => {
-    if (!item.roles) return true;
-    return user && item.roles.includes(user.role);
-  });
-
-  const searchPlaceholder =
-    language === "id"
-      ? "Cari fitur, proyek, atau kredit karbon..."
-      : "Search features, projects, or carbon credits...";
-
-  return (
-    <div className="min-h-screen bg-[#0a0f0d]">
-      {/* Top Header */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-[#0d1411]/95 backdrop-blur-xl border-b border-emerald-900/30 z-50">
-        <div className="h-full px-4 flex items-center justify-between">
-          {/* Left Section */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 rounded-xl hover:bg-emerald-500/10 transition-colors"
-            >
-              <Menu className="w-6 h-6 text-gray-300" />
-            </button>
-
-            <Link to="/home" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <Leaf className="w-6 h-6 text-white" />
-              </div>
-              <div
-                className={`hidden sm:block transition-all duration-300 ${sidebarCollapsed ? "lg:hidden" : ""}`}
-              >
-                <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent">
-                  C-NEX
-                </h1>
-                <p className="text-[10px] text-gray-500">
-                  Carbon Network Exchange
-                </p>
-              </div>
-            </Link>
-          </div>
-
-          {/* Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-xl mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-              <input
-                type="text"
-                placeholder={searchPlaceholder}
-                className="w-full pl-12 pr-4 py-2.5 bg-[#1a2420] border border-emerald-900/30 rounded-xl text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-emerald-500/50"
-              />
-            </div>
-          </div>
-
-          {/* Right Section */}
-          <div className="flex items-center gap-1">
-            {/* Theme Toggle */}
-            <button
-              onClick={() => setIsDark(!isDark)}
-              className="p-2.5 rounded-xl hover:bg-emerald-500/10 transition-colors group"
-            >
-              {isDark ? (
-                <Sun className="w-5 h-5 text-gray-400 group-hover:text-emerald-400" />
-              ) : (
-                <Moon className="w-5 h-5 text-gray-400 group-hover:text-emerald-400" />
-              )}
-            </button>
-
-            {/* Language Toggle */}
-            <div className="relative">
-              <button
-                onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
-                className="p-2.5 rounded-xl hover:bg-emerald-500/10 transition-colors group flex items-center gap-1"
-              >
-                <Globe className="w-5 h-5 text-gray-400 group-hover:text-emerald-400" />
-                <span className="text-xs text-gray-400 font-medium">
-                  {language.toUpperCase()}
-                </span>
-              </button>
-
-              <AnimatePresence>
-                {languageMenuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setLanguageMenuOpen(false)}
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute right-0 mt-2 w-40 bg-[#1a2420] border border-emerald-900/30 rounded-xl shadow-2xl z-50 overflow-hidden"
-                    >
-                      <button
-                        onClick={() => {
-                          setLanguage("id");
-                          setLanguageMenuOpen(false);
-                        }}
-                        className={`w-full px-4 py-3 text-left text-sm hover:bg-emerald-500/10 flex items-center gap-3 ${language === "id" ? "text-emerald-400 bg-emerald-500/10" : "text-gray-300"}`}
-                      >
-                        <span className="text-lg">🇮🇩</span>
-                        <span>Bahasa Indonesia</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setLanguage("en");
-                          setLanguageMenuOpen(false);
-                        }}
-                        className={`w-full px-4 py-3 text-left text-sm hover:bg-emerald-500/10 flex items-center gap-3 ${language === "en" ? "text-emerald-400 bg-emerald-500/10" : "text-gray-300"}`}
-                      >
-                        <span className="text-lg">🇺🇸</span>
-                        <span>English</span>
-                      </button>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Notifications */}
-            <button className="relative p-2.5 rounded-xl hover:bg-emerald-500/10 transition-colors group">
-              <Bell className="w-5 h-5 text-gray-400 group-hover:text-emerald-400" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-            </button>
-
-            {/* User Menu */}
-            <div className="relative ml-2">
-              <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-3 p-2 pr-3 rounded-xl hover:bg-emerald-500/10 transition-colors"
-              >
-                <div
-                  className={`w-9 h-9 ${getRoleBadgeColor()} rounded-xl flex items-center justify-center shadow-lg`}
-                >
-                  <span className="text-white font-bold text-sm">
-                    {user?.name?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium text-gray-200">
-                    {user?.name}
-                  </p>
-                  <p className="text-xs text-gray-500">{getRoleName()}</p>
-                </div>
-                <ChevronDown
-                  className={`w-4 h-4 text-gray-500 hidden sm:block transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              <AnimatePresence>
-                {userMenuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setUserMenuOpen(false)}
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-72 bg-[#1a2420] border border-emerald-900/30 rounded-2xl shadow-2xl z-50 overflow-hidden"
-                    >
-                      <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-green-500/10 border-b border-emerald-900/30">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-12 h-12 ${getRoleBadgeColor()} rounded-xl flex items-center justify-center`}
-                          >
-                            <span className="text-white font-bold text-lg">
-                              {user?.name?.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-200">
-                              {user?.name}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {user?.email}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 mt-3">
-                          <span
-                            className={`px-2 py-1 ${getRoleBadgeColor()} rounded-lg text-xs font-medium text-white`}
-                          >
-                            {getRoleName()}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="p-2">
-                        <Link
-                          to="/profile"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-emerald-500/10 transition-colors"
-                        >
-                          <User className="w-5 h-5 text-gray-400" />
-                          <span className="text-gray-300">
-                            {language === "id" ? "Profil Saya" : "My Profile"}
-                          </span>
-                        </Link>
-                        <Link
-                          to="/settings"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-emerald-500/10 transition-colors"
-                        >
-                          <Settings className="w-5 h-5 text-gray-400" />
-                          <span className="text-gray-300">
-                            {language === "id" ? "Pengaturan" : "Settings"}
-                          </span>
-                        </Link>
-                        <div className="my-2 border-t border-emerald-900/30" />
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-500/10 transition-colors text-red-400"
-                        >
-                          <LogOut className="w-5 h-5" />
-                          <span>{language === "id" ? "Keluar" : "Logout"}</span>
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Sidebar - Desktop */}
-      <aside
-        className={`hidden lg:flex fixed left-0 top-16 bottom-0 bg-[#0d1411]/95 backdrop-blur-xl border-r border-emerald-900/30 flex-col z-40 transition-all duration-300 ${
-          sidebarCollapsed ? "w-20" : "w-64"
-        }`}
+      {/* Logo row */}
+      <div
+        className="flex items-center flex-shrink-0"
+        style={{
+          height: HEADER_H,
+          paddingLeft: collapsed && !mobile ? 12 : 16,
+          paddingRight: 12,
+          borderBottom: `1px solid ${t.sidebarBorder}`,
+        }}
       >
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="absolute -right-3 top-6 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 transition-colors z-50"
+        <Link
+          to="/home"
+          onClick={mobile ? () => setMobileOpen(false) : undefined}
+          className="flex items-center gap-2.5 min-w-0 flex-1"
+          style={{ textDecoration: "none" }}
         >
-          {sidebarCollapsed ? (
-            <ChevronRight className="w-4 h-4 text-white" />
-          ) : (
-            <ChevronLeft className="w-4 h-4 text-white" />
+          {/* Use logo.png from public */}
+          <img
+            src="/logo.png"
+            alt="HYDREX"
+            style={{
+              width: 28,
+              height: 28,
+              objectFit: "contain",
+              flexShrink: 0,
+            }}
+          />
+          {(!collapsed || mobile) && (
+            <span
+              style={{
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 700,
+                fontSize: 13,
+                letterSpacing: "0.08em",
+                color: t.text,
+                lineHeight: 1,
+              }}
+            >
+              HYDREX
+            </span>
           )}
+        </Link>
+
+        {/* Collapse toggle — desktop only */}
+        {!mobile && (
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-md transition-opacity"
+            style={{ color: t.textMuted, opacity: 0.7 }}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+          </button>
+        )}
+
+        {/* Mobile close */}
+        {mobile && (
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="flex-shrink-0 p-1 rounded-md"
+            style={{ color: t.textMuted }}
+          >
+            <X size={16} />
+          </button>
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-2" style={{ overflowX: "hidden" }}>
+        {filteredItems.map((item) => {
+          const active = location.pathname === item.path;
+          const label = language === "id" ? item.name : item.nameEn;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={mobile ? () => setMobileOpen(false) : undefined}
+              title={collapsed && !mobile ? label : undefined}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                margin: "1px 8px",
+                padding: "8px 10px",
+                borderRadius: 8,
+                textDecoration: "none",
+                color: active ? t.primary : t.textSub,
+                backgroundColor: active ? t.active : "transparent",
+                fontWeight: active ? 600 : 400,
+                fontSize: 13.5,
+                fontFamily: "'Space Grotesk', sans-serif",
+                justifyContent: collapsed && !mobile ? "center" : "flex-start",
+                transition: "background 0.15s, color 0.15s",
+                position: "relative",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = t.hover;
+                  (e.currentTarget as HTMLElement).style.color = t.text;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                  (e.currentTarget as HTMLElement).style.color = t.textSub;
+                }
+              }}
+            >
+              {active && (!collapsed || mobile) && (
+                <span
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: 3,
+                    height: 18,
+                    borderRadius: "0 3px 3px 0",
+                    backgroundColor: t.primary,
+                  }}
+                />
+              )}
+              <span style={{ flexShrink: 0 }}>{item.icon}</span>
+              {(!collapsed || mobile) && <span>{label}</span>}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div
+        className="flex-shrink-0 py-1.5 px-2"
+        style={{ borderTop: `1px solid ${t.sidebarBorder}` }}
+      >
+        {[
+          { to: "/settings", label: language === "id" ? "Pengaturan" : "Settings", icon: <Settings size={17} /> },
+        ].map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            onClick={mobile ? () => setMobileOpen(false) : undefined}
+            title={collapsed && !mobile ? item.label : undefined}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "8px 10px",
+              borderRadius: 8,
+              textDecoration: "none",
+              color: t.textMuted,
+              fontSize: 13.5,
+              fontFamily: "'Space Grotesk', sans-serif",
+              justifyContent: collapsed && !mobile ? "center" : "flex-start",
+              transition: "background 0.15s, color 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = t.hover;
+              (e.currentTarget as HTMLElement).style.color = t.textSub;
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+              (e.currentTarget as HTMLElement).style.color = t.textMuted;
+            }}
+          >
+            {item.icon}
+            {(!collapsed || mobile) && <span>{item.label}</span>}
+          </Link>
+        ))}
+        <button
+          onClick={handleLogout}
+          title={collapsed && !mobile ? (language === "id" ? "Keluar" : "Logout") : undefined}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            width: "100%",
+            padding: "8px 10px",
+            borderRadius: 8,
+            color: "#ef4444",
+            fontSize: 13.5,
+            fontFamily: "'Space Grotesk', sans-serif",
+            justifyContent: collapsed && !mobile ? "center" : "flex-start",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            transition: "background 0.15s",
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(239,68,68,0.08)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; }}
+        >
+          <LogOut size={17} />
+          {(!collapsed || mobile) && <span>{language === "id" ? "Keluar" : "Logout"}</span>}
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── Header content ──────────────────────────────────────────────────────
+  const HeaderContent = () => (
+    <div className="flex items-center gap-1 ml-auto">
+      {/* Language */}
+      <div className="relative">
+        <button
+          onClick={() => { setLangMenuOpen(!langMenuOpen); setUserMenuOpen(false); }}
+          style={{
+            display: "flex", alignItems: "center", gap: 5,
+            padding: "6px 10px", borderRadius: 8,
+            color: t.textSub, fontSize: 12, fontFamily: "'Space Grotesk', sans-serif",
+            fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em",
+            background: "none", border: "none", cursor: "pointer",
+            transition: "background 0.15s",
+          }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = t.hover}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}
+        >
+          <Globe size={15} />
+          <span className="hidden sm:block">{language}</span>
+        </button>
+        {langMenuOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setLangMenuOpen(false)} />
+            <div
+              style={{
+                position: "absolute", right: 0, top: "calc(100% + 6px)",
+                width: 140, borderRadius: 12, overflow: "hidden", zIndex: 50, padding: "4px 0",
+                backgroundColor: t.card, border: `1px solid ${t.border}`,
+                boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.6)" : "0 8px 32px rgba(0,0,0,0.1)",
+              }}
+            >
+              {[{ val: "id", label: "🇮🇩 Indonesia" }, { val: "en", label: "🇺🇸 English" }].map(l => (
+                <button
+                  key={l.val}
+                  onClick={() => { setLanguage(l.val as any); setLangMenuOpen(false); }}
+                  style={{
+                    display: "block", width: "100%", textAlign: "left",
+                    padding: "8px 14px", fontSize: 13,
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    color: language === l.val ? t.primary : t.textSub,
+                    backgroundColor: language === l.val ? t.active : "transparent",
+                    border: "none", cursor: "pointer",
+                  }}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Theme */}
+      <button
+        onClick={toggleTheme}
+        style={{
+          padding: 8, borderRadius: 8, color: t.textSub,
+          background: "none", border: "none", cursor: "pointer",
+          transition: "background 0.15s",
+        }}
+        onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = t.hover}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}
+      >
+        {isDark ? <Sun size={16} /> : <Moon size={16} />}
+      </button>
+
+      {/* Notifications */}
+      <button
+        style={{
+          position: "relative", padding: 8, borderRadius: 8, color: t.textSub,
+          background: "none", border: "none", cursor: "pointer",
+          transition: "background 0.15s",
+        }}
+        onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = t.hover}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}
+      >
+        <Bell size={16} />
+        <span style={{
+          position: "absolute", top: 6, right: 6, width: 6, height: 6,
+          borderRadius: "50%", backgroundColor: t.primary,
+        }} />
+      </button>
+
+      {/* User */}
+      <div style={{ position: "relative", marginLeft: 2 }}>
+        <button
+          onClick={() => { setUserMenuOpen(!userMenuOpen); setLangMenuOpen(false); }}
+          style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "5px 10px 5px 6px", borderRadius: 8,
+            border: `1px solid ${t.border}`,
+            background: "none", cursor: "pointer",
+            transition: "background 0.15s",
+          }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = t.hover}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}
+        >
+          <div style={{
+            width: 26, height: 26, borderRadius: "50%",
+            background: `linear-gradient(135deg, ${t.primary}25, ${t.accent}25)`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            {getRoleIcon(14)}
+          </div>
+          <span className="hidden sm:block" style={{
+            fontSize: 13, fontWeight: 600, color: t.text,
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}>
+            {user?.name?.split(" ")[0]}
+          </span>
+          <ChevronDown size={12} style={{ color: t.textMuted }} className="hidden sm:block" />
         </button>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {filteredNavItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
-                  isActive
-                    ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/30"
-                    : "text-gray-400 hover:bg-emerald-500/10 hover:text-emerald-400"
-                }`}
-                title={
-                  sidebarCollapsed
-                    ? language === "id"
-                      ? item.nameId
-                      : item.nameEn
-                    : undefined
-                }
-              >
-                <span
-                  className={`flex-shrink-0 ${isActive ? "text-white" : ""}`}
-                >
-                  {item.icon}
-                </span>
-                {!sidebarCollapsed && (
-                  <>
-                    <span className="font-medium">
-                      {language === "id" ? item.nameId : item.nameEn}
-                    </span>
-                    {item.badge && (
-                      <span className="ml-auto px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
-                )}
-                {sidebarCollapsed && item.badge && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {!sidebarCollapsed && (
-          <div className="p-3">
-            <div className="p-4 bg-gradient-to-br from-emerald-500/10 to-green-500/10 border border-emerald-500/20 rounded-2xl">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-                  <HelpCircle className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-200">
-                    {language === "id" ? "Butuh Bantuan?" : "Need Help?"}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {language === "id"
-                      ? "Tim support 24/7"
-                      : "24/7 Support Team"}
-                  </p>
-                </div>
-              </div>
-              <button className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-2">
-                <MessageCircle className="w-4 h-4" />
-                {language === "id" ? "Hubungi Support" : "Contact Support"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {sidebarCollapsed && (
-          <div className="p-3">
-            <button
-              className="w-full p-3 bg-emerald-500/20 rounded-xl hover:bg-emerald-500/30 transition-colors"
-              title={language === "id" ? "Hubungi Support" : "Contact Support"}
-            >
-              <HelpCircle className="w-5 h-5 text-emerald-400 mx-auto" />
-            </button>
-          </div>
-        )}
-      </aside>
-
-      {/* Mobile Sidebar */}
-      <AnimatePresence>
-        {sidebarOpen && (
+        {userMenuOpen && (
           <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-            <motion.aside
-              initial={{ x: -300 }}
-              animate={{ x: 0 }}
-              exit={{ x: -300 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-72 bg-[#0d1411] z-50 lg:hidden flex flex-col"
-            >
-              <div className="h-16 px-4 flex items-center justify-between border-b border-emerald-900/30">
-                <Link to="/home" className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
-                    <Leaf className="w-6 h-6 text-white" />
-                  </div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent">
-                    C-NEX
-                  </h1>
-                </Link>
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className="p-2 rounded-xl hover:bg-emerald-500/10 transition-colors"
-                >
-                  <X className="w-6 h-6 text-gray-400" />
-                </button>
+            <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+            <div style={{
+              position: "absolute", right: 0, top: "calc(100% + 6px)",
+              width: 210, borderRadius: 16, overflow: "hidden", zIndex: 50,
+              backgroundColor: t.card, border: `1px solid ${t.border}`,
+              boxShadow: isDark ? "0 16px 48px rgba(0,0,0,0.7)" : "0 8px 32px rgba(0,0,0,0.12)",
+            }}>
+              <div style={{ padding: "14px 16px", borderBottom: `1px solid ${t.border}` }}>
+                <p style={{ fontWeight: 600, fontSize: 14, color: t.text, fontFamily: "'Space Grotesk', sans-serif", marginBottom: 2 }}>{user?.name}</p>
+                <p style={{ fontSize: 12, color: t.textMuted }}>{user?.email}</p>
               </div>
-
-              <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-                {filteredNavItems.map((item) => {
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                        isActive
-                          ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg"
-                          : "text-gray-400 hover:bg-emerald-500/10 hover:text-emerald-400"
-                      }`}
-                    >
-                      {item.icon}
-                      <span className="font-medium">
-                        {language === "id" ? item.nameId : item.nameEn}
-                      </span>
-                      {item.badge && (
-                        <span className="ml-auto px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </nav>
-
-              <div className="p-4 border-t border-emerald-900/30">
+              <div style={{ padding: 6 }}>
+                {[
+                  { to: "/profile", label: language === "id" ? "Profil Saya" : "My Profile", icon: <User size={15} /> },
+                  { to: "/settings", label: language === "id" ? "Pengaturan" : "Settings", icon: <Settings size={15} /> },
+                ].map(item => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setUserMenuOpen(false)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "8px 12px", borderRadius: 8, textDecoration: "none",
+                      color: t.textSub, fontSize: 13,
+                      fontFamily: "'Space Grotesk', sans-serif",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = t.hover; (e.currentTarget as HTMLElement).style.color = t.text; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = t.textSub; }}
+                  >
+                    {item.icon}<span>{item.label}</span>
+                  </Link>
+                ))}
+                <div style={{ margin: "4px 0", borderTop: `1px solid ${t.border}` }} />
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/10 text-red-400 rounded-xl font-medium hover:bg-red-500/20 transition-colors"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10, width: "100%",
+                    padding: "8px 12px", borderRadius: 8, fontSize: 13,
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    color: "#ef4444", background: "none", border: "none", cursor: "pointer",
+                    transition: "background 0.15s",
+                  }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(239,68,68,0.08)"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}
                 >
-                  <LogOut className="w-5 h-5" />
-                  <span>{language === "id" ? "Keluar" : "Logout"}</span>
+                  <LogOut size={15} /><span>{language === "id" ? "Keluar" : "Logout"}</span>
                 </button>
               </div>
-            </motion.aside>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight: "100vh", backgroundColor: t.bg, display: "flex" }}>
+
+      {/* ── Fixed Desktop Sidebar (hidden on < md) ── */}
+      <motion.div
+        animate={{ width: sidebarW }}
+        transition={{ duration: 0.18, ease: "easeInOut" }}
+        className="hidden md:flex flex-col flex-shrink-0"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: sidebarW,
+          backgroundColor: t.sidebar,
+          borderRight: `1px solid ${t.sidebarBorder}`,
+          zIndex: 40,
+          overflow: "hidden",
+        }}
+      >
+        <SidebarContent />
+      </motion.div>
+
+      {/* ── Main wrapper (pushes right of sidebar) ── */}
+      <motion.div
+        animate={{ paddingLeft: sidebarW }}
+        transition={{ duration: 0.18, ease: "easeInOut" }}
+        className="hidden md:flex flex-col flex-1 min-w-0"
+        style={{ paddingLeft: sidebarW }}
+      >
+        {/* Desktop Header */}
+        <div
+          style={{
+            position: "sticky",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: HEADER_H,
+            backgroundColor: t.header,
+            borderBottom: `1px solid ${t.border}`,
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            zIndex: 30,
+            display: "flex",
+            alignItems: "center",
+            paddingLeft: 20,
+            paddingRight: 20,
+          }}
+        >
+          <HeaderContent />
+        </div>
+
+        {/* Page content */}
+        <div style={{ flex: 1, padding: 24 }}>
+          <Outlet />
+        </div>
+      </motion.div>
+
+      {/* ── Mobile Layout ── */}
+      <div className="flex flex-col flex-1 md:hidden" style={{ minWidth: 0 }}>
+        {/* Mobile Header */}
+        <div
+          style={{
+            position: "sticky",
+            top: 0,
+            height: HEADER_H,
+            backgroundColor: t.header,
+            borderBottom: `1px solid ${t.border}`,
+            backdropFilter: "blur(20px)",
+            zIndex: 30,
+            display: "flex",
+            alignItems: "center",
+            paddingLeft: 12,
+            paddingRight: 12,
+            gap: 8,
+          }}
+        >
+          <button
+            onClick={() => setMobileOpen(true)}
+            style={{ padding: 8, borderRadius: 8, color: t.textSub, background: "none", border: "none", cursor: "pointer" }}
+          >
+            <Menu size={20} />
+          </button>
+          <Link to="/home" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+            <img src="/logo.png" alt="HYDREX" style={{ width: 24, height: 24, objectFit: "contain" }} />
+            <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 12, color: t.text, letterSpacing: "0.08em" }}>HYDREX</span>
+          </Link>
+          <div style={{ flex: 1 }} />
+          <button onClick={toggleTheme} style={{ padding: 8, borderRadius: 8, color: t.textSub, background: "none", border: "none", cursor: "pointer" }}>
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+          <button style={{ position: "relative", padding: 8, borderRadius: 8, color: t.textSub, background: "none", border: "none", cursor: "pointer" }}>
+            <Bell size={16} />
+            <span style={{ position: "absolute", top: 7, right: 7, width: 5, height: 5, borderRadius: "50%", backgroundColor: t.primary }} />
+          </button>
+        </div>
+        {/* Mobile page content */}
+        <div style={{ flex: 1, padding: 16 }}>
+          <Outlet />
+        </div>
+      </div>
+
+      {/* ── Mobile Drawer ── */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.55)", zIndex: 50 }}
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.div
+              initial={{ x: -SIDEBAR_FULL }} animate={{ x: 0 }} exit={{ x: -SIDEBAR_FULL }}
+              transition={{ type: "spring", damping: 28, stiffness: 320 }}
+              style={{
+                position: "fixed", left: 0, top: 0, bottom: 0, width: SIDEBAR_FULL,
+                backgroundColor: t.sidebar,
+                borderRight: `1px solid ${t.sidebarBorder}`,
+                zIndex: 60,
+              }}
+            >
+              <SidebarContent mobile />
+            </motion.div>
           </>
         )}
       </AnimatePresence>
-
-      {/* Main Content */}
-      <main
-        className={`pt-16 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"}`}
-      >
-        <div className="p-4 md:p-6 lg:p-8">
-          <Outlet />
-        </div>
-      </main>
     </div>
   );
 };

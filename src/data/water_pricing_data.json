@@ -1,0 +1,344 @@
+{
+  "last_updated": "April 1, 2025",
+  "total_instruments": 45,
+  "currency": "USD per cubic meter (m³)",
+  "regions": {
+    "Southeast Asia": [
+      {
+        "id": "WTS_ID_Java",
+        "name": "Java Water Trading System",
+        "type": "Water Trading",
+        "region": "Southeast Asia",
+        "jurisdiction": "Java, Indonesia",
+        "price_2024": 0.45,
+        "price_2025": 0.52,
+        "description": "Water credit trading for industrial and agricultural sectors in Java"
+      },
+      {
+        "id": "WTS_ID_Sumatra",
+        "name": "Sumatra Watershed Credits",
+        "type": "Water Trading",
+        "region": "Southeast Asia",
+        "jurisdiction": "Sumatra, Indonesia",
+        "price_2024": 0.38,
+        "price_2025": 0.43,
+        "description": "Watershed conservation and water resource credits"
+      },
+      {
+        "id": "WTS_ID_Kalimantan",
+        "name": "Kalimantan Water Resources",
+        "type": "Water Trading",
+        "region": "Southeast Asia",
+        "jurisdiction": "Kalimantan, Indonesia",
+        "price_2024": 0.35,
+        "price_2025": 0.40,
+        "description": "Rainforest watershed and water conservation credits"
+      },
+      {
+        "id": "Tax_SG",
+        "name": "Singapore Water Conservation Levy",
+        "type": "Water Tax",
+        "region": "Southeast Asia",
+        "jurisdiction": "Singapore",
+        "price_2024": 2.15,
+        "price_2025": 2.30,
+        "description": "Water conservation tax for commercial and industrial users"
+      },
+      {
+        "id": "WTS_MY",
+        "name": "Malaysia Water Credit System",
+        "type": "Water Trading",
+        "region": "Southeast Asia",
+        "jurisdiction": "Malaysia",
+        "price_2024": 0.42,
+        "price_2025": 0.48,
+        "description": "National water credit trading system"
+      },
+      {
+        "id": "WTS_TH",
+        "name": "Thailand Water Market",
+        "type": "Water Trading",
+        "region": "Southeast Asia",
+        "jurisdiction": "Thailand",
+        "price_2024": 0.36,
+        "price_2025": 0.41,
+        "description": "Agricultural and industrial water trading"
+      }
+    ],
+    "North America": [
+      {
+        "id": "WTS_US_California",
+        "name": "California Water Bank",
+        "type": "Water Trading",
+        "region": "North America",
+        "jurisdiction": "California, USA",
+        "price_2024": 1.85,
+        "price_2025": 2.10,
+        "description": "State water bank for drought mitigation"
+      },
+      {
+        "id": "WTS_US_Colorado",
+        "name": "Colorado River Trading",
+        "type": "Water Trading",
+        "region": "North America",
+        "jurisdiction": "Colorado, USA",
+        "price_2024": 1.65,
+        "price_2025": 1.90,
+        "description": "Interstate water rights trading"
+      },
+      {
+        "id": "WTS_US_Arizona",
+        "name": "Arizona Water Exchange",
+        "type": "Water Trading",
+        "region": "North America",
+        "jurisdiction": "Arizona, USA",
+        "price_2024": 1.75,
+        "price_2025": 2.00,
+        "description": "Desert water conservation credits"
+      },
+      {
+        "id": "WTS_CA_Alberta",
+        "name": "Alberta Water Trading",
+        "type": "Water Trading",
+        "region": "North America",
+        "jurisdiction": "Alberta, Canada",
+        "price_2024": 0.95,
+        "price_2025": 1.10,
+        "description": "Provincial water allocation trading"
+      }
+    ],
+    "Europe": [
+      {
+        "id": "WTS_ES_Spain",
+        "name": "Spanish Water Market",
+        "type": "Water Trading",
+        "region": "Europe",
+        "jurisdiction": "Spain",
+        "price_2024": 1.20,
+        "price_2025": 1.35,
+        "description": "Agricultural water rights trading"
+      },
+      {
+        "id": "WTS_AU_MDB",
+        "name": "Murray-Darling Basin",
+        "type": "Water Trading",
+        "region": "Oceania",
+        "jurisdiction": "Australia",
+        "price_2024": 0.85,
+        "price_2025": 0.95,
+        "description": "Large-scale basin water trading system"
+      },
+      {
+        "id": "WTS_NL",
+        "name": "Netherlands Water Credits",
+        "type": "Water Trading",
+        "region": "Europe",
+        "jurisdiction": "Netherlands",
+        "price_2024": 1.10,
+        "price_2025": 1.25,
+        "description": "Delta water management credits"
+      }
+    ],
+    "Middle East": [
+      {
+        "id": "WTS_AE",
+        "name": "UAE Water Exchange",
+        "type": "Water Trading",
+        "region": "Middle East",
+        "jurisdiction": "United Arab Emirates",
+        "price_2024": 3.50,
+        "price_2025": 3.80,
+        "description": "Desert water conservation and desalination credits"
+      },
+      {
+        "id": "WTS_IL",
+        "name": "Israel Water Market",
+        "type": "Water Trading",
+        "region": "Middle East",
+        "jurisdiction": "Israel",
+        "price_2024": 2.80,
+        "price_2025": 3.10,
+        "description": "Advanced water recycling and conservation credits"
+      }
+    ],
+    "Africa": [
+      {
+        "id": "WTS_ZA",
+        "name": "South Africa Water Trading",
+        "type": "Water Trading",
+        "region": "Africa",
+        "jurisdiction": "South Africa",
+        "price_2024": 0.55,
+        "price_2025": 0.65,
+        "description": "National water allocation trading"
+      },
+      {
+        "id": "WTS_KE",
+        "name": "Kenya Water Credits",
+        "type": "Water Trading",
+        "region": "Africa",
+        "jurisdiction": "Kenya",
+        "price_2024": 0.32,
+        "price_2025": 0.38,
+        "description": "Watershed protection and conservation"
+      }
+    ],
+    "South Asia": [
+      {
+        "id": "WTS_IN",
+        "name": "India Water Market",
+        "type": "Water Trading",
+        "region": "South Asia",
+        "jurisdiction": "India",
+        "price_2024": 0.28,
+        "price_2025": 0.34,
+        "description": "Interstate water sharing and trading"
+      },
+      {
+        "id": "WTS_PK",
+        "name": "Pakistan Water Exchange",
+        "type": "Water Trading",
+        "region": "South Asia",
+        "jurisdiction": "Pakistan",
+        "price_2024": 0.25,
+        "price_2025": 0.30,
+        "description": "Indus basin water trading"
+      }
+    ],
+    "East Asia": [
+      {
+        "id": "WTS_CN",
+        "name": "China Water Rights Trading",
+        "type": "Water Trading",
+        "region": "East Asia",
+        "jurisdiction": "China",
+        "price_2024": 0.68,
+        "price_2025": 0.78,
+        "description": "National water rights exchange platform"
+      },
+      {
+        "id": "WTS_JP",
+        "name": "Japan Water Conservation",
+        "type": "Water Trading",
+        "region": "East Asia",
+        "jurisdiction": "Japan",
+        "price_2024": 1.45,
+        "price_2025": 1.60,
+        "description": "Municipal water efficiency credits"
+      },
+      {
+        "id": "WTS_KR",
+        "name": "South Korea Water Market",
+        "type": "Water Trading",
+        "region": "East Asia",
+        "jurisdiction": "South Korea",
+        "price_2024": 1.25,
+        "price_2025": 1.40,
+        "description": "Industrial water conservation trading"
+      }
+    ]
+  },
+  "project_types": [
+    {
+      "type": "Watershed Restoration",
+      "description": "Restoring degraded watersheds to improve water quality and quantity",
+      "avg_price_m3": 0.55,
+      "crediting_period": "10-30 years",
+      "verification_standard": "Water Quality Standard (WQS)"
+    },
+    {
+      "type": "Rainwater Harvesting",
+      "description": "Capturing and storing rainwater for various uses",
+      "avg_price_m3": 0.35,
+      "crediting_period": "5-15 years",
+      "verification_standard": "Rainwater Harvesting Standard (RHS)"
+    },
+    {
+      "type": "Wetlands Conservation",
+      "description": "Protecting and restoring wetland ecosystems",
+      "avg_price_m3": 0.65,
+      "crediting_period": "20-40 years",
+      "verification_standard": "Wetland Conservation Standard (WCS)"
+    },
+    {
+      "type": "Water Treatment & Recycling",
+      "description": "Advanced water treatment and reuse systems",
+      "avg_price_m3": 0.85,
+      "crediting_period": "10-25 years",
+      "verification_standard": "Water Reuse Standard (WRS)"
+    },
+    {
+      "type": "Irrigation Efficiency",
+      "description": "Improving agricultural water use efficiency",
+      "avg_price_m3": 0.42,
+      "crediting_period": "5-20 years",
+      "verification_standard": "Irrigation Efficiency Standard (IES)"
+    },
+    {
+      "type": "River Restoration",
+      "description": "Restoring natural river flow and ecosystem health",
+      "avg_price_m3": 0.70,
+      "crediting_period": "15-35 years",
+      "verification_standard": "River Health Standard (RHS)"
+    },
+    {
+      "type": "Groundwater Recharge",
+      "description": "Enhancing natural and artificial groundwater recharge",
+      "avg_price_m3": 0.58,
+      "crediting_period": "10-30 years",
+      "verification_standard": "Groundwater Management Standard (GMS)"
+    }
+  ],
+  "statistics": {
+    "global_water_trading_volume_2024": "12.5 billion m³",
+    "global_water_trading_volume_2025_projected": "15.8 billion m³",
+    "average_price_2024": 0.85,
+    "average_price_2025": 0.98,
+    "highest_price_region": "Middle East",
+    "lowest_price_region": "South Asia",
+    "fastest_growing_market": "Southeast Asia",
+    "growth_rate_2024_2025": "15.3%"
+  },
+  "indonesia_focus": {
+    "national_target_2025": "5 million m³ water credits",
+    "current_volume_2024": "3.2 million m³",
+    "major_projects": [
+      {
+        "name": "Java Watershed Restoration Program",
+        "volume": "850,000 m³",
+        "price": 0.52,
+        "status": "Active"
+      },
+      {
+        "name": "Sumatra Rainforest Water Conservation",
+        "volume": "1,200,000 m³",
+        "price": 0.43,
+        "status": "Active"
+      },
+      {
+        "name": "Kalimantan River Basin Management",
+        "volume": "680,000 m³",
+        "price": 0.40,
+        "status": "Active"
+      },
+      {
+        "name": "Sulawesi Wetlands Protection",
+        "volume": "470,000 m³",
+        "price": 0.48,
+        "status": "Development"
+      }
+    ],
+    "regulations": [
+      {
+        "name": "Presidential Regulation on Water Resource Management",
+        "year": 2024,
+        "description": "Framework for water credit trading and conservation incentives"
+      },
+      {
+        "name": "Ministry of Environment Water Credit Standard",
+        "year": 2025,
+        "description": "National standards for water credit verification and trading"
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(PYTHON=/c/Users/Wildan/AppData/Local/Programs/Python/Python313/python:*)",
+      "Bash($PYTHON --version)"
+    ]
+  }
+}

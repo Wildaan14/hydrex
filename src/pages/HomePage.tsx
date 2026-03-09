@@ -1,459 +1,1134 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
   TrendingDown,
-  Leaf,
   ShoppingCart,
   FolderKanban,
   Calculator,
-  FileText,
-  ArrowRight,
+  MessageSquare,
   ArrowUpRight,
-  Activity,
-  Globe,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Target,
   Zap,
   Award,
+  Droplets,
+  Satellite,
+  Activity,
   BarChart3,
-  PieChart,
-  Sparkles,
-  Clock,
-  CheckCircle,
-  Target,
-  TreeDeciduous,
   Users,
-  DollarSign,
+  Factory,
+  CheckCircle,
+  Package,
+  MessageCircle,
+  Eye,
+  Leaf,
+  Blocks,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
+import { useProjects } from "../context/ProjectContext";
+import { useMarketplace } from "../context/MarketplaceContext";
+import { useESG } from "../context/ESGContext";
+import { useTheme } from "../components/ThemeProvider";
+import { lightPageTheme, darkPageTheme } from "../utils/appTheme";
 
+const companyLogoPath = "/company-logo.png";
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+const relativeTime = (isoDate: string): string => {
+  const diff = Date.now() - new Date(isoDate).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 2) return "baru saja";
+  if (mins < 60) return `${mins} menit lalu`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} jam lalu`;
+  return `${Math.floor(hours / 24)} hari lalu`;
+};
+
+const relativeTimeEn = (isoDate: string): string => {
+  const diff = Date.now() - new Date(isoDate).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 2) return "just now";
+  if (mins < 60) return `${mins} minutes ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hours ago`;
+  return `${Math.floor(hours / 24)} days ago`;
+};
+
+const getESGScoreColor = (score: number) => {
+  if (score >= 80) return "#22c55e";
+  if (score >= 65) return "#3b82f6";
+  if (score >= 50) return "#f59e0b";
+  return "#ef4444";
+};
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 export const HomePage: React.FC = () => {
   const { user } = useAuth();
+  const { language } = useLanguage();
+  const { theme: colorTheme } = useTheme();
+  const theme = colorTheme === "dark" ? darkPageTheme : lightPageTheme;
 
+  // ── Context hooks ─────────────────────────────────────────────────────────
+  const {
+    getAllProjects,
+    projects: ctxProjects,
+    getStatistics,
+  } = useProjects();
+  const allProjects = useMemo(
+    () => (getAllProjects ? getAllProjects() : ctxProjects),
+    [getAllProjects, ctxProjects],
+  );
+  const projectStats = getStatistics(
+    user?.role === "admin" ? undefined : user?.email,
+  );
+
+  const { listings, transactions, getMarketplaceStats } = useMarketplace();
+  const marketStats = getMarketplaceStats();
+
+  const { esgScorings } = useESG();
+
+  // ── Derived data ──────────────────────────────────────────────────────────
+
+  // Projects
+  const myProjects =
+    user?.role === "admin"
+      ? allProjects
+      : allProjects.filter((p) => p.ownerEmail === user?.email);
+  const activeListings = listings.filter((l) => l.status === "active");
+  const verifiedProjects = allProjects.filter(
+    (p) => p.verificationStatus === "verified",
+  );
+
+  // Total water credits from my projects
+  const totalWaterCredits = myProjects.reduce(
+    (sum, p) => sum + p.waterData.estimatedCredits,
+    0,
+  );
+  const verifiedCredits = myProjects.reduce(
+    (sum, p) => sum + p.waterData.verifiedCredits,
+    0,
+  );
+
+  // ESG — latest/best score for current user's company
+  const myESGScorings = esgScorings.filter(
+    (s) =>
+      myProjects.some((p) => p.id === s.projectId) || esgScorings.length > 0,
+  );
+  const latestESG =
+    myESGScorings.length > 0
+      ? myESGScorings.reduce((best, curr) =>
+          curr.overallScore > best.overallScore ? curr : best,
+        )
+      : null;
+  const avgESGScore =
+    myESGScorings.length > 0
+      ? Math.round(
+          myESGScorings.reduce((s, e) => s + e.overallScore, 0) /
+            myESGScorings.length,
+        )
+      : null;
+
+  // Recent activity: merge blockchain records + transactions
+  const blockchainActivity = allProjects
+    .flatMap((p) =>
+      (p.blockchainRecords || []).map((r) => ({
+        id: r.txHash,
+        type: "blockchain" as const,
+        title: language === "id" ? "Blockchain" : "Blockchain",
+        desc: `${r.action} — ${p.title}`,
+        time: r.timestamp,
+        status: "success" as const,
+        amount: null as string | null,
+      })),
+    )
+    .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+    .slice(0, 3);
+
+  // Transaction type uses `paymentStatus`, NOT `status` — fixes TS2339
+  const txActivity = transactions.slice(0, 3).map((t) => {
+    const isDone = (t as any).paymentStatus === "completed";
+    return {
+      id: t.id,
+      type: "transaction" as const,
+      title: language === "id" ? "Transaksi" : "Transaction",
+      desc: `${t.id} — ${(t as any).items?.length ?? 0} item`,
+      time: (t as any).createdAt ?? new Date().toISOString(),
+      status: (isDone ? "success" : "pending") as "success" | "pending",
+      amount: isDone
+        ? `+${(t as any).items?.reduce((s: number, i: any) => s + (i.quantity || 0), 0) ?? 0} m³`
+        : (null as string | null),
+    };
+  });
+
+  const recentActivity = [...blockchainActivity, ...txActivity]
+    .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+    .slice(0, 3);
+
+  // ── Greeting ──────────────────────────────────────────────────────────────
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return language === "id" ? "Selamat Pagi" : "Good Morning";
+    if (hour < 17)
+      return language === "id" ? "Selamat Siang" : "Good Afternoon";
+    return language === "id" ? "Selamat Malam" : "Good Evening";
+  };
+
+  // ── Stats cards (live data) ───────────────────────────────────────────────
   const stats = [
     {
-      title: "Total Carbon Credit",
-      value: "12,450",
-      unit: "tCO₂e",
-      change: "+12.5%",
-      trend: "up",
-      icon: <Leaf className="w-6 h-6" />,
-      gradient: "from-emerald-500 to-green-600",
-      shadowColor: "shadow-emerald-500/20",
+      label: language === "id" ? "Total Kredit Air" : "Total Water Credits",
+      value:
+        totalWaterCredits > 0
+          ? totalWaterCredits.toLocaleString()
+          : marketStats.totalCreditsAvailable > 0
+            ? `${(marketStats.totalCreditsAvailable / 1000).toFixed(1)}K`
+            : "0",
+      unit: "m³",
+      change:
+        verifiedCredits > 0
+          ? `${Math.round((verifiedCredits / Math.max(totalWaterCredits, 1)) * 100)}% verified`
+          : language === "id"
+            ? "Belum ada"
+            : "None yet",
+      trend: "up" as const,
+      icon: <Droplets className="w-5 h-5" />,
+      color: theme.secondary,
     },
     {
-      title: "Emisi Bulan Ini",
-      value: "2,340",
-      unit: "tCO₂e",
-      change: "-8.2%",
-      trend: "down",
-      icon: <Activity className="w-6 h-6" />,
-      gradient: "from-blue-500 to-cyan-600",
-      shadowColor: "shadow-blue-500/20",
+      label: language === "id" ? "Listing Aktif" : "Active Listings",
+      value: activeListings.length.toString(),
+      unit: language === "id" ? "listing" : "listings",
+      change:
+        marketStats.totalTransactions > 0
+          ? `${marketStats.totalTransactions} tx`
+          : language === "id"
+            ? "Belum ada transaksi"
+            : "No transactions yet",
+      trend: "up" as const,
+      icon: <ShoppingCart className="w-5 h-5" />,
+      color: "#8b5cf6",
     },
     {
-      title: "Transaksi Aktif",
-      value: "23",
-      unit: "transaksi",
-      change: "+5",
-      trend: "up",
-      icon: <ShoppingCart className="w-6 h-6" />,
-      gradient: "from-purple-500 to-pink-600",
-      shadowColor: "shadow-purple-500/20",
+      label: language === "id" ? "Proyek Aktif" : "Active Projects",
+      value: projectStats.activeProjects.toString(),
+      unit: `/ ${projectStats.totalProjects} total`,
+      change:
+        projectStats.pendingVerifications > 0
+          ? `${projectStats.pendingVerifications} pending`
+          : language === "id"
+            ? "Semua up to date"
+            : "All up to date",
+      trend: (projectStats.pendingVerifications > 0 ? "down" : "up") as
+        | "up"
+        | "down",
+      icon: <Zap className="w-5 h-5" />,
+      color: theme.primary,
     },
     {
-      title: "Skor ESG",
-      value: "87",
-      unit: "poin",
-      change: "+3",
-      trend: "up",
-      icon: <Award className="w-6 h-6" />,
-      gradient: "from-amber-500 to-orange-600",
-      shadowColor: "shadow-amber-500/20",
+      label: language === "id" ? "Skor ESG" : "ESG Score",
+      value:
+        avgESGScore !== null
+          ? avgESGScore.toString()
+          : latestESG
+            ? latestESG.overallScore.toString()
+            : "—",
+      unit: avgESGScore !== null ? (language === "id" ? "poin" : "pts") : "",
+      change: latestESG
+        ? latestESG.grade
+        : language === "id"
+          ? "Belum dihitung"
+          : "Not yet scored",
+      trend: (avgESGScore !== null && avgESGScore >= 65 ? "up" : "down") as
+        | "up"
+        | "down",
+      icon: <Award className="w-5 h-5" />,
+      color: "#f59e0b",
     },
   ];
 
-  const quickActions = [
+  // ── Quick Access (same links as original, with live stat labels) ──────────
+  const quickAccess = [
     {
-      title: "Marketplace",
-      description: "Jual beli kredit karbon tersertifikasi",
-      icon: <ShoppingCart className="w-6 h-6" />,
+      name: "Marketplace",
+      nameEn: "Marketplace",
+      desc:
+        language === "id"
+          ? "Jual & beli kredit air"
+          : "Buy & sell water credits",
       path: "/marketplace",
-      gradient: "from-emerald-500 to-green-600",
-      stats: "1,234 listings",
+      icon: <ShoppingCart className="w-6 h-6" />,
+      stat:
+        activeListings.length > 0
+          ? `${activeListings.length} active listings`
+          : language === "id"
+            ? "Belum ada listing"
+            : "No listings yet",
+      gradient: `linear-gradient(135deg, ${theme.primary}30, ${theme.primaryLight}30)`,
+      iconColor: theme.primary,
     },
     {
-      title: "Projects",
-      description: "Kelola proyek karbon Anda",
-      icon: <FolderKanban className="w-6 h-6" />,
+      name: "Proyek",
+      nameEn: "Projects",
+      desc: language === "id" ? "Kelola proyek air" : "Manage water projects",
       path: "/projects",
-      gradient: "from-blue-500 to-cyan-600",
-      stats: "5 aktif",
+      icon: <FolderKanban className="w-6 h-6" />,
+      stat:
+        projectStats.totalProjects > 0
+          ? `${projectStats.activeProjects} active / ${projectStats.totalProjects} total`
+          : language === "id"
+            ? "Belum ada proyek"
+            : "No projects yet",
+      gradient:
+        "linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(168, 85, 247, 0.3))",
+      iconColor: "#8b5cf6",
     },
     {
-      title: "Kalkulator",
-      description: "Hitung jejak karbon Anda",
-      icon: <Calculator className="w-6 h-6" />,
+      name: "ESG Scoring",
+      nameEn: "ESG Scoring",
+      desc:
+        language === "id"
+          ? "Nilai keberlanjutan ESG"
+          : "Sustainability ESG scoring",
+      path: "/esg",
+      icon: <Award className="w-6 h-6" />,
+      stat:
+        esgScorings.length > 0
+          ? `${esgScorings.length} scoring${esgScorings.length > 1 ? "s" : ""}`
+          : language === "id"
+            ? "Mulai scoring"
+            : "Start scoring",
+      gradient:
+        "linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(251, 191, 36, 0.3))",
+      iconColor: "#f59e0b",
+    },
+    {
+      name: "MRV Dashboard",
+      nameEn: "MRV Dashboard",
+      desc:
+        language === "id"
+          ? "Monitoring & verifikasi"
+          : "Monitoring & verification",
+      path: "/mrv",
+      icon: <Satellite className="w-6 h-6" />,
+      stat:
+        verifiedProjects.length > 0
+          ? `${verifiedProjects.length} verified`
+          : language === "id"
+            ? "Real-time"
+            : "Real-time",
+      gradient: `linear-gradient(135deg, ${theme.secondary}30, ${theme.secondaryLight}30)`,
+      iconColor: theme.secondary,
+    },
+    {
+      name: "Kalkulator",
+      nameEn: "Calculator",
+      desc:
+        language === "id" ? "Hitung jejak air" : "Calculate water footprint",
       path: "/calculator",
-      gradient: "from-purple-500 to-pink-600",
-      stats: "Real-time",
+      icon: <Calculator className="w-6 h-6" />,
+      stat: "Real-time",
+      gradient: `linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.3))`,
+      iconColor: "#22c55e",
     },
     {
-      title: "Reports",
-      description: "Lihat laporan emisi lengkap",
-      icon: <FileText className="w-6 h-6" />,
-      path: "/reports",
-      gradient: "from-amber-500 to-orange-600",
-      stats: "12 laporan",
+      name: "Forum",
+      nameEn: "Forum",
+      desc: language === "id" ? "Diskusi & berbagi" : "Discuss & share",
+      path: "/forum",
+      icon: <MessageSquare className="w-6 h-6" />,
+      stat: "128 topics",
+      gradient:
+        "linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(244, 114, 182, 0.3))",
+      iconColor: "#ec4899",
     },
   ];
 
-  const recentActivities = [
-    {
-      type: "purchase",
-      title: "Pembelian Carbon Credit",
-      description: "100 tCO₂e dari PT Hutan Hijau",
-      time: "2 jam lalu",
-      amount: "Rp 45.000.000",
-      status: "success",
-    },
-    {
-      type: "verification",
-      title: "Verifikasi Selesai",
-      description: "Proyek Restorasi Mangrove",
-      time: "5 jam lalu",
-      amount: "250 tCO₂e",
-      status: "success",
-    },
-    {
-      type: "pending",
-      title: "Menunggu Approval",
-      description: "Proyek PLTS Komunitas",
-      time: "1 hari lalu",
-      amount: null,
-      status: "pending",
-    },
-  ];
-
-  const marketData = [
-    { name: "VCS Standard", price: "Rp 180.000", change: "+2.5%", trend: "up", volume: "12.5K" },
-    { name: "Gold Standard", price: "Rp 220.000", change: "+1.8%", trend: "up", volume: "8.2K" },
-    { name: "CDM", price: "Rp 95.000", change: "-0.5%", trend: "down", volume: "5.1K" },
-  ];
-
-  const carbonProgress = {
-    emitted: 12450,
-    offset: 8100,
-    target: 15000,
-  };
+  // ── Progress calculation ──────────────────────────────────────────────────
+  const ANNUAL_TARGET = 15_000;
+  const achievedCredits =
+    verifiedCredits > 0 ? verifiedCredits : totalWaterCredits;
+  const progressPct = Math.min(
+    Math.round((achievedCredits / ANNUAL_TARGET) * 100),
+    100,
+  );
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Welcome Section */}
+
+      {/* ── HERO SECTION ──────────────────────────────────────────────────── */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 rounded-3xl p-6 md:p-8 text-white overflow-hidden"
+        transition={{ duration: 0.5 }}
+        className="hero-bg rounded-2xl overflow-hidden"
+        style={{ minHeight: "180px" }}
       >
-        {/* Background decorations */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-1/2 w-48 h-48 bg-white/10 rounded-full translate-y-1/2" />
-        <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-white/5 rounded-full" />
-        
-        <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        {/* Grid overlay for texture */}
+        <div className="grid-overlay absolute inset-0" />
+
+        {/* Content */}
+        <div className="relative z-10 p-6 md:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-5 h-5 text-yellow-300" />
-              <span className="text-sm text-white/80">Selamat datang kembali</span>
+            {/* Platform badge */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="feature-pill text-xs py-1 px-3">
+                <Droplets className="w-3.5 h-3.5" />
+                Water Credit Platform
+              </span>
+              <span
+                className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                style={{ backgroundColor: "rgba(16,185,129,0.2)", color: "#6ee7b7" }}
+              >
+                🟢 {language === "id" ? "Aktif" : "Active"}
+              </span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              Halo, {user?.name?.split(" ")[0]}! 👋
+
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-1.5 leading-tight">
+              {getGreeting()},{" "}
+              <span style={{ color: "#6ee7b7" }}>{user?.name?.split(" ")[0]}</span>! 👋
             </h1>
-            <p className="text-white/80 max-w-lg">
-              {user?.role === "company"
-                ? "Kelola emisi perusahaan dan trading kredit karbon Anda dengan mudah"
-                : user?.role === "admin"
-                ? "Monitor dan kelola seluruh aktivitas platform C-NEX"
-                : "Pantau dan offset jejak karbon Anda untuk masa depan yang lebih hijau"}
+            <p className="text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
+              {language === "id"
+                ? "Berikut ringkasan aktivitas kredit air Anda hari ini"
+                : "Here's your water credit activity summary for today"}
             </p>
-            
-            {/* Quick Stats in Welcome */}
-            <div className="flex flex-wrap gap-4 mt-6">
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/20 rounded-xl backdrop-blur-sm">
-                <Target className="w-4 h-4" />
-                <span className="text-sm font-medium">65% Target Offset</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/20 rounded-xl backdrop-blur-sm">
-                <TreeDeciduous className="w-4 h-4" />
-                <span className="text-sm font-medium">1,299 Pohon Setara</span>
-              </div>
-            </div>
           </div>
-          
-          <div className="flex gap-3">
-            <Link
-              to="/calculator"
-              className="px-5 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl font-medium transition-all flex items-center gap-2"
-            >
-              <Calculator className="w-5 h-5" />
-              Hitung Karbon
-            </Link>
+
+          <div className="flex flex-col items-start sm:items-end gap-3">
             <Link
               to="/marketplace"
-              className="px-5 py-3 bg-white text-emerald-600 hover:bg-white/90 rounded-xl font-semibold transition-all flex items-center gap-2 shadow-lg"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 active:scale-95"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.15)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                color: "white",
+                backdropFilter: "blur(8px)",
+              }}
             >
-              <ShoppingCart className="w-5 h-5" />
-              Beli Credit
+              <ShoppingCart className="w-4 h-4" />
+              {language === "id" ? "Beli Kredit Air" : "Buy Water Credits"}
+            </Link>
+            <Link
+              to="/projects"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 active:scale-95 text-white"
+              style={{
+                background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                boxShadow: "0 4px 16px rgba(5,150,105,0.4)",
+              }}
+            >
+              <Zap className="w-4 h-4" />
+              {language === "id" ? "Buat Proyek" : "New Project"}
             </Link>
           </div>
         </div>
+
+        {/* Decorative orbs */}
+        <div
+          className="absolute top-[-20px] right-[-20px] w-40 h-40 rounded-full opacity-20 pointer-events-none"
+          style={{
+            background: `radial-gradient(circle, ${theme.primary} 0%, transparent 70%)`,
+            filter: "blur(20px)",
+          }}
+        />
+        <div
+          className="absolute bottom-[-30px] left-[30%] w-48 h-48 rounded-full opacity-15 pointer-events-none"
+          style={{
+            background: `radial-gradient(circle, ${theme.secondary} 0%, transparent 70%)`,
+            filter: "blur(30px)",
+          }}
+        />
       </motion.div>
 
-      {/* Stats Grid */}
+      {/* ── Stats Grid ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-5 hover:border-emerald-500/30 transition-all group"
+            transition={{ delay: index * 0.08 }}
+            className="stat-card p-5"
+            style={{
+              backgroundColor: theme.bgCard,
+              border: `1px solid ${theme.border}`,
+            }}
           >
+            {/* Top row */}
             <div className="flex items-start justify-between mb-4">
-              <div className={`p-3 bg-gradient-to-br ${stat.gradient} rounded-xl shadow-lg ${stat.shadowColor} group-hover:scale-110 transition-transform`}>
-                <span className="text-white">{stat.icon}</span>
+              <div
+                className="p-2.5 rounded-xl"
+                style={{
+                  backgroundColor: `${stat.color}18`,
+                  color: stat.color,
+                  boxShadow: `0 0 12px ${stat.color}20`,
+                }}
+              >
+                {stat.icon}
               </div>
               <div
-                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-medium ${
-                  stat.trend === "up" 
-                    ? "text-emerald-400 bg-emerald-500/10" 
+                className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  stat.trend === "up"
+                    ? "text-green-500 bg-green-500/10"
                     : "text-red-400 bg-red-500/10"
                 }`}
               >
                 {stat.trend === "up" ? (
-                  <TrendingUp className="w-4 h-4" />
+                  <TrendingUp className="w-3 h-3" />
                 ) : (
-                  <TrendingDown className="w-4 h-4" />
+                  <TrendingDown className="w-3 h-3" />
                 )}
-                {stat.change}
+                <span>{stat.change}</span>
               </div>
             </div>
-            <p className="text-sm text-gray-400 mb-1">{stat.title}</p>
-            <p className="text-2xl font-bold text-white">
-              {stat.value}{" "}
-              <span className="text-sm font-normal text-gray-500">{stat.unit}</span>
+            <p className="text-xs mb-1 font-medium" style={{ color: theme.textMuted }}>
+              {stat.label}
             </p>
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className="text-2xl font-extrabold"
+                style={{ color: theme.textPrimary }}
+              >
+                {stat.value}
+              </span>
+              <span className="text-xs font-medium" style={{ color: theme.textMuted }}>
+                {stat.unit}
+              </span>
+            </div>
+            {/* Bottom accent bar */}
+            <div
+              className="mt-3 h-0.5 rounded-full"
+              style={{
+                background: `linear-gradient(90deg, ${stat.color}60, transparent)`,
+              }}
+            />
           </motion.div>
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+
+      {/* ── Platform Overview — live cross-module stats (NEW) ─────────── */}
+      <div
+        className="rounded-2xl p-5"
+        style={{
+          backgroundColor: theme.bgCard,
+          border: `1px solid ${theme.border}`,
+        }}
       >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-white">Akses Cepat</h2>
-          <Link to="/home" className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-            Lihat Semua <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {quickActions.map((action, index) => (
-            <Link
-              key={index}
-              to={action.path}
-              className="group bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-5 hover:border-emerald-500/30 transition-all relative overflow-hidden"
+        <h2
+          className="text-base font-semibold mb-4 flex items-center gap-2"
+          style={{ color: theme.textPrimary }}
+        >
+          <Activity className="w-4 h-4" style={{ color: theme.secondary }} />
+          {language === "id" ? "Ringkasan Platform" : "Platform Overview"}
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            {
+              icon: <Package className="w-4 h-4" />,
+              color: theme.primary,
+              label: language === "id" ? "Total Listing" : "Total Listings",
+              value: marketStats.totalListings,
+            },
+            {
+              icon: <Leaf className="w-4 h-4" />,
+              color: "#22c55e",
+              label: language === "id" ? "Komunitas" : "Community",
+              value: marketStats.communityListings ?? 0,
+            },
+            {
+              icon: <Factory className="w-4 h-4" />,
+              color: "#f59e0b",
+              label: language === "id" ? "Korporat" : "Corporate",
+              value: marketStats.corporateListings ?? 0,
+            },
+            {
+              icon: <FolderKanban className="w-4 h-4" />,
+              color: "#8b5cf6",
+              label: language === "id" ? "Total Proyek" : "Total Projects",
+              value: projectStats.totalProjects,
+            },
+            {
+              icon: <CheckCircle className="w-4 h-4" />,
+              color: "#22c55e",
+              label: language === "id" ? "Terverifikasi" : "Verified",
+              value: verifiedProjects.length,
+            },
+            {
+              icon: <Award className="w-4 h-4" />,
+              color: "#f59e0b",
+              label: language === "id" ? "ESG Scoring" : "ESG Scorings",
+              value: esgScorings.length,
+            },
+          ].map((item, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.05 * idx }}
+              className="rounded-xl p-3 flex flex-col gap-1"
+              style={{
+                backgroundColor: `${item.color}10`,
+                border: `1px solid ${item.color}20`,
+              }}
             >
-              {/* Hover gradient effect */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
-              
-              <div className="relative">
-                <div className={`w-12 h-12 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
-                  {action.icon}
-                </div>
-                <h3 className="font-semibold text-white mb-1 group-hover:text-emerald-400 transition-colors">
-                  {action.title}
-                </h3>
-                <p className="text-sm text-gray-500 mb-3">{action.description}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-emerald-400 font-medium">{action.stats}</span>
-                  <ArrowUpRight className="w-4 h-4 text-gray-600 group-hover:text-emerald-400 transition-colors" />
-                </div>
-              </div>
-            </Link>
+              <div style={{ color: item.color }}>{item.icon}</div>
+              <p
+                className="text-xl font-bold"
+                style={{ color: theme.textPrimary }}
+              >
+                {item.value}
+              </p>
+              <p
+                className="text-xs leading-tight"
+                style={{ color: theme.textMuted }}
+              >
+                {item.label}
+              </p>
+            </motion.div>
           ))}
         </div>
-      </motion.div>
-
-      {/* Two Column Layout */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Recent Activity */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 overflow-hidden"
-        >
-          <div className="p-5 border-b border-emerald-900/30 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-emerald-400" />
-              Aktivitas Terbaru
-            </h2>
-            <Link
-              to="/activities"
-              className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
-            >
-              Lihat Semua <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="p-4 space-y-3">
-            {recentActivities.map((activity, index) => (
-              <div
-                key={index}
-                className="flex items-start gap-4 p-4 rounded-xl bg-[#0d1411]/50 hover:bg-[#0d1411] transition-colors"
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                  activity.status === "success" 
-                    ? "bg-emerald-500/20" 
-                    : "bg-amber-500/20"
-                }`}>
-                  {activity.status === "success" ? (
-                    <CheckCircle className="w-5 h-5 text-emerald-400" />
-                  ) : (
-                    <Clock className="w-5 h-5 text-amber-400" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-white">{activity.title}</p>
-                  <p className="text-sm text-gray-500 truncate">{activity.description}</p>
-                  <p className="text-xs text-gray-600 mt-1">{activity.time}</p>
-                </div>
-                {activity.amount && (
-                  <div className="text-right">
-                    <p className="font-semibold text-emerald-400">{activity.amount}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Market Overview */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 overflow-hidden"
-        >
-          <div className="p-5 border-b border-emerald-900/30 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-emerald-400" />
-              Harga Pasar Carbon
-            </h2>
-            <Link
-              to="/marketplace"
-              className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
-            >
-              Marketplace <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="p-4">
-            {/* Mini Chart Placeholder */}
-            <div className="h-32 bg-gradient-to-t from-emerald-500/10 to-transparent rounded-xl mb-4 flex items-end justify-center p-4">
-              <div className="flex items-end gap-2 h-full">
-                {[40, 65, 45, 80, 55, 70, 90, 60, 75, 85, 70, 95].map((h, i) => (
-                  <div
-                    key={i}
-                    className="w-4 bg-gradient-to-t from-emerald-500 to-green-400 rounded-t-sm transition-all hover:from-emerald-400 hover:to-green-300"
-                    style={{ height: `${h}%` }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Market Prices */}
-            <div className="space-y-3">
-              {marketData.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 rounded-xl bg-[#0d1411]/50 hover:bg-[#0d1411] transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-                      <Leaf className="w-5 h-5 text-emerald-400" />
-                    </div>
-                    <div>
-                      <span className="font-medium text-white">{item.name}</span>
-                      <p className="text-xs text-gray-500">Vol: {item.volume}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-white">{item.price}</p>
-                    <p className={`text-xs font-medium ${item.trend === "up" ? "text-emerald-400" : "text-red-400"}`}>
-                      {item.change}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
       </div>
 
-      {/* Carbon Progress */}
+      {/* ── Quick Access (6 cards) + Recent Activity ──────────────────── */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Quick Access */}
+        <div className="lg:col-span-2 space-y-4">
+          <h2
+            className="text-lg font-semibold"
+            style={{ color: theme.textPrimary }}
+          >
+            {language === "id" ? "Akses Cepat" : "Quick Access"}
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {quickAccess.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + index * 0.08 }}
+              >
+                <Link
+                  to={item.path}
+                  className="block rounded-2xl p-5 transition-all group hover:scale-[1.02]"
+                  style={{
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                  }}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div
+                      className="p-3 rounded-xl"
+                      style={{
+                        background: item.gradient,
+                        color: item.iconColor,
+                      }}
+                    >
+                      {item.icon}
+                    </div>
+                    <ArrowUpRight
+                      className="w-5 h-5 transition-colors"
+                      style={{ color: theme.textMuted }}
+                    />
+                  </div>
+                  <h3
+                    className="text-lg font-semibold mb-1"
+                    style={{ color: theme.textPrimary }}
+                  >
+                    {language === "id" ? item.name : item.nameEn}
+                  </h3>
+                  <p
+                    className="text-sm mb-3"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    {item.desc}
+                  </p>
+                  <span
+                    className="text-xs px-2 py-1 rounded-lg"
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.05)",
+                      color: theme.textMuted,
+                    }}
+                  >
+                    {item.stat}
+                  </span>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2
+              className="text-lg font-semibold"
+              style={{ color: theme.textPrimary }}
+            >
+              {language === "id" ? "Aktivitas Terbaru" : "Recent Activity"}
+            </h2>
+            <Link
+              to="/mrv"
+              className="text-sm hover:opacity-80 flex items-center gap-1"
+              style={{ color: theme.primary }}
+            >
+              {language === "id" ? "Lihat Semua" : "View All"}
+              <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div
+            className="rounded-2xl divide-y"
+            style={{
+              backgroundColor: theme.bgCard,
+              border: `1px solid ${theme.border}`,
+              borderColor: theme.border,
+            }}
+          >
+            {recentActivity.length === 0
+              ? /* fallback ke hardcoded dari original kalau belum ada aktivitas */
+                [
+                  {
+                    title: language === "id" ? "Pembelian" : "Purchase",
+                    desc: "Water credit from Kalimantan Watershed Project",
+                    time: language === "id" ? "2 jam lalu" : "2 hours ago",
+                    amount: "+500 m³",
+                    status: "success",
+                  },
+                  {
+                    title: language === "id" ? "Verifikasi" : "Verification",
+                    desc: "Sulawesi Water Conservation Project verified",
+                    time: language === "id" ? "5 jam lalu" : "5 hours ago",
+                    amount: null,
+                    status: "success",
+                  },
+                  {
+                    title: language === "id" ? "Pending" : "Pending",
+                    desc: "Waiting for transfer approval",
+                    time: language === "id" ? "1 hari lalu" : "1 day ago",
+                    amount: "-200 m³",
+                    status: "pending",
+                  },
+                ].map((activity, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                    className="p-4 flex items-start gap-3"
+                    style={{ borderColor: theme.border }}
+                  >
+                    <div
+                      className={`p-2 rounded-lg ${
+                        activity.status === "success"
+                          ? "bg-green-500/10 text-green-400"
+                          : "bg-yellow-500/10 text-yellow-400"
+                      }`}
+                    >
+                      {activity.status === "success" ? (
+                        <CheckCircle2 className="w-4 h-4" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className="font-medium"
+                        style={{ color: theme.textPrimary }}
+                      >
+                        {activity.title}
+                      </p>
+                      <p
+                        className="text-sm truncate"
+                        style={{ color: theme.textSecondary }}
+                      >
+                        {activity.desc}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Clock
+                          className="w-3 h-3"
+                          style={{ color: theme.textMuted }}
+                        />
+                        <span
+                          className="text-xs"
+                          style={{ color: theme.textMuted }}
+                        >
+                          {activity.time}
+                        </span>
+                        {activity.amount && (
+                          <span
+                            className={`text-xs font-medium ${
+                              activity.amount.startsWith("+")
+                                ? "text-green-400"
+                                : "text-red-400"
+                            }`}
+                          >
+                            {activity.amount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              : recentActivity.map((activity, index) => (
+                  <motion.div
+                    key={activity.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                    className="p-4 flex items-start gap-3"
+                    style={{ borderColor: theme.border }}
+                  >
+                    <div
+                      className={`p-2 rounded-lg ${
+                        activity.status === "success"
+                          ? "bg-green-500/10 text-green-400"
+                          : "bg-yellow-500/10 text-yellow-400"
+                      }`}
+                    >
+                      {activity.type === "blockchain" ? (
+                        <Blocks className="w-4 h-4" />
+                      ) : activity.status === "success" ? (
+                        <CheckCircle2 className="w-4 h-4" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className="font-medium"
+                        style={{ color: theme.textPrimary }}
+                      >
+                        {activity.title}
+                      </p>
+                      <p
+                        className="text-sm truncate"
+                        style={{ color: theme.textSecondary }}
+                      >
+                        {activity.desc}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Clock
+                          className="w-3 h-3"
+                          style={{ color: theme.textMuted }}
+                        />
+                        <span
+                          className="text-xs"
+                          style={{ color: theme.textMuted }}
+                        >
+                          {language === "id"
+                            ? relativeTime(activity.time)
+                            : relativeTimeEn(activity.time)}
+                        </span>
+                        {activity.amount && (
+                          <span
+                            className={`text-xs font-medium ${
+                              activity.amount.startsWith("+")
+                                ? "text-green-400"
+                                : "text-red-400"
+                            }`}
+                          >
+                            {activity.amount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+          </div>
+
+          {/* Recent Forum Posts (from ForumPage samplePosts) */}
+          <div
+            className="rounded-2xl p-4 space-y-3"
+            style={{
+              backgroundColor: theme.bgCard,
+              border: `1px solid ${theme.border}`,
+            }}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <h3
+                className="font-semibold text-sm flex items-center gap-2"
+                style={{ color: theme.textPrimary }}
+              >
+                <MessageCircle
+                  className="w-4 h-4"
+                  style={{ color: "#ec4899" }}
+                />
+                {language === "id" ? "Diskusi Terbaru" : "Latest Discussions"}
+              </h3>
+              <Link
+                to="/forum"
+                className="text-xs hover:opacity-80"
+                style={{ color: theme.primary }}
+              >
+                {language === "id" ? "Forum →" : "Forum →"}
+              </Link>
+            </div>
+            {[
+              {
+                title:
+                  "Bagaimana cara menghitung water footprint untuk industri manufaktur?",
+                titleEn:
+                  "How to calculate water footprint for manufacturing industry?",
+                replies: 8,
+                views: 156,
+                tag: "question",
+              },
+              {
+                title: "[Pengumuman] Update Fitur Kalkulator Air v2.0",
+                titleEn: "[Announcement] Water Calculator Feature Update v2.0",
+                replies: 23,
+                views: 542,
+                tag: "announcement",
+              },
+              {
+                title:
+                  "Panduan Lengkap: Memulai Trading Water Credit di HYDREX",
+                titleEn:
+                  "Complete Guide: Getting Started with Water Credit Trading",
+                replies: 34,
+                views: 1205,
+                tag: "guide",
+              },
+            ].map((post, idx) => (
+              <Link
+                key={idx}
+                to="/forum"
+                className="block rounded-lg p-3 hover:bg-white/5 transition-colors"
+                style={{ border: `1px solid ${theme.border}` }}
+              >
+                <p
+                  className="text-xs font-medium line-clamp-2 mb-1.5"
+                  style={{ color: theme.textPrimary }}
+                >
+                  {language === "id" ? post.title : post.titleEn}
+                </p>
+                <div
+                  className="flex items-center gap-3 text-xs"
+                  style={{ color: theme.textMuted }}
+                >
+                  <span className="flex items-center gap-1">
+                    <MessageCircle className="w-3 h-3" />
+                    {post.replies}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Eye className="w-3 h-3" />
+                    {post.views}
+                  </span>
+                  <span
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    style={{
+                      backgroundColor:
+                        post.tag === "question"
+                          ? "#fbbf2420"
+                          : post.tag === "announcement"
+                            ? "#ef444420"
+                            : "#a855f720",
+                      color:
+                        post.tag === "question"
+                          ? "#fbbf24"
+                          : post.tag === "announcement"
+                            ? "#ef4444"
+                            : "#a855f7",
+                    }}
+                  >
+                    {post.tag}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Progress Section (original + live data) ─────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-6"
+        className="rounded-2xl p-6"
+        style={{
+          backgroundColor: theme.bgCard,
+          border: `1px solid ${theme.border}`,
+        }}
       >
-        <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-              <Target className="w-5 h-5 text-emerald-400" />
-              Progress Offset Karbon
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <h2
+              className="text-lg font-semibold flex items-center gap-2"
+              style={{ color: theme.textPrimary }}
+            >
+              <Target className="w-5 h-5" style={{ color: theme.secondary }} />
+              {language === "id"
+                ? "Progress Konservasi Air"
+                : "Water Conservation Progress"}
             </h2>
-            <p className="text-gray-500 text-sm mb-4">
-              Pantau kemajuan Anda menuju target net-zero emission
+            <p className="text-sm mt-1" style={{ color: theme.textSecondary }}>
+              {language === "id"
+                ? `Target tahunan: ${ANNUAL_TARGET.toLocaleString()} m³`
+                : `Annual target: ${ANNUAL_TARGET.toLocaleString()} m³`}
             </p>
-            
-            {/* Progress Bar */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Progress</span>
-                <span className="text-emerald-400 font-medium">
-                  {((carbonProgress.offset / carbonProgress.emitted) * 100).toFixed(0)}% Offset
-                </span>
-              </div>
-              <div className="h-4 bg-[#0d1411] rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full transition-all duration-1000"
-                  style={{ width: `${(carbonProgress.offset / carbonProgress.emitted) * 100}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>0 tCO₂e</span>
-                <span>{carbonProgress.emitted.toLocaleString()} tCO₂e</span>
-              </div>
-            </div>
           </div>
-          
-          <div className="grid grid-cols-3 gap-4 lg:w-auto">
-            <div className="text-center p-4 bg-[#0d1411] rounded-xl">
-              <p className="text-2xl font-bold text-white">{carbonProgress.emitted.toLocaleString()}</p>
-              <p className="text-xs text-gray-500">Total Emisi</p>
-            </div>
-            <div className="text-center p-4 bg-emerald-500/10 rounded-xl">
-              <p className="text-2xl font-bold text-emerald-400">{carbonProgress.offset.toLocaleString()}</p>
-              <p className="text-xs text-gray-500">Sudah Offset</p>
-            </div>
-            <div className="text-center p-4 bg-[#0d1411] rounded-xl">
-              <p className="text-2xl font-bold text-amber-400">{(carbonProgress.emitted - carbonProgress.offset).toLocaleString()}</p>
-              <p className="text-xs text-gray-500">Sisa Offset</p>
-            </div>
+          <Link
+            to="/mrv"
+            className="text-sm flex items-center gap-1 hover:opacity-80"
+            style={{ color: theme.primary }}
+          >
+            {language === "id" ? "Lihat Detail" : "View Details"}
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span style={{ color: theme.textSecondary }}>
+              {language === "id" ? "Tercapai" : "Achieved"}
+            </span>
+            <span className="font-medium" style={{ color: theme.textPrimary }}>
+              {achievedCredits.toLocaleString()} /{" "}
+              {ANNUAL_TARGET.toLocaleString()} m³ ({progressPct}%)
+            </span>
           </div>
+          <div
+            className="h-3 rounded-full overflow-hidden"
+            style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+          >
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPct}%` }}
+              transition={{ duration: 1, delay: 0.6 }}
+              className="h-full rounded-full"
+              style={{
+                background: `linear-gradient(90deg, ${theme.primary}, ${theme.secondary})`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Milestones (original) + live project stats below */}
+        <div
+          className="grid grid-cols-3 gap-4 mt-6 pt-6"
+          style={{ borderTop: `1px solid ${theme.border}` }}
+        >
+          <div className="text-center">
+            <p
+              className="text-2xl font-bold"
+              style={{ color: theme.secondary }}
+            >
+              {projectStats.totalProjects}
+            </p>
+            <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+              {language === "id" ? "Total Proyek" : "Total Projects"}
+            </p>
+          </div>
+          <div className="text-center">
+            <p
+              className="text-2xl font-bold"
+              style={{ color: theme.secondary }}
+            >
+              {verifiedProjects.length}
+            </p>
+            <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+              {language === "id" ? "Terverifikasi" : "Verified"}
+            </p>
+          </div>
+          <div className="text-center">
+            <p
+              className="text-2xl font-bold"
+              style={{
+                color:
+                  projectStats.pendingVerifications > 0 ? "#f59e0b" : "#22c55e",
+              }}
+            >
+              {projectStats.pendingVerifications}
+            </p>
+            <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+              {language === "id"
+                ? "Menunggu Verifikasi"
+                : "Pending Verification"}
+            </p>
+          </div>
+        </div>
+
+        {/* ESG summary strip (only when data exists) */}
+        {esgScorings.length > 0 && (
+          <div
+            className="mt-4 pt-4 flex items-center gap-4 flex-wrap"
+            style={{ borderTop: `1px solid ${theme.border}` }}
+          >
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4" style={{ color: "#f59e0b" }} />
+              <span className="text-sm" style={{ color: theme.textSecondary }}>
+                {language === "id" ? "Rata-rata ESG:" : "Avg ESG:"}
+              </span>
+              <span
+                className="text-sm font-bold"
+                style={{
+                  color: getESGScoreColor(avgESGScore ?? 0),
+                }}
+              >
+                {avgESGScore ?? "—"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" style={{ color: theme.primary }} />
+              <span className="text-sm" style={{ color: theme.textSecondary }}>
+                {language === "id" ? "Eligible:" : "Eligible:"}
+              </span>
+              <span className="text-sm font-bold" style={{ color: "#22c55e" }}>
+                {esgScorings.filter((s) => s.status === "eligible").length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" style={{ color: "#f59e0b" }} />
+              <span className="text-sm" style={{ color: theme.textSecondary }}>
+                {language === "id" ? "Conditional:" : "Conditional:"}
+              </span>
+              <span className="text-sm font-bold" style={{ color: "#f59e0b" }}>
+                {esgScorings.filter((s) => s.status === "conditional").length}
+              </span>
+            </div>
+            <Link
+              to="/esg"
+              className="ml-auto text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 hover:opacity-80 transition-all"
+              style={{
+                backgroundColor: `${theme.primary}20`,
+                color: theme.primary,
+                border: `1px solid ${theme.primary}30`,
+              }}
+            >
+              {language === "id" ? "Lihat ESG →" : "View ESG →"}
+            </Link>
+          </div>
+        )}
+      </motion.div>
+
+      {/* ── Company Logo Footer (original) ──────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="flex justify-center items-center py-8"
+      >
+        <div className="text-center">
+          <p className="text-xs mb-4" style={{ color: theme.textMuted }}>
+            {language === "id" ? "Didukung oleh" : "Powered by"}
+          </p>
+          <img
+            src={companyLogoPath}
+            alt="Company Logo"
+            className="h-12 md:h-16 w-auto mx-auto opacity-60 hover:opacity-100 transition-opacity"
+            style={{ filter: "grayscale(20%)" }}
+          />
         </div>
       </motion.div>
     </div>

@@ -1,137 +1,232 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
-import { LanguageProvider } from "./components/LanguageProvider";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { LanguageProvider } from "./context/LanguageContext";
+import { AuthProvider } from "./context/AuthContext";
+import { ProjectProvider } from "./context/ProjectContext"; // ✅ pakai ProjectContext (bukan _v2)
+import { MarketplaceProvider } from "./context/MarketplaceContext";
+import { ESGProvider } from "./context/ESGContext"; // ← TAMBAHAN: ESGProvider
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AppLayout } from "./components/AppLayout";
 
 // Pages
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { HomePage } from "./pages/HomePage";
 import { MarketplacePage } from "./pages/MarketplacePage";
-import { ProjectsPage } from "./pages/ProjectsPage";
-import { CalculatorPage } from "./pages/CalculatorPage";
+import { ProjectsPage } from "./pages/ProjectsPage"; // ✅ named import - sesuai "export const ProjectsPage"
+import CalculatorPage from "./pages/CalculatorPage";
+import { ForumPage } from "./pages/ForumPage";
 import { NewsPage } from "./pages/NewsPage";
+import { EducationPage } from "./pages/EducationPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { MRVDashboardPage } from "./pages/MRVDashboardPage";
-import { ESGScoringPage } from "./pages/ESGScoringPage";
+import ESGScoringPage from "./pages/ESGScoringPage";
 import { AdminPage } from "./pages/AdminPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
+import WaterPricingRegulations from "./pages/WaterPricingRegulations";
 
-// Components
-import { AppLayout } from "./components/AppLayout";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-
-// Public Route - redirect to home if already logged in
-const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Memuat...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/home" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-// Main App Component
-const AppRoutes: React.FC = () => {
+function App() {
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <LoginPage />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicRoute>
-            <RegisterPage />
-          </PublicRoute>
-        }
-      />
+    <ThemeProvider>
+    <HashRouter>
+      <LanguageProvider>
+        <AuthProvider>
+          <ProjectProvider>
+            <MarketplaceProvider>
+              <ESGProvider>
+                {" "}
+                {/* ← TAMBAHAN: Wrap ESGProvider */}
+                <Routes>
+                  {/* ==================== PUBLIC ROUTES ==================== */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
 
-      {/* Protected Routes with Layout */}
-      <Route
-        element={
-          <ProtectedRoute>
-            <AppLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/marketplace" element={<MarketplacePage />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/calculator" element={<CalculatorPage />} />
-        <Route path="/news" element={<NewsPage />} />
-        <Route path="/reports" element={<ReportsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+                  {/* ==================== PROTECTED ROUTES WITH LAYOUT ==================== */}
+                  <Route element={<AppLayout />}>
+                    {/* HOME - All authenticated users */}
+                    <Route
+                      path="/home"
+                      element={
+                        <ProtectedRoute
+                          allowedRoles={["admin", "company", "user"]}
+                        >
+                          <HomePage />
+                        </ProtectedRoute>
+                      }
+                    />
 
-        {/* Role-specific routes */}
-        <Route
-          path="/mrv-dashboard"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "company"]}>
-              <MRVDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/esg-scoring"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "company"]}>
-              <ESGScoringPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
-      </Route>
+                    {/* ==================== MAIN MENU ==================== */}
 
-      {/* Redirect root to login or home */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+                    {/* MARKETPLACE - All users */}
+                    <Route
+                      path="/marketplace"
+                      element={
+                        <ProtectedRoute
+                          allowedRoles={["admin", "company", "user"]}
+                        >
+                          <MarketplacePage />
+                        </ProtectedRoute>
+                      }
+                    />
 
-      {/* 404 - Redirect to home */}
-      <Route path="*" element={<Navigate to="/home" replace />} />
-    </Routes>
+                    {/* PROJECTS - Admin & Company only */}
+                    <Route
+                      path="/projects"
+                      element={
+                        <ProtectedRoute allowedRoles={["admin", "company"]}>
+                          <ProjectsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* CALCULATOR - All authenticated users */}
+                    <Route
+                      path="/calculator"
+                      element={
+                        <ProtectedRoute
+                          allowedRoles={["admin", "company", "user"]}
+                        >
+                          <CalculatorPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* REGULATIONS - All authenticated users */}
+                    <Route
+                      path="/regulations"
+                      element={
+                        <ProtectedRoute
+                          allowedRoles={["admin", "company", "user"]}
+                        >
+                          <WaterPricingRegulations />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* ==================== COMMUNITY ==================== */}
+
+                    {/* FORUM - All authenticated users */}
+                    <Route
+                      path="/forum"
+                      element={
+                        <ProtectedRoute
+                          allowedRoles={["admin", "company", "user"]}
+                        >
+                          <ForumPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* NEWS - All authenticated users */}
+                    <Route
+                      path="/news"
+                      element={
+                        <ProtectedRoute
+                          allowedRoles={["admin", "company", "user"]}
+                        >
+                          <NewsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* EDUCATION - All authenticated users */}
+                    <Route
+                      path="/education"
+                      element={
+                        <ProtectedRoute
+                          allowedRoles={["admin", "company", "user"]}
+                        >
+                          <EducationPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* ==================== REPORTS & ANALYTICS ==================== */}
+
+                    {/* REPORTS - Admin & Company only */}
+                    <Route
+                      path="/reports"
+                      element={
+                        <ProtectedRoute allowedRoles={["admin", "company"]}>
+                          <ReportsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* MRV DASHBOARD - Admin & Company only */}
+                    <Route
+                      path="/mrv-dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={["admin", "company"]}>
+                          <MRVDashboardPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* ESG SCORING - Admin & Company only */}
+                    <Route
+                      path="/esg-scoring"
+                      element={
+                        <ProtectedRoute allowedRoles={["admin", "company"]}>
+                          <ESGScoringPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* ==================== ADMIN ==================== */}
+
+                    {/* ADMIN PAGE - Admin only */}
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute allowedRoles={["admin"]}>
+                          <AdminPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* ==================== USER ==================== */}
+
+                    {/* PROFILE - All authenticated users */}
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute
+                          allowedRoles={["admin", "company", "user"]}
+                        >
+                          <ProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* SETTINGS - All authenticated users */}
+                    <Route
+                      path="/settings"
+                      element={
+                        <ProtectedRoute
+                          allowedRoles={["admin", "company", "user"]}
+                        >
+                          <SettingsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
+
+                  {/* ==================== DEFAULT REDIRECTS ==================== */}
+                  <Route path="/" element={<Navigate to="/login" replace />} />
+                  <Route path="*" element={<Navigate to="/home" replace />} />
+                </Routes>
+              </ESGProvider>{" "}
+              {/* ← TAMBAHAN: Tutup ESGProvider */}
+            </MarketplaceProvider>
+          </ProjectProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </HashRouter>
+    </ThemeProvider>
   );
-};
-
-const App: React.FC = () => {
-  return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <LanguageProvider>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </LanguageProvider>
-      </ThemeProvider>
-    </BrowserRouter>
-  );
-};
+}
 
 export default App;

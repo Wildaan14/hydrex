@@ -1,10 +1,362 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
-// =============================================
-// LANGUAGE TYPES
-// =============================================
+type Language = "id" | "en";
 
-export type Language = "id" | "en";
+interface Translations {
+  [key: string]: {
+    id: string;
+    en: string;
+  };
+}
+
+const translations: Translations = {
+  // Navigation
+  home: { id: "Beranda", en: "Home" },
+  marketplace: { id: "Marketplace", en: "Marketplace" },
+  projects: { id: "Proyek", en: "Projects" },
+  calculator: { id: "Kalkulator", en: "Calculator" },
+  forum: { id: "Forum", en: "Forum" },
+  news: { id: "Berita", en: "News" },
+  reports: { id: "Laporan", en: "Reports" },
+  mrvDashboard: { id: "MRV Dashboard", en: "MRV Dashboard" },
+  esgScoring: { id: "ESG Scoring", en: "ESG Scoring" },
+  adminPanel: { id: "Admin Panel", en: "Admin Panel" },
+
+  // Auth
+  login: { id: "Masuk", en: "Login" },
+  logout: { id: "Keluar", en: "Logout" },
+  register: { id: "Daftar", en: "Register" },
+  email: { id: "Email", en: "Email" },
+  password: { id: "Kata Sandi", en: "Password" },
+  confirmPassword: { id: "Konfirmasi Kata Sandi", en: "Confirm Password" },
+  name: { id: "Nama", en: "Name" },
+  fullName: { id: "Nama Lengkap", en: "Full Name" },
+
+  // User
+  profile: { id: "Profil", en: "Profile" },
+  settings: { id: "Pengaturan", en: "Settings" },
+  myProfile: { id: "Profil Saya", en: "My Profile" },
+
+  // Roles
+  administrator: { id: "Administrator", en: "Administrator" },
+  company: { id: "Perusahaan", en: "Company" },
+  individual: { id: "Individual", en: "Individual" },
+
+  // Common
+  search: { id: "Cari", en: "Search" },
+  save: { id: "Simpan", en: "Save" },
+  cancel: { id: "Batal", en: "Cancel" },
+  delete: { id: "Hapus", en: "Delete" },
+  edit: { id: "Edit", en: "Edit" },
+  add: { id: "Tambah", en: "Add" },
+  create: { id: "Buat", en: "Create" },
+  submit: { id: "Kirim", en: "Submit" },
+  back: { id: "Kembali", en: "Back" },
+  next: { id: "Selanjutnya", en: "Next" },
+  previous: { id: "Sebelumnya", en: "Previous" },
+  loading: { id: "Memuat...", en: "Loading..." },
+  noData: { id: "Tidak ada data", en: "No data" },
+
+  // Calculator
+  waterFootprint: { id: "Jejak Air", en: "Water Footprint" },
+  waterStock: { id: "Stok Air", en: "Water Resources" },
+  waterCredit: { id: "Kredit Air", en: "Water Credit" },
+  consumptionCategory: {
+    id: "Kategori Konsumsi Air",
+    en: "Consumption Category",
+  },
+  landType: { id: "Tipe Lahan", en: "Land Type" },
+  area: { id: "Luas", en: "Area" },
+  calculate: { id: "Hitung", en: "Calculate" },
+  result: { id: "Hasil", en: "Result" },
+  totalConsumption: { id: "Total Konsumsi Air", en: "Total Consumption" },
+  totalStock: { id: "Total Stok", en: "Total Stock" },
+
+  // Consumption Categories
+  electricity: { id: "Listrik", en: "Electricity" },
+  naturalGas: { id: "Gas Alam", en: "Natural Gas" },
+  fuel: { id: "Bahan Bakar", en: "Fuel" },
+  water: { id: "Air", en: "Water" },
+  waste: { id: "Limbah", en: "Waste" },
+  transportation: { id: "Transportasi", en: "Transportation" },
+  airTravel: { id: "Penerbangan", en: "Air Travel" },
+  accommodation: { id: "Akomodasi", en: "Accommodation" },
+  food: { id: "Makanan", en: "Food" },
+
+  // Land Types
+  tropicalRainforest: { id: "Hutan Hujan Tropis", en: "Tropical Rainforest" },
+  mangrove: { id: "Hutan Mangrove", en: "Mangrove Forest" },
+  peatland: { id: "Lahan Gambut", en: "Peatland" },
+  drylandForest: { id: "Hutan Dataran Kering", en: "Dryland Forest" },
+  wetland: { id: "Lahan Basah", en: "Wetland" },
+  grassland: { id: "Padang Rumput", en: "Grassland" },
+  cropland: { id: "Lahan Pertanian", en: "Cropland" },
+  settlement: { id: "Pemukiman", en: "Settlement" },
+  otherLand: { id: "Lahan Lainnya", en: "Other Land" },
+
+  // Levels
+  low: { id: "Rendah", en: "Low" },
+  medium: { id: "Sedang", en: "Medium" },
+  high: { id: "Tinggi", en: "High" },
+  veryHigh: { id: "Sangat Tinggi", en: "Very High" },
+
+  // Map
+  selectAreaOnMap: { id: "Pilih area di peta", en: "Select area on map" },
+  drawPolygon: { id: "Gambar Poligon", en: "Draw Polygon" },
+  drawRectangle: { id: "Gambar Persegi", en: "Draw Rectangle" },
+  quickLocation: { id: "Lokasi Cepat", en: "Quick Location" },
+
+  // Help
+  needHelp: { id: "Butuh Bantuan?", en: "Need Help?" },
+  contactSupport: { id: "Hubungi Support", en: "Contact Support" },
+  supportTeam: { id: "Tim support 24/7", en: "24/7 Support Team" },
+
+  // ── NRECA Model ──
+  nreca_tab_params: { id: "⚙️ Parameter Model", en: "⚙️ Model Parameters" },
+  nreca_tab_data: { id: "📋 Data Hujan & PET", en: "📋 Rainfall & PET Data" },
+  nreca_tab_results: {
+    id: "📊 Hasil & Statistik",
+    en: "📊 Results & Statistics",
+  },
+  nreca_tab_charts: { id: "📈 Grafik Kalibrasi", en: "📈 Calibration Charts" },
+  nreca_reset: { id: "Reset", en: "Reset" },
+  nreca_params_title: {
+    id: "Parameter Kalibrasi NRECA",
+    en: "NRECA Calibration Parameters",
+  },
+  nreca_params_subtitle: {
+    id: "PSUB · GWF · Cr · Simpanan Awal · Luas DAS",
+    en: "PSUB · GWF · Cr · Initial Storage · Catchment Area",
+  },
+  nreca_params_main: { id: "Parameter Utama", en: "Main Parameters" },
+  nreca_psub_hint: {
+    id: "0.3 = tanah kedap air  |  0.9 = sangat permeabel",
+    en: "0.3 = impervious soil  |  0.9 = highly permeable",
+  },
+  nreca_gwf_hint: {
+    id: "0.2 = kedap (baseflow lambat)  |  0.8 = sangat lulus air (baseflow cepat)",
+    en: "0.2 = slow baseflow  |  0.8 = fast baseflow",
+  },
+  nreca_cr_label: {
+    id: "Cr — Koef. Reduksi Evapotranspirasi",
+    en: "Cr — ET Reduction Coefficient",
+  },
+  nreca_cr_hint: {
+    id: "Faktor koreksi PET berdasarkan kemiringan lahan",
+    en: "PET correction factor based on land slope",
+  },
+  nreca_run_btn: { id: "▶ Jalankan Model NRECA", en: "▶ Run NRECA Model" },
+  nreca_results_title: {
+    id: "Hasil & Statistik Kalibrasi",
+    en: "Calibration Results & Statistics",
+  },
+  nreca_results_subtitle: {
+    id: "Rerata · Min · Max · NSE · Korelasi Pearson",
+    en: "Mean · Min · Max · NSE · Pearson Correlation",
+  },
+  nreca_charts_subtitle: {
+    id: "Time Series · Kurva Durasi · Moisture Storage · GW Storage",
+    en: "Time Series · Duration Curve · Moisture Storage · GW Storage",
+  },
+  nreca_chart_timeseries_title: {
+    id: "KALIBRASI TIME SERIES — DEBIT (M³/S)",
+    en: "CALIBRATION TIME SERIES — STREAMFLOW (M³/S)",
+  },
+  nreca_chart_timeseries_xaxis: {
+    id: "Waktu (Bulan–Tahun)",
+    en: "Time (Month–Year)",
+  },
+  nreca_chart_timeseries_yaxis: {
+    id: "Debit Q (m³/s) — laju aliran air tiap detik",
+    en: "Streamflow Q (m³/s) — flow rate per second",
+  },
+  nreca_chart_duration_title: {
+    id: "KURVA DURASI DEBIT — KALIBRASI",
+    en: "FLOW DURATION CURVE — CALIBRATION",
+  },
+  nreca_chart_duration_xaxis: {
+    id: "Probabilitas Terlampaui P (0–1)",
+    en: "Exceedance Probability P (0–1)",
+  },
+  nreca_chart_duration_yaxis: {
+    id: "Debit Q (m³/s)",
+    en: "Streamflow Q (m³/s)",
+  },
+  nreca_chart_duration_tip: {
+    id: "💡 P=0.05 → debit terlampaui 5% waktu (banjir)  ·  P=0.95 → debit terlampaui 95% waktu (kemarau)",
+    en: "💡 P=0.05 → flow exceeded 5% of time (flood)  ·  P=0.95 → flow exceeded 95% of time (dry season)",
+  },
+  nreca_rekap_title: {
+    id: "Rekap Probabilitas Debit",
+    en: "Flow Duration Summary",
+  },
+  nreca_rekap_subtitle: {
+    id: "Debit pada berbagai probabilitas terlampaui — untuk perencanaan teknis & hidrologi",
+    en: "Streamflow at key exceedance probabilities — for engineering & hydrology planning",
+  },
+  nreca_rekap_col_prob: { id: "Probabilitas", en: "Exceedance Probability" },
+  nreca_rekap_col_qobs: { id: "Q Obs (m³/s)", en: "Q Obs (m³/s)" },
+  nreca_rekap_col_qmodel: { id: "Q Model (m³/s)", en: "Q Model (m³/s)" },
+  nreca_rekap_col_use: { id: "Kegunaan", en: "Use Case" },
+  nreca_rekap_method_note: {
+    id: "📌 Metode: Weibull plotting position — P = m/(n+1) dimana m = peringkat dari besar ke kecil, n = jumlah data",
+    en: "📌 Method: Weibull plotting position — P = m/(n+1) where m = rank (descending) and n = total data points",
+  },
+  nreca_rekap_q95_use: {
+    id: "PLTA / Pembangkit Listrik Tenaga Air",
+    en: "Hydropower (dependable flow)",
+  },
+  nreca_rekap_q90_use: {
+    id: "Air Domestik & Industri",
+    en: "Domestic & Industrial Supply",
+  },
+  nreca_rekap_q80_use: { id: "Irigasi", en: "Irrigation" },
+  nreca_rekap_q60_use: {
+    id: "Perencanaan Bendungan / Waduk",
+    en: "Dam / Reservoir Design",
+  },
+  nreca_rekap_q50_use: {
+    id: "Ketersediaan Air Rata-Rata Tahunan",
+    en: "Mean Annual Flow Availability",
+  },
+  nreca_rekap_q40_use: {
+    id: "Analisis Banjir (Batas Bawah)",
+    en: "Flood Analysis (Lower Bound)",
+  },
+  nreca_rekap_q20_use: {
+    id: "Analisis Banjir (Desain)",
+    en: "Flood Analysis (Design)",
+  },
+  nreca_nse_formula_title: { id: "Formula NSE", en: "NSE Formula" },
+  nreca_nse_class_title: {
+    id: "Klasifikasi NSE (Moriasi et al.)",
+    en: "NSE Classification (Moriasi et al.)",
+  },
+  nreca_metric_guide_title: {
+    id: "Panduan Singkatan & Metrik",
+    en: "Abbreviations & Metrics Guide",
+  },
+  nreca_axis_xaxis: { id: "Sumbu X", en: "X-axis" },
+  nreca_axis_yaxis: { id: "Sumbu Y", en: "Y-axis" },
+  nreca_calib_very_good: {
+    id: "Kalibrasi: SANGAT BAIK ✓",
+    en: "Calibration: VERY GOOD ✓",
+  },
+  nreca_calib_good: { id: "Kalibrasi: BAIK ✓", en: "Calibration: GOOD ✓" },
+  nreca_calib_satisfactory: {
+    id: "Kalibrasi: CUKUP — perlu penyesuaian parameter",
+    en: "Calibration: SATISFACTORY — parameter adjustment needed",
+  },
+  nreca_calib_unsatisfactory: {
+    id: "Kalibrasi: KURANG BAIK — sesuaikan PSUB, GWF, Cr",
+    en: "Calibration: UNSATISFACTORY — adjust PSUB, GWF, Cr",
+  },
+  nreca_no_obs: {
+    id: "Masukkan data observasi untuk menghitung NSE",
+    en: "Enter observed data to compute NSE",
+  },
+  nreca_run_first: {
+    id: "Jalankan model NRECA untuk melihat hasil",
+    en: "Run the NRECA model to view results",
+  },
+  nreca_mean_obs: { id: "Rerata Data Obs", en: "Mean Observed Data" },
+  nreca_mean_model: { id: "Rerata Model", en: "Mean Model" },
+  nreca_corr_coef: { id: "Koef. Korelasi (r)", en: "Correlation Coef. (r)" },
+  nreca_min_data_model: { id: "Min Data / Model", en: "Min Data / Model" },
+  nreca_max_data_model: { id: "Max Data / Model", en: "Max Data / Model" },
+  nreca_nom_formula: { id: "Nom = 100 + 0.2·Ra", en: "Nom = 100 + 0.2·Ra" },
+  nreca_table_title: {
+    id: "Tabel Hasil Lengkap (21 Kolom)",
+    en: "Full Results Table (21 Columns)",
+  },
+  nreca_table_subtitle: {
+    id: "Semua variabel antara model NRECA per bulan",
+    en: "All NRECA model intermediate variables per month",
+  },
+  nreca_table_show: { id: "Tampilkan", en: "Show" },
+  nreca_table_hide: { id: "Sembunyikan", en: "Hide" },
+  // Metric Guide Descriptions
+  nreca_metric_nse_desc: {
+    id: "Mengukur seberapa baik model mereproduksi data observasi. Semakin mendekati 1 = semakin baik. NSE = 1 berarti model sempurna.",
+    en: "Measures how well the model reproduces observed data. Closer to 1 = better. NSE = 1 means perfect model.",
+  },
+  nreca_metric_nse_range: {
+    id: "Terbaik: mendekati 1",
+    en: "Best: close to 1",
+  },
+  nreca_metric_r_desc: {
+    id: "Mengukur kekuatan hubungan linear antara debit model dan observasi. Berkisar dari -1 hingga 1.",
+    en: "Measures the linear correlation between modeled and observed streamflow. Ranges from -1 to 1.",
+  },
+  nreca_metric_r_range: { id: "Terbaik: mendekati 1", en: "Best: close to 1" },
+  nreca_metric_qcomp_desc: {
+    id: "Debit yang dihasilkan oleh model NRECA berdasarkan parameter kalibrasi dan data hujan-PET.",
+    en: "Streamflow computed by the NRECA model based on calibration parameters and rainfall-PET input.",
+  },
+  nreca_metric_qcomp_range: {
+    id: "Bandingkan dengan Qobs",
+    en: "Compare with Qobs",
+  },
+  nreca_metric_qobs_desc: {
+    id: "Debit hasil pengukuran lapangan di pos AWLR atau stasiun hidrologi. Digunakan sebagai acuan kalibrasi.",
+    en: "Observed streamflow measured at a gauging station. Used as the calibration reference.",
+  },
+  nreca_metric_qobs_range: {
+    id: "Data referensi lapangan",
+    en: "Field reference data",
+  },
+  nreca_metric_pet_desc: {
+    id: "Evapotranspirasi potensial (mm): jumlah air yang bisa menguap jika air tersedia cukup. Dikalikan faktor koreksi Cr.",
+    en: "Potential Evapotranspiration (mm): water that could evaporate if supply is unlimited. Multiplied by correction factor Cr.",
+  },
+  nreca_metric_pet_range: {
+    id: "Input model, satuan mm",
+    en: "Model input, unit mm",
+  },
+  nreca_metric_aet_desc: {
+    id: "Evapotranspirasi aktual (mm): bagian dari PET yang benar-benar terjadi, bergantung pada kelembaban tanah (STOR_RATIO).",
+    en: "Actual Evapotranspiration (mm): portion of PET that actually occurs, depending on soil moisture (STOR_RATIO).",
+  },
+  nreca_metric_aet_range: { id: "AET ≤ PET selalu", en: "AET ≤ PET always" },
+  nreca_metric_psub_desc: {
+    id: "Fraksi kelebihan air yang masuk ke reservoir air tanah. Sisanya (1−PSUB) menjadi aliran langsung.",
+    en: "Fraction of excess moisture that recharges the groundwater reservoir. Remainder (1−PSUB) becomes direct runoff.",
+  },
+  nreca_metric_psub_range: {
+    id: "0 – 1 (umumnya 0.5–0.9)",
+    en: "0 – 1 (typically 0.5–0.9)",
+  },
+  nreca_metric_gwf_desc: {
+    id: "Fraksi simpanan air tanah yang keluar sebagai baseflow setiap bulan. Nilai kecil = air tanah lambat keluar.",
+    en: "Fraction of groundwater storage that exits as baseflow each month. Small = slow baseflow release.",
+  },
+  nreca_metric_gwf_range: {
+    id: "0 – 1 (umumnya 0.1–0.3)",
+    en: "0 – 1 (typically 0.1–0.3)",
+  },
+  nreca_metric_nom_desc: {
+    id: "Nom = 100 + 0.2×Ra adalah kapasitas simpanan tanah nominal (mm). Ra = rata-rata curah hujan tahunan (mm).",
+    en: "Nom = 100 + 0.2×Ra is the nominal soil storage capacity (mm). Ra = mean annual rainfall (mm).",
+  },
+  nreca_metric_nom_range: {
+    id: "Dihitung otomatis dari Ra",
+    en: "Auto-calculated from Ra",
+  },
+  nreca_metric_cr_desc: {
+    id: "Koefisien pengali untuk menyesuaikan PET ke kondisi DAS lokal. Nilai < 1 = PET efektif lebih rendah.",
+    en: "Multiplication factor to adjust PET to local watershed conditions. Value < 1 = lower effective PET.",
+  },
+  nreca_metric_cr_range: {
+    id: "0.5 – 1.2 (umumnya ≈ 0.8)",
+    en: "0.5 – 1.2 (typically ≈ 0.8)",
+  },
+};
 
 interface LanguageContextType {
   language: Language;
@@ -12,362 +364,41 @@ interface LanguageContextType {
   t: (key: string) => string;
 }
 
-// =============================================
-// TRANSLATIONS
-// =============================================
+const LanguageContext = createContext<LanguageContextType | undefined>(
+  undefined,
+);
 
-const translations: Record<Language, Record<string, string>> = {
-  id: {
-    // General
-    "app.name": "C-NEX",
-    "app.tagline": "Carbon Network Exchange",
-    "common.loading": "Memuat...",
-    "common.reset": "Reset",
-    "common.download": "Unduh",
-    "common.save": "Simpan",
-    "common.cancel": "Batal",
-    "common.delete": "Hapus",
-    "common.edit": "Edit",
-    "common.view": "Lihat",
-    "common.search": "Cari",
-    "common.filter": "Filter",
-    "common.all": "Semua",
-    "common.yes": "Ya",
-    "common.no": "Tidak",
-    "common.or": "atau",
-    "common.and": "dan",
-    "common.close": "Tutup",
-    "common.back": "Kembali",
-    "common.next": "Selanjutnya",
-    "common.previous": "Sebelumnya",
-    "common.submit": "Kirim",
-    "common.hectare": "hektar",
-    "common.year": "tahun",
-    "common.month": "bulan",
-    "common.total": "Total",
-    "common.average": "Rata-rata",
-    "common.minimum": "Minimum",
-    "common.maximum": "Maksimum",
+interface LanguageProviderProps {
+  children: ReactNode;
+}
 
-    // Navigation
-    "nav.home": "Beranda",
-    "nav.marketplace": "Marketplace",
-    "nav.projects": "Proyek",
-    "nav.calculator": "Kalkulator",
-    "nav.news": "Berita",
-    "nav.reports": "Laporan",
-    "nav.mrv": "MRV Dashboard",
-    "nav.esg": "ESG Scoring",
-    "nav.admin": "Admin Panel",
-    "nav.profile": "Profil Saya",
-    "nav.settings": "Pengaturan",
-    "nav.logout": "Keluar",
-    "nav.help": "Butuh Bantuan?",
-    "nav.support": "Hubungi Support",
-
-    // Calculator Page
-    "calc.title": "Kalkulator Karbon",
-    "calc.subtitle": "Metodologi IPCC 2019",
-    "calc.description": "Hitung jejak karbon, stok karbon lahan dengan peta interaktif, dan estimasi kredit karbon",
-    
-    // Calculator Tabs
-    "calc.tab.footprint": "Jejak Karbon",
-    "calc.tab.stock": "Stok Karbon & Peta",
-    "calc.tab.credit": "Kredit Karbon",
-
-    // Carbon Footprint
-    "calc.footprint.title": "Input Aktivitas",
-    "calc.footprint.total": "Total Emisi Tahunan",
-    "calc.footprint.level": "Level",
-    "calc.footprint.level.low": "Rendah",
-    "calc.footprint.level.medium": "Sedang",
-    "calc.footprint.level.high": "Tinggi",
-    "calc.footprint.level.veryHigh": "Sangat Tinggi",
-    "calc.footprint.comparison": "Perbandingan",
-    "calc.footprint.vsIndonesia": "vs Rata-rata Indonesia",
-    "calc.footprint.vsGlobal": "vs Rata-rata Global",
-    "calc.footprint.offsetNeeds": "Kebutuhan Offset",
-    "calc.footprint.treesPerYear": "Pohon/tahun",
-    "calc.footprint.carbonCredit": "Kredit Karbon",
-    "calc.footprint.buyCredit": "Beli Carbon Credit",
-
-    // Emission Categories
-    "emission.electricity": "Listrik",
-    "emission.electricity.unit": "kWh/bulan",
-    "emission.electricity.desc": "Konsumsi listrik rumah tangga atau kantor",
-    "emission.transport": "Transportasi Darat",
-    "emission.transport.unit": "km/bulan",
-    "emission.transport.desc": "Perjalanan dengan mobil atau motor pribadi",
-    "emission.flight": "Penerbangan",
-    "emission.flight.unit": "km/tahun",
-    "emission.flight.desc": "Perjalanan dengan pesawat",
-    "emission.fuel.gasoline": "Bensin",
-    "emission.fuel.gasoline.unit": "liter/bulan",
-    "emission.fuel.diesel": "Solar",
-    "emission.fuel.diesel.unit": "liter/bulan",
-    "emission.lpg": "Gas LPG",
-    "emission.lpg.unit": "kg/bulan",
-    "emission.meat.beef": "Daging Sapi",
-    "emission.meat.beef.unit": "kg/bulan",
-    "emission.meat.chicken": "Daging Ayam",
-    "emission.meat.chicken.unit": "kg/bulan",
-    "emission.waste": "Sampah",
-    "emission.waste.unit": "kg/bulan",
-
-    // Carbon Stock
-    "calc.stock.map.title": "Peta Interaktif",
-    "calc.stock.map.quickLocation": "Lokasi Cepat",
-    "calc.stock.map.instructions": "Cara Menggunakan",
-    "calc.stock.map.instructionsText": "Klik tombol polygon (⬠) atau rectangle (▢) di pojok kiri atas peta, lalu gambar area yang ingin dihitung. Klik 2x untuk menyelesaikan polygon.",
-    "calc.stock.map.drawnArea": "Area Tergambar",
-    "calc.stock.map.polygon": "Polygon",
-    "calc.stock.map.totalArea": "Total Area",
-    "calc.stock.map.clearAll": "Hapus Semua",
-    "calc.stock.map.fullscreen": "Layar Penuh",
-    "calc.stock.map.loading": "Memuat peta...",
-    
-    "calc.stock.landType.title": "Pilih Tipe Lahan",
-    "calc.stock.landType.tropical": "Hutan Hujan Tropis",
-    "calc.stock.landType.mangrove": "Mangrove",
-    "calc.stock.landType.peatland": "Hutan Gambut",
-    "calc.stock.landType.secondary": "Hutan Sekunder",
-    "calc.stock.landType.agroforestry": "Agroforestri",
-    "calc.stock.landType.rubber": "Perkebunan Karet",
-    "calc.stock.landType.oilPalm": "Kelapa Sawit",
-    "calc.stock.landType.grassland": "Padang Rumput",
-    "calc.stock.landType.ricePaddy": "Sawah Padi",
-
-    "calc.stock.manualInput": "Input Manual (jika tidak menggambar)",
-    "calc.stock.carbonStock": "Stok Karbon",
-    "calc.stock.aboveground": "Biomassa Atas Tanah",
-    "calc.stock.belowground": "Biomassa Bawah Tanah",
-    "calc.stock.deadwood": "Kayu Mati",
-    "calc.stock.litter": "Serasah",
-    "calc.stock.soil": "Karbon Organik Tanah",
-    "calc.stock.totalStock": "Total Stok Karbon",
-    "calc.stock.co2eq": "Ekuivalen CO₂",
-    "calc.stock.creditValue": "Estimasi Nilai Kredit Karbon",
-    "calc.stock.downloadReport": "Unduh Laporan",
-    "calc.stock.referenceTable": "Tabel Referensi IPCC 2019 - Stok Karbon per Tipe Lahan",
-    "calc.stock.source": "Sumber: IPCC 2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories",
-
-    // Carbon Credit
-    "calc.credit.amount": "Jumlah Kredit Karbon",
-    "calc.credit.selectMarket": "Pilih Pasar Karbon",
-    "calc.credit.market.voluntary": "Sukarela",
-    "calc.credit.market.compliance": "Kepatuhan",
-    "calc.credit.market.indonesia": "Indonesia",
-    "calc.credit.estimatedValue": "Estimasi Nilai",
-    "calc.credit.inRupiah": "Dalam Rupiah",
-    "calc.credit.importantInfo": "Informasi Penting",
-    "calc.credit.info1": "1 Kredit Karbon = 1 ton CO₂ ekuivalen",
-    "calc.credit.info2": "Harga bervariasi tergantung standar sertifikasi",
-    "calc.credit.info3": "Harga bersifat estimasi dan dapat berubah",
-    "calc.credit.exploreMarketplace": "Jelajahi Marketplace",
-    "calc.credit.priceReference": "Referensi Harga Kredit Karbon Global",
-
-    // Info Banner
-    "calc.info.carbonStock": "Carbon Stock Calculator - Gambar area di peta untuk menghitung stok karbon berdasarkan metodologi IPCC 2019. Gunakan tools di kiri peta untuk menggambar polygon atau rectangle.",
-
-    // Locations
-    "location.kalimantanTimur": "Kalimantan Timur",
-    "location.riau": "Riau (Gambut)",
-    "location.papuaBarat": "Papua Barat",
-    "location.sulawesiSelatan": "Sulawesi Selatan",
-    "location.sumatraBarat": "Sumatra Barat",
-    "location.bali": "Bali",
-    "location.jawaTengah": "Jawa Tengah",
-    "location.ntt": "NTT (Mangrove)",
-  },
-
-  en: {
-    // General
-    "app.name": "C-NEX",
-    "app.tagline": "Carbon Network Exchange",
-    "common.loading": "Loading...",
-    "common.reset": "Reset",
-    "common.download": "Download",
-    "common.save": "Save",
-    "common.cancel": "Cancel",
-    "common.delete": "Delete",
-    "common.edit": "Edit",
-    "common.view": "View",
-    "common.search": "Search",
-    "common.filter": "Filter",
-    "common.all": "All",
-    "common.yes": "Yes",
-    "common.no": "No",
-    "common.or": "or",
-    "common.and": "and",
-    "common.close": "Close",
-    "common.back": "Back",
-    "common.next": "Next",
-    "common.previous": "Previous",
-    "common.submit": "Submit",
-    "common.hectare": "hectare",
-    "common.year": "year",
-    "common.month": "month",
-    "common.total": "Total",
-    "common.average": "Average",
-    "common.minimum": "Minimum",
-    "common.maximum": "Maximum",
-
-    // Navigation
-    "nav.home": "Home",
-    "nav.marketplace": "Marketplace",
-    "nav.projects": "Projects",
-    "nav.calculator": "Calculator",
-    "nav.news": "News",
-    "nav.reports": "Reports",
-    "nav.mrv": "MRV Dashboard",
-    "nav.esg": "ESG Scoring",
-    "nav.admin": "Admin Panel",
-    "nav.profile": "My Profile",
-    "nav.settings": "Settings",
-    "nav.logout": "Logout",
-    "nav.help": "Need Help?",
-    "nav.support": "Contact Support",
-
-    // Calculator Page
-    "calc.title": "Carbon Calculator",
-    "calc.subtitle": "IPCC 2019 Methodology",
-    "calc.description": "Calculate your carbon footprint, land carbon stock with interactive map, and carbon credit estimation",
-    
-    // Calculator Tabs
-    "calc.tab.footprint": "Carbon Footprint",
-    "calc.tab.stock": "Carbon Stock & Map",
-    "calc.tab.credit": "Carbon Credit",
-
-    // Carbon Footprint
-    "calc.footprint.title": "Activity Input",
-    "calc.footprint.total": "Total Annual Emissions",
-    "calc.footprint.level": "Level",
-    "calc.footprint.level.low": "Low",
-    "calc.footprint.level.medium": "Medium",
-    "calc.footprint.level.high": "High",
-    "calc.footprint.level.veryHigh": "Very High",
-    "calc.footprint.comparison": "Comparison",
-    "calc.footprint.vsIndonesia": "vs Indonesia Average",
-    "calc.footprint.vsGlobal": "vs Global Average",
-    "calc.footprint.offsetNeeds": "Offset Needs",
-    "calc.footprint.treesPerYear": "Trees/year",
-    "calc.footprint.carbonCredit": "Carbon Credit",
-    "calc.footprint.buyCredit": "Buy Carbon Credit",
-
-    // Emission Categories
-    "emission.electricity": "Electricity",
-    "emission.electricity.unit": "kWh/month",
-    "emission.electricity.desc": "Household or office electricity consumption",
-    "emission.transport": "Ground Transport",
-    "emission.transport.unit": "km/month",
-    "emission.transport.desc": "Travel by car or motorcycle",
-    "emission.flight": "Air Travel",
-    "emission.flight.unit": "km/year",
-    "emission.flight.desc": "Travel by airplane",
-    "emission.fuel.gasoline": "Gasoline",
-    "emission.fuel.gasoline.unit": "liters/month",
-    "emission.fuel.diesel": "Diesel",
-    "emission.fuel.diesel.unit": "liters/month",
-    "emission.lpg": "LPG Gas",
-    "emission.lpg.unit": "kg/month",
-    "emission.meat.beef": "Beef",
-    "emission.meat.beef.unit": "kg/month",
-    "emission.meat.chicken": "Chicken",
-    "emission.meat.chicken.unit": "kg/month",
-    "emission.waste": "Waste",
-    "emission.waste.unit": "kg/month",
-
-    // Carbon Stock
-    "calc.stock.map.title": "Interactive Map",
-    "calc.stock.map.quickLocation": "Quick Locations",
-    "calc.stock.map.instructions": "How to Use",
-    "calc.stock.map.instructionsText": "Click the polygon (⬠) or rectangle (▢) button at the top left of the map, then draw the area you want to calculate. Double-click to finish the polygon.",
-    "calc.stock.map.drawnArea": "Drawn Area",
-    "calc.stock.map.polygon": "Polygon",
-    "calc.stock.map.totalArea": "Total Area",
-    "calc.stock.map.clearAll": "Clear All",
-    "calc.stock.map.fullscreen": "Fullscreen",
-    "calc.stock.map.loading": "Loading map...",
-    
-    "calc.stock.landType.title": "Select Land Type",
-    "calc.stock.landType.tropical": "Tropical Rainforest",
-    "calc.stock.landType.mangrove": "Mangrove",
-    "calc.stock.landType.peatland": "Peatland Forest",
-    "calc.stock.landType.secondary": "Secondary Forest",
-    "calc.stock.landType.agroforestry": "Agroforestry",
-    "calc.stock.landType.rubber": "Rubber Plantation",
-    "calc.stock.landType.oilPalm": "Oil Palm",
-    "calc.stock.landType.grassland": "Grassland",
-    "calc.stock.landType.ricePaddy": "Rice Paddy",
-
-    "calc.stock.manualInput": "Manual Input (if not drawing)",
-    "calc.stock.carbonStock": "Carbon Stock",
-    "calc.stock.aboveground": "Aboveground Biomass",
-    "calc.stock.belowground": "Belowground Biomass",
-    "calc.stock.deadwood": "Dead Wood",
-    "calc.stock.litter": "Litter",
-    "calc.stock.soil": "Soil Organic Carbon",
-    "calc.stock.totalStock": "Total Carbon Stock",
-    "calc.stock.co2eq": "CO₂ Equivalent",
-    "calc.stock.creditValue": "Estimated Carbon Credit Value",
-    "calc.stock.downloadReport": "Download Report",
-    "calc.stock.referenceTable": "IPCC 2019 Reference Table - Carbon Stock by Land Type",
-    "calc.stock.source": "Source: IPCC 2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories",
-
-    // Carbon Credit
-    "calc.credit.amount": "Carbon Credit Amount",
-    "calc.credit.selectMarket": "Select Carbon Market",
-    "calc.credit.market.voluntary": "Voluntary",
-    "calc.credit.market.compliance": "Compliance",
-    "calc.credit.market.indonesia": "Indonesia",
-    "calc.credit.estimatedValue": "Estimated Value",
-    "calc.credit.inRupiah": "In Rupiah",
-    "calc.credit.importantInfo": "Important Information",
-    "calc.credit.info1": "1 Carbon Credit = 1 tonne CO₂ equivalent",
-    "calc.credit.info2": "Prices vary depending on certification standard",
-    "calc.credit.info3": "Prices are estimates and subject to change",
-    "calc.credit.exploreMarketplace": "Explore Marketplace",
-    "calc.credit.priceReference": "Global Carbon Credit Price Reference",
-
-    // Info Banner
-    "calc.info.carbonStock": "Carbon Stock Calculator - Draw an area on the map to calculate carbon stock based on IPCC 2019 methodology. Use the tools on the left of the map to draw polygon or rectangle.",
-
-    // Locations
-    "location.kalimantanTimur": "East Kalimantan",
-    "location.riau": "Riau (Peatland)",
-    "location.papuaBarat": "West Papua",
-    "location.sulawesiSelatan": "South Sulawesi",
-    "location.sumatraBarat": "West Sumatra",
-    "location.bali": "Bali",
-    "location.jawaTengah": "Central Java",
-    "location.ntt": "NTT (Mangrove)",
-  },
-};
-
-// =============================================
-// CONTEXT
-// =============================================
-
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
-
-export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const LanguageProvider: React.FC<LanguageProviderProps> = ({
+  children,
+}) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem("cnex-language");
-    return (saved as Language) || "id";
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("hydrex-language");
+      return (saved as Language) || "id";
+    }
+    return "id";
   });
+
+  useEffect(() => {
+    localStorage.setItem("hydrex-language", language);
+  }, [language]);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem("cnex-language", lang);
   };
 
   const t = (key: string): string => {
-    return translations[language][key] || key;
+    const translation = translations[key];
+    if (!translation) {
+      console.warn(`Translation missing for key: ${key}`);
+      return key;
+    }
+    return translation[language];
   };
-
-  useEffect(() => {
-    document.documentElement.lang = language;
-  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
@@ -378,10 +409,10 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
 export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useLanguage must be used within a LanguageProvider");
   }
   return context;
 };
 
-export default LanguageProvider;
+export default LanguageContext;

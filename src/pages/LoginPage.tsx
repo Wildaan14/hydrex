@@ -1,239 +1,384 @@
 import React, { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Leaf, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Loader2,
+  Droplets,
+  ShieldCheck,
+  BarChart3,
+  Globe,
+  Leaf,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../components/ThemeProvider";
+import { lightPageTheme, darkPageTheme } from "../utils/appTheme";
+
+const logoPath = "/logo.png";
+
+const features = [
+  { icon: <Droplets className="w-4 h-4" />, label: "Water Credits" },
+  { icon: <ShieldCheck className="w-4 h-4" />, label: "Verified & Secure" },
+  { icon: <BarChart3 className="w-4 h-4" />, label: "ESG Reporting" },
+  { icon: <Globe className="w-4 h-4" />, label: "Global Standards" },
+  { icon: <Leaf className="w-4 h-4" />, label: "Sustainability" },
+];
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { login, isLoading } = useAuth();
-  
-  const from = (location.state as any)?.from?.pathname || "/home";
-  
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const { theme: colorTheme } = useTheme();
+  const theme = colorTheme === "dark" ? darkPageTheme : lightPageTheme;
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError("");
-  };
+  const [rememberMe, setRememberMe] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!formData.email || !formData.password) {
-      setError("Mohon isi semua field");
+    if (!email || !password) {
+      setError("Please enter email and password");
       return;
     }
 
-    const result = await login(formData.email, formData.password);
-    
-    if (result.success) {
-      navigate(from, { replace: true });
+    const success = await login(email, password);
+
+    if (success) {
+      navigate("/home");
     } else {
-      setError(result.error || "Login gagal");
+      setError("Invalid email or password");
     }
   };
 
-  // Demo accounts info
-  const demoAccounts = [
-    { role: "Admin", email: "admin@cnex.id", password: "admin123" },
-    { role: "User", email: "user@example.com", password: "user123" },
-    { role: "Company", email: "company@example.com", password: "company123" },
-  ];
-
-  const fillDemoAccount = (email: string, password: string) => {
-    setFormData({ email, password });
-    setError("");
-  };
-
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left Side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="w-full max-w-md"
-        >
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-              <Leaf className="w-7 h-7 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-primary">C-NEX</h1>
-              <p className="text-xs text-muted-foreground">Carbon Network Exchange</p>
-            </div>
-          </Link>
+    <div
+      className="min-h-screen flex"
+      style={{ backgroundColor: theme.bgDark }}
+    >
+      {/* ===== Left Side — Login Form ===== */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-10 relative">
+        {/* Subtle background pattern */}
+        <div
+          className="absolute inset-0 opacity-30 pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(circle at 25% 25%, ${theme.primaryGlow} 0%, transparent 50%),
+                              radial-gradient(circle at 75% 75%, ${theme.secondaryGlow} 0%, transparent 50%)`,
+          }}
+        />
 
-          {/* Welcome Text */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md relative z-10"
+        >
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center gap-3 mb-8">
+            <img src="/logo.png" alt="HYDREX" className="w-10 h-10" style={{ objectFit: "contain" }} />
+            <p style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: "0.08em", color: theme.textPrimary }}>HYDREX</p>
+          </div>
+
+          {/* Header */}
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-foreground mb-2">Selamat Datang!</h2>
-            <p className="text-muted-foreground">
-              Masuk ke akun Anda untuk melanjutkan
+            <h1 className="text-3xl font-bold mb-2" style={{ color: theme.textPrimary, fontFamily: "'Space Grotesk', sans-serif" }}>
+              Welcome back
+            </h1>
+            <p style={{ color: theme.textSecondary, fontFamily: "'Space Grotesk', sans-serif" }}>
+              Sign in to your HYDREX account to continue
             </p>
           </div>
 
-          {/* Error Alert */}
+          {/* Error */}
           {error && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3"
+              className="mb-5 p-3.5 rounded-xl flex items-center gap-3"
+              style={{
+                backgroundColor: "rgba(239, 68, 68, 0.08)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+              }}
             >
-              <AlertCircle className="w-5 h-5 text-destructive" />
-              <p className="text-sm text-destructive">{error}</p>
+              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+              <p className="text-red-400 text-sm">{error}</p>
             </motion.div>
           )}
 
-          {/* Login Form */}
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email Field */}
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Email
+              <label
+                className="block text-sm font-semibold mb-2"
+                style={{ color: theme.textSecondary, fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                Email Address
               </label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="nama@email.com"
-                  className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                />
-              </div>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+                style={{
+                  backgroundColor: colorTheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                  border: `1.5px solid ${theme.border}`,
+                  color: theme.textPrimary,
+                  fontFamily: "'Space Grotesk', sans-serif",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = theme.primary;
+                  e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.primaryGlow}`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = theme.border;
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+                placeholder="your@email.com"
+              />
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label
+                className="block text-sm font-semibold mb-2"
+                style={{ color: theme.textSecondary, fontFamily: "'Space Grotesk', sans-serif" }}
+              >
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="••••••••"
-                  className="w-full pl-12 pr-12 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 pr-12 py-3 rounded-xl text-sm focus:outline-none transition-all"
+                  style={{
+                    backgroundColor: colorTheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                    border: `1.5px solid ${theme.border}`,
+                    color: theme.textPrimary,
+                    fontFamily: "'Space Grotesk', sans-serif",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = theme.primary;
+                    e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.primaryGlow}`;
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = theme.border;
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors"
+                  style={{ color: theme.textMuted }}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password */}
+            {/* Remember + Forgot */}
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary"
+                  className="w-4 h-4 rounded"
+                  style={{ accentColor: theme.primary }}
                 />
-                <span className="text-sm text-muted-foreground">Ingat saya</span>
+                <span className="text-sm" style={{ color: theme.textSecondary }}>
+                  Remember me
+                </span>
               </label>
               <button
                 type="button"
-                className="text-sm text-primary hover:underline"
+                className="text-sm font-medium hover:opacity-80 transition-opacity"
+                style={{ color: theme.primary }}
               >
-                Lupa password?
+                Forgot password?
               </button>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-white hover:opacity-90 active:scale-95"
+              style={{
+                background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                boxShadow: `0 4px 16px ${theme.primaryGlow}`,
+              }}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Memproses...
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Signing in...
                 </>
               ) : (
-                "Masuk"
+                "Sign In"
               )}
             </button>
           </form>
 
-          {/* Register Link */}
-          <p className="mt-8 text-center text-muted-foreground">
-            Belum punya akun?{" "}
-            <Link to="/register" className="text-primary font-medium hover:underline">
-              Daftar sekarang
+          {/* Register link */}
+          <p className="text-center mt-7 text-sm" style={{ color: theme.textSecondary }}>
+            Don't have an account?{" "}
+            <Link
+              to="/register"
+              className="font-semibold hover:opacity-80 transition-opacity"
+              style={{ color: theme.primary }}
+            >
+              Create account
             </Link>
           </p>
 
-          {/* Demo Accounts */}
-          <div className="mt-8 p-4 bg-card rounded-xl border border-border">
-            <p className="text-sm font-medium text-foreground mb-3">🔐 Demo Accounts:</p>
-            <div className="space-y-2">
-              {demoAccounts.map((account, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => fillDemoAccount(account.email, account.password)}
-                  className="w-full text-left p-2 rounded-lg hover:bg-primary/10 transition-colors text-sm"
+          {/* Social proof */}
+          <div
+            className="mt-8 pt-6 text-center"
+            style={{ borderTop: `1px solid ${theme.border}` }}
+          >
+            <p className="text-xs mb-3" style={{ color: theme.textMuted }}>
+              Dipercaya oleh perusahaan di Indonesia
+            </p>
+            <div className="flex items-center justify-center gap-1.5 flex-wrap">
+              {["AWS Certified", "ISO 14046", "WWF Partner", "Verified"].map((label) => (
+                <span
+                  key={label}
+                  className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
+                  style={{
+                    backgroundColor: colorTheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+                    color: theme.textSecondary,
+                    border: `1px solid ${theme.border}`,
+                  }}
                 >
-                  <span className="font-medium text-primary">{account.role}:</span>{" "}
-                  <span className="text-muted-foreground">{account.email}</span>
-                </button>
+                  {label}
+                </span>
               ))}
             </div>
           </div>
         </motion.div>
       </div>
 
-      {/* Right Side - Decoration */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-primary to-emerald-600 items-center justify-center p-12">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-center text-white"
-        >
-          <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-8">
-            <Leaf className="w-16 h-16" />
-          </div>
-          <h2 className="text-4xl font-bold mb-4">Platform Karbon Terpercaya</h2>
-          <p className="text-lg text-white/80 max-w-md">
-            Kelola, monitor, dan trading kredit karbon dengan sistem yang transparan
-            dan terverifikasi blockchain
-          </p>
-          <div className="mt-12 grid grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold">500+</div>
-              <div className="text-sm text-white/70">Perusahaan</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">1.2M</div>
-              <div className="text-sm text-white/70">Ton CO₂</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">99.9%</div>
-              <div className="text-sm text-white/70">Uptime</div>
-            </div>
-          </div>
-        </motion.div>
+      {/* ===== Right Side — Hero Panel ===== */}
+      <div
+        className="hidden lg:flex flex-1 items-center justify-center p-12 relative overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #064e3b 0%, #065f46 35%, #1e3a8a 100%)" }}
+      >
+        {/* Grid overlay */}
+        <div className="grid-overlay absolute inset-0" />
+
+        {/* Animated orbs */}
+        <div
+          className="absolute top-[10%] right-[10%] w-64 h-64 rounded-full pointer-events-none"
+          style={{
+            background: "radial-gradient(circle, rgba(16,185,129,0.25) 0%, transparent 70%)",
+            filter: "blur(30px)",
+            animation: "float 6s ease-in-out infinite",
+          }}
+        />
+        <div
+          className="absolute bottom-[10%] left-[5%] w-80 h-80 rounded-full pointer-events-none"
+          style={{
+            background: "radial-gradient(circle, rgba(37,99,235,0.2) 0%, transparent 70%)",
+            filter: "blur(40px)",
+            animation: "float 8s ease-in-out infinite reverse",
+          }}
+        />
+
+        <div className="relative z-10 text-center text-white max-w-md">
+          {/* Logo */}
+          <motion.div
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="mb-6"
+          >
+            <img
+              src={logoPath}
+              alt="HYDREX Logo"
+              className="h-36 w-auto mx-auto"
+              style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.4))" }}
+            />
+          </motion.div>
+
+          <motion.h2
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.35 }}
+            className="text-3xl font-extrabold mb-2"
+          >
+            Hydrological Resource
+            <br />
+            <span style={{ color: "#6ee7b7" }}>Exchange</span>
+          </motion.h2>
+
+          <motion.p
+            initial={{ y: 15, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.45 }}
+            className="text-sm mb-8"
+            style={{ color: "rgba(255,255,255,0.6)" }}
+          >
+            Platform kredit air terintegrasi untuk keberlanjutan Indonesia
+          </motion.p>
+
+          {/* Feature pills */}
+          <motion.div
+            initial={{ y: 15, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.55 }}
+            className="flex flex-wrap justify-center gap-2"
+          >
+            {features.map((f, i) => (
+              <span key={i} className="feature-pill">
+                {f.icon}
+                {f.label}
+              </span>
+            ))}
+          </motion.div>
+
+          {/* Stats row */}
+          <motion.div
+            initial={{ y: 15, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.65 }}
+            className="mt-10 grid grid-cols-3 gap-4"
+          >
+            {[
+              { value: "AWS", label: "Standard" },
+              { value: "ISO", label: "14046" },
+              { value: "100%", label: "Terverifikasi" },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="rounded-xl py-3 px-2"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                }}
+              >
+                <p className="text-lg font-bold" style={{ color: "#6ee7b7" }}>
+                  {item.value}
+                </p>
+                <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.55)" }}>
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </motion.div>
+        </div>
       </div>
     </div>
   );

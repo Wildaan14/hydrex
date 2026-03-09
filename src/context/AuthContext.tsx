@@ -1,171 +1,195 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-// User Types
 export type UserRole = "admin" | "user" | "company";
 
 export interface User {
   id: string;
-  email: string;
   name: string;
+  email: string;
   role: UserRole;
-  company?: string;
   avatar?: string;
-  phone?: string;
-  address?: string;
+  company?: string;
   createdAt: string;
+}
+
+interface StoredUser {
+  email: string;
+  password: string;
+  user: User;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  updateProfile: (data: Partial<User>) => void;
-}
-
-interface RegisterData {
-  email: string;
-  password: string;
-  name: string;
-  role: UserRole;
-  company?: string;
+  register: (name: string, email: string, password: string, role: UserRole) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Demo users for testing
-const DEMO_USERS: (User & { password: string })[] = [
+// Default demo users
+const defaultUsers: StoredUser[] = [
   {
-    id: "1",
-    email: "admin@cnex.id",
+    email: "admin@hydrex.id",
     password: "admin123",
-    name: "Administrator",
-    role: "admin",
-    createdAt: "2024-01-01",
+    user: {
+      id: "1",
+      name: "Admin HYDREX",
+      email: "admin@hydrex.id",
+      role: "admin",
+      createdAt: "2024-01-01",
+    },
   },
   {
-    id: "2",
     email: "user@example.com",
     password: "user123",
-    name: "John Doe",
-    role: "user",
-    createdAt: "2024-01-15",
+    user: {
+      id: "2",
+      name: "John Doe",
+      email: "user@example.com",
+      role: "user",
+      createdAt: "2024-01-15",
+    },
   },
   {
-    id: "3",
     email: "company@example.com",
     password: "company123",
-    name: "PT Green Energy",
-    role: "company",
-    company: "PT Green Energy Indonesia",
-    createdAt: "2024-02-01",
+    user: {
+      id: "3",
+      name: "PT Green Energy",
+      email: "company@example.com",
+      role: "company",
+      company: "PT Green Energy Indonesia",
+      createdAt: "2024-02-01",
+    },
   },
 ];
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+// Get users from localStorage or use defaults
+const getStoredUsers = (): StoredUser[] => {
+  if (typeof window === "undefined") return defaultUsers;
+  
+  const stored = localStorage.getItem("hydrex-users");
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return defaultUsers;
+    }
+  }
+  
+  // Initialize with default users
+  localStorage.setItem("hydrex-users", JSON.stringify(defaultUsers));
+  return defaultUsers;
+};
+
+// Save users to localStorage
+const saveUsers = (users: StoredUser[]) => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("hydrex-users", JSON.stringify(users));
+  }
+};
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check for existing session on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem("cnex_user");
-    if (savedUser) {
+    const checkAuth = () => {
       try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        localStorage.removeItem("cnex_user");
+        const savedUser = localStorage.getItem("hydrex-user");
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        localStorage.removeItem("hydrex-user");
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
-  // Get all users from localStorage + demo users
-  const getAllUsers = (): (User & { password: string })[] => {
-    const savedUsers = localStorage.getItem("cnex_users");
-    const customUsers = savedUsers ? JSON.parse(savedUsers) : [];
-    return [...DEMO_USERS, ...customUsers];
-  };
-
-  // Login function
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const users = getAllUsers();
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    const users = getStoredUsers();
     const foundUser = users.find(
       (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
     );
 
     if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem("cnex_user", JSON.stringify(userWithoutPassword));
+      setUser(foundUser.user);
+      localStorage.setItem("hydrex-user", JSON.stringify(foundUser.user));
       setIsLoading(false);
-      return { success: true };
+      return true;
     }
 
     setIsLoading(false);
-    return { success: false, error: "Email atau password salah" };
+    return false;
   };
 
-  // Register function
-  const register = async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem("hydrex-user");
+  };
+
+  const register = async (
+    name: string,
+    email: string,
+    password: string,
+    role: UserRole
+  ): Promise<boolean> => {
     setIsLoading(true);
+    
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const users = getAllUsers();
+    const users = getStoredUsers();
     
     // Check if email already exists
-    if (users.some((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
+    const existingUser = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    if (existingUser) {
       setIsLoading(false);
-      return { success: false, error: "Email sudah terdaftar" };
+      return false;
     }
 
     // Create new user
-    const newUser: User & { password: string } = {
-      id: Date.now().toString(),
-      email: data.email,
-      password: data.password,
-      name: data.name,
-      role: data.role,
-      company: data.company,
-      createdAt: new Date().toISOString(),
+    const newUser: User = {
+      id: String(Date.now()),
+      name,
+      email,
+      role,
+      createdAt: new Date().toISOString().split("T")[0],
     };
 
-    // Save to localStorage
-    const savedUsers = localStorage.getItem("cnex_users");
-    const customUsers = savedUsers ? JSON.parse(savedUsers) : [];
-    customUsers.push(newUser);
-    localStorage.setItem("cnex_users", JSON.stringify(customUsers));
+    // Add to users list
+    const newStoredUser: StoredUser = {
+      email,
+      password,
+      user: newUser,
+    };
 
-    // Auto login after register
-    const { password: _, ...userWithoutPassword } = newUser;
-    setUser(userWithoutPassword);
-    localStorage.setItem("cnex_user", JSON.stringify(userWithoutPassword));
+    users.push(newStoredUser);
+    saveUsers(users);
 
+    // Auto login after registration
+    setUser(newUser);
+    localStorage.setItem("hydrex-user", JSON.stringify(newUser));
     setIsLoading(false);
-    return { success: true };
-  };
-
-  // Logout function
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("cnex_user");
-  };
-
-  // Update profile
-  const updateProfile = (data: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...data };
-      setUser(updatedUser);
-      localStorage.setItem("cnex_user", JSON.stringify(updatedUser));
-    }
+    return true;
   };
 
   return (
@@ -175,9 +199,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: !!user,
         isLoading,
         login,
-        register,
         logout,
-        updateProfile,
+        register,
       }}
     >
       {children}
@@ -185,7 +208,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");

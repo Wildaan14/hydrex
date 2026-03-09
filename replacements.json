@@ -1,0 +1,7 @@
+[
+[
+"R1",
+"const { t } = useLanguage();",
+"const { t, language } = useLanguage();"
+]
+]

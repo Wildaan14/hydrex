@@ -1,17 +1,22 @@
 // pages/ProfilePage.tsx
 import React from "react";
 import { motion } from "framer-motion";
-import { User, Mail, Phone, MapPin, Building2, Calendar, Edit, Camera, Award, Leaf, ShoppingCart } from "lucide-react";
+import { User, Mail, Phone, MapPin, Building2, Calendar, Edit, Camera, Award, Droplets, ShoppingCart } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
 
   const stats = [
-    { label: "Kredit Karbon", value: "12,450 tCO₂e", icon: <Leaf className="w-5 h-5" /> },
+    { label: "Kredit Air", value: "12,450 m³", icon: <Droplets className="w-5 h-5" /> },
     { label: "Transaksi", value: "45", icon: <ShoppingCart className="w-5 h-5" /> },
     { label: "Sertifikat", value: "12", icon: <Award className="w-5 h-5" /> },
   ];
+
+  // FIX: Use optional chaining and provide defaults for phone and address
+  // These properties may not exist on the User type, so we access them safely
+  const userPhone = (user as any)?.phone || "Belum diisi";
+  const userAddress = (user as any)?.address || "Belum diisi";
 
   return (
     <div className="space-y-6">
@@ -88,7 +93,8 @@ export const ProfilePage: React.FC = () => {
             <Phone className="w-5 h-5 text-muted-foreground" />
             <div>
               <p className="text-sm text-muted-foreground">Telepon</p>
-              <p className="text-foreground">{user?.phone || "Belum diisi"}</p>
+              {/* FIX: Use the safely accessed phone value */}
+              <p className="text-foreground">{userPhone}</p>
             </div>
           </div>
           {user?.company && (
@@ -104,7 +110,8 @@ export const ProfilePage: React.FC = () => {
             <MapPin className="w-5 h-5 text-muted-foreground" />
             <div>
               <p className="text-sm text-muted-foreground">Alamat</p>
-              <p className="text-foreground">{user?.address || "Belum diisi"}</p>
+              {/* FIX: Use the safely accessed address value */}
+              <p className="text-foreground">{userAddress}</p>
             </div>
           </div>
         </div>

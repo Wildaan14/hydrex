@@ -32,16 +32,16 @@ interface Translations {
   hero_services_desc: string;
 
   // Service Categories
-  service_carbon_tracking: string;
-  service_carbon_tracking_desc: string;
-  service_carbon_credit: string;
-  service_carbon_credit_desc: string;
-  service_carbon_offset: string;
-  service_carbon_offset_desc: string;
-  service_carbon_report: string;
-  service_carbon_report_desc: string;
-  service_carbon_audit: string;
-  service_carbon_audit_desc: string;
+  service_water_tracking: string;
+  service_water_tracking_desc: string;
+  service_water_credit: string;
+  service_water_credit_desc: string;
+  service_water_offset: string;
+  service_water_offset_desc: string;
+  service_water_report: string;
+  service_water_report_desc: string;
+  service_water_audit: string;
+  service_water_audit_desc: string;
 
   // Trust Points
   trust_certified: string;
@@ -64,12 +64,12 @@ interface Translations {
   online_services: string;
   popular_label: string;
 
-  // Carbon Calculator
+  // Water Calculator
   calculator_badge: string;
   calculator_title: string;
   calculator_desc: string;
-  carbon_stock: string;
-  carbon_credit: string;
+  water_stock: string;
+  water_credit: string;
   land_area: string;
   land_cover_type: string;
   land_cover_primary_forest: string;
@@ -86,10 +86,10 @@ interface Translations {
   project_reforestation: string;
   project_renewable: string;
   project_efficiency: string;
-  total_carbon_stock: string;
+  total_water_stock: string;
   equivalent_to: string;
-  carbon_per_hectare: string;
-  carbon_per_tree: string;
+  water_per_hectare: string;
+  water_per_tree: string;
   environmental_impact: string;
   impact_description: string;
   positive: string;
@@ -198,7 +198,7 @@ interface Translations {
   // Portal
   portal_title: string;
   portal_desc: string;
-  carbon_sequestered: string;
+  water_sequestered: string;
   projects_active: string;
   transparency_score: string;
   access_portal: string;
@@ -249,9 +249,9 @@ interface Translations {
   mrv_module_nek: string;
   mrv_module_economic: string;
   mrv_module_compliance: string;
-  mrv_carbon_stock: string;
+  mrv_water_stock: string;
   mrv_emission_reduction: string;
-  mrv_carbon_units: string;
+  mrv_water_units: string;
   mrv_economic_value: string;
   mrv_total_area: string;
   mrv_monitoring_period: string;
@@ -274,7 +274,7 @@ interface Translations {
   mrv_actual_stock: string;
   mrv_target_stock: string;
   mrv_methodology: string;
-  mrv_carbon_fraction: string;
+  mrv_water_fraction: string;
   mrv_conversion_factor: string;
   mrv_emission_source: string;
   mrv_allometric: string;
@@ -336,6 +336,88 @@ interface Translations {
   mrv_valid_until: string;
   mrv_download_report: string;
   mrv_share_stakeholders: string;
+
+  // NRECA Model
+  nreca_tab_params: string;
+  nreca_tab_data: string;
+  nreca_tab_results: string;
+  nreca_tab_charts: string;
+  nreca_reset: string;
+  nreca_params_title: string;
+  nreca_params_subtitle: string;
+  nreca_params_main: string;
+  nreca_psub_hint: string;
+  nreca_gwf_hint: string;
+  nreca_cr_label: string;
+  nreca_cr_hint: string;
+  nreca_run_btn: string;
+  nreca_results_title: string;
+  nreca_results_subtitle: string;
+  nreca_charts_subtitle: string;
+  nreca_chart_timeseries_title: string;
+  nreca_chart_timeseries_xaxis: string;
+  nreca_chart_timeseries_yaxis: string;
+  nreca_chart_duration_title: string;
+  nreca_chart_duration_xaxis: string;
+  nreca_chart_duration_yaxis: string;
+  nreca_chart_duration_tip: string;
+  nreca_rekap_title: string;
+  nreca_rekap_subtitle: string;
+  nreca_rekap_col_prob: string;
+  nreca_rekap_col_qobs: string;
+  nreca_rekap_col_qmodel: string;
+  nreca_rekap_col_use: string;
+  nreca_rekap_method_note: string;
+  nreca_rekap_q95_use: string;
+  nreca_rekap_q90_use: string;
+  nreca_rekap_q80_use: string;
+  nreca_rekap_q60_use: string;
+  nreca_rekap_q50_use: string;
+  nreca_rekap_q40_use: string;
+  nreca_rekap_q20_use: string;
+  nreca_nse_formula_title: string;
+  nreca_nse_class_title: string;
+  nreca_metric_guide_title: string;
+  nreca_axis_xaxis: string;
+  nreca_axis_yaxis: string;
+  nreca_calib_very_good: string;
+  nreca_calib_good: string;
+  nreca_calib_satisfactory: string;
+  nreca_calib_unsatisfactory: string;
+  nreca_no_obs: string;
+  nreca_run_first: string;
+  nreca_mean_obs: string;
+  nreca_mean_model: string;
+  nreca_corr_coef: string;
+  nreca_min_data_model: string;
+  nreca_max_data_model: string;
+  nreca_nom_formula: string;
+  nreca_table_title: string;
+  nreca_table_subtitle: string;
+  nreca_table_show: string;
+  nreca_table_hide: string;
+
+  // NRECA Metric Guide Descriptions
+  nreca_metric_nse_desc: string;
+  nreca_metric_nse_range: string;
+  nreca_metric_r_desc: string;
+  nreca_metric_r_range: string;
+  nreca_metric_qcomp_desc: string;
+  nreca_metric_qcomp_range: string;
+  nreca_metric_qobs_desc: string;
+  nreca_metric_qobs_range: string;
+  nreca_metric_pet_desc: string;
+  nreca_metric_pet_range: string;
+  nreca_metric_aet_desc: string;
+  nreca_metric_aet_range: string;
+  nreca_metric_psub_desc: string;
+  nreca_metric_psub_range: string;
+  nreca_metric_gwf_desc: string;
+  nreca_metric_gwf_range: string;
+  nreca_metric_nom_desc: string;
+  nreca_metric_nom_range: string;
+  nreca_metric_cr_desc: string;
+  nreca_metric_cr_range: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -345,7 +427,7 @@ const translations: Record<Language, Translations> = {
     loading_subtitle: "Mohon tunggu sebentar",
 
     // Header
-    search_placeholder: "Cari layanan karbon...",
+    search_placeholder: "Cari layanan air...",
     login: "Masuk",
     home: "Beranda",
     services: "Layanan",
@@ -358,37 +440,37 @@ const translations: Record<Language, Translations> = {
     reports: "Laporan",
 
     // Hero Section
-    hero_badge: "🌱 Sistem Karbon Tersertifikasi Indonesia",
-    hero_title_1: "Platform Karbon",
+    hero_badge: "🌱 Sistem Air Tersertifikasi Indonesia",
+    hero_title_1: "Platform Air",
     hero_title_2: "Terpercaya Indonesia",
     hero_description:
-      "Kelola, perdagangkan, dan pantau kredit karbon Anda dengan sistem MRV berbasis blockchain yang transparan dan tersertifikasi sesuai regulasi NEK Indonesia",
+      "Kelola, perdagangkan, dan pantau kredit air Anda dengan sistem MRV berbasis blockchain yang transparan dan tersertifikasi sesuai regulasi NEK Indonesia",
     hero_features: "MRV • Blockchain • SRN-PPI",
     hero_cta_primary: "Mulai Sekarang",
     hero_cta_secondary: "Pelajari Lebih Lanjut",
     hero_main_services: "Layanan Utama",
-    hero_services_desc: "Solusi lengkap manajemen karbon untuk Indonesia",
+    hero_services_desc: "Solusi lengkap manajemen air untuk Indonesia",
 
     // Service Categories
-    service_carbon_tracking: "Pelacakan Karbon",
-    service_carbon_tracking_desc:
-      "Pantau stok karbon real-time dengan teknologi satelit dan AI",
-    service_carbon_credit: "Kredit Karbon",
-    service_carbon_credit_desc:
-      "Perdagangkan kredit karbon tersertifikasi di marketplace blockchain",
-    service_carbon_offset: "Offset Karbon",
-    service_carbon_offset_desc:
-      "Program offset untuk mencapai target net-zero emissions",
-    service_carbon_report: "Laporan Karbon",
-    service_carbon_report_desc:
+    service_water_tracking: "Pelacakan Air",
+    service_water_tracking_desc:
+      "Pantau stok air real-time dengan teknologi satelit dan AI",
+    service_water_credit: "Kredit Air",
+    service_water_credit_desc:
+      "Perdagangkan kredit air tersertifikasi di marketplace blockchain",
+    service_water_offset: "Offset Air",
+    service_water_offset_desc:
+      "Program offset untuk mencapai target net-zero consumption",
+    service_water_report: "Laporan Air",
+    service_water_report_desc:
       "Laporan MRV lengkap sesuai standar NEK dan internasional",
-    service_carbon_audit: "Audit Karbon",
-    service_carbon_audit_desc:
-      "Verifikasi dan validasi proyek karbon oleh auditor tersertifikasi",
+    service_water_audit: "Audit Air",
+    service_water_audit_desc:
+      "Verifikasi dan validasi proyek air oleh auditor tersertifikasi",
 
     // Trust Points
     trust_certified: "Tersertifikasi NEK",
-    trust_certified_desc: "Sesuai regulasi Nilai Ekonomi Karbon Indonesia",
+    trust_certified_desc: "Sesuai regulasi Nilai Ekonomi Air Indonesia",
     trust_transparent: "Transparansi Penuh",
     trust_transparent_desc: "Semua transaksi tercatat di blockchain",
     trust_verified: "Terverifikasi Pihak Ketiga",
@@ -398,7 +480,7 @@ const translations: Record<Language, Translations> = {
     quick_access_badge: "Akses Cepat",
     quick_access_title: "Layanan Populer",
     quick_access_desc:
-      "Akses langsung ke layanan karbon yang paling banyak digunakan",
+      "Akses langsung ke layanan air yang paling banyak digunakan",
     start_now: "Mulai Sekarang",
     estimated_time: "Estimasi Waktu",
     completed_today: "Diselesaikan Hari Ini",
@@ -408,13 +490,13 @@ const translations: Record<Language, Translations> = {
     online_services: "Layanan Online",
     popular_label: "Populer",
 
-    // Carbon Calculator
-    calculator_badge: "Kalkulator Karbon C-NEX",
-    calculator_title: "Kalkulator Karbon Indonesia",
+    // Water Calculator
+    calculator_badge: "Kalkulator Air HYDREX",
+    calculator_title: "Kalkulator Air Indonesia",
     calculator_desc:
-      "Hitung stok karbon, kredit, dan nilai ekonomi dengan standar Indonesia",
-    carbon_stock: "Stok Karbon",
-    carbon_credit: "Kredit Karbon",
+      "Hitung stok air, kredit, dan nilai ekonomi dengan standar Indonesia",
+    water_stock: "Stok Air",
+    water_credit: "Kredit Air",
     land_area: "Luas Lahan",
     land_cover_type: "Jenis Tutupan Lahan",
     land_cover_primary_forest: "Hutan Primer",
@@ -425,20 +507,20 @@ const translations: Record<Language, Translations> = {
     forest_tropical: "Tropis",
     forest_temperate: "Sedang",
     forest_boreal: "Boreal",
-    annual_emission: "Emisi Tahunan",
+    annual_emission: "Konsumsi Tahunan",
     offset_target: "Target Offset",
     project_type: "Jenis Proyek",
     project_reforestation: "Reboisasi",
     project_renewable: "Energi Terbarukan",
     project_efficiency: "Efisiensi Energi",
-    total_carbon_stock: "Total Stok Karbon",
+    total_water_stock: "Total Stok Air",
     equivalent_to: "Setara dengan",
-    carbon_per_hectare: "Karbon per Hektar",
-    carbon_per_tree: "Karbon per Pohon",
+    water_per_hectare: "Air per Hektar",
+    water_per_tree: "Air per Pohon",
     environmental_impact: "Dampak Lingkungan",
     impact_description: "Kontribusi terhadap NDC Indonesia",
     positive: "Positif",
-    impact_1: "Menghilangkan emisi dari",
+    impact_1: "Menghilangkan konsumsi dari",
     cars_year: "mobil/tahun",
     impact_2: "Menghasilkan",
     oxygen_year: "kg O₂/tahun",
@@ -461,69 +543,68 @@ const translations: Record<Language, Translations> = {
     // Services by Sector
     persona_title: "Solusi untuk Setiap Sektor",
     persona_desc:
-      "Layanan C-NEX yang disesuaikan dengan kebutuhan ekosistem dan regulasi Indonesia",
+      "Layanan HYDREX yang disesuaikan dengan kebutuhan ekosistem dan regulasi Indonesia",
     persona_forestry: "Kehutanan",
     persona_agriculture: "Pertanian",
     persona_energy: "Energi",
     persona_industry: "Industri",
 
     // News Section
-    news_title: "Berita Pasar Karbon Indonesia",
+    news_title: "Berita Pasar Air Indonesia",
     news_desc:
-      "Berita terkini seputar pasar karbon, regulasi NEK, dan proyek offsetting karbon di Indonesia",
+      "Berita terkini seputar pasar air, regulasi NEK, dan proyek offsetting air di Indonesia",
     news_tab: "📰 Berita",
     announcements_tab: "📢 Pengumuman",
-    news_scholarship_title: "Beasiswa Karbon untuk Mahasiswa Indonesia",
+    news_scholarship_title: "Beasiswa Air untuk Mahasiswa Indonesia",
     news_scholarship_desc:
-      "Mendukung generasi profesional pasar karbon berikutnya di Indonesia",
+      "Mendukung generasi profesional pasar air berikutnya di Indonesia",
     category_education: "Pendidikan",
-    news_app_title: "C-NEX Luncurkan Aplikasi Mobile",
+    news_app_title: "HYDREX Luncurkan Aplikasi Mobile",
     news_app_desc:
-      "Akses layanan karbon C-NEX kapan saja dan di mana saja melalui aplikasi mobile kami",
-    news_festival_title: "Festival Karbon & Lingkungan 2025",
-    news_festival_desc: "Merayakan aksi iklim dan inovasi karbon di Indonesia",
+      "Akses layanan air HYDREX kapan saja dan di mana saja melalui aplikasi mobile kami",
+    news_festival_title: "Festival Air & Lingkungan 2025",
+    news_festival_desc: "Merayakan aksi iklim dan inovasi air di Indonesia",
     category_culture: "Budaya",
-    announce_holiday_title: "Liburan Kebijakan Karbon 2025",
-    announce_holiday_desc:
-      "Pengumuman liburan kebijakan karbon untuk tahun 2025",
-    announce_infrastructure_title: "Pengembangan Infrastruktur Karbon",
+    announce_holiday_title: "Liburan Kebijakan Air 2025",
+    announce_holiday_desc: "Pengumuman liburan kebijakan air untuk tahun 2025",
+    announce_infrastructure_title: "Pengembangan Infrastruktur Air",
     announce_infrastructure_desc:
-      "Pengumuman pengembangan infrastruktur karbon untuk tahun 2025",
-    announce_health_title: "Health Sector Carbon Initiatives",
+      "Pengumuman pengembangan infrastruktur air untuk tahun 2025",
+    announce_health_title: "Health Sector Water Initiatives",
     announce_health_desc:
-      "New carbon offset programs in Indonesia's health sector",
+      "New water offset programs in Indonesia's health sector",
 
     // Sample News
     news_forest_title: "Proyek REDD+ Kalimantan Tengah Diluncurkan",
     news_forest_desc:
-      "Program Reducing Emissions from Deforestation and Forest Degradation menargetkan 500 ribu ha...",
-    news_market_title: "Harga Kredit Karbon Indonesia Naik 30% di Q1 2025",
+      "Program Reducing Consumption from Deforestation and Forest Degradation menargetkan 500 ribu ha...",
+    news_market_title: "Harga Kredit Air Indonesia Naik 30% di Q1 2025",
     news_market_desc:
-      "Pasar karbon domestik menunjukkan pertumbuhan signifikan dengan integrasi SRN-PPI...",
-    news_technology_title: "C-NEX Luncurkan Fitur MRV Berbasis AI dan Satelit",
+      "Pasar air domestik menunjukkan pertumbuhan signifikan dengan integrasi SRN-PPI...",
+    news_technology_title: "HYDREX Luncurkan Fitur MRV Berbasis AI dan Satelit",
     news_technology_desc:
-      "Monitoring stok karbon real-time menggunakan teknologi Sentinel-2 dan machine learning...",
+      "Monitoring stok air real-time menggunakan teknologi Sentinel-2 dan machine learning...",
 
     // Sample Announcements
     announce_regulation_title: "Implementasi NEK dan Integrasi SRN-PPI",
     announce_regulation_desc:
-      "Pemerintah perkuat regulasi Nilai Ekonomi Karbon untuk pasar karbon Indonesia...",
-    announce_project_title: "Pembukaan Marketplace Kredit Karbon C-NEX",
+      "Pemerintah perkuat regulasi Nilai Ekonomi Air untuk pasar air Indonesia...",
+    announce_project_title: "Pembukaan Marketplace Kredit Air HYDREX",
     announce_project_desc:
-      "Marketplace karbon terintegrasi blockchain untuk transparansi penuh...",
+      "Marketplace air terintegrasi blockchain untuk transparansi penuh...",
     announce_report_title: "Laporan NDC Indonesia: Target Unconditional 29%",
     announce_report_desc:
-      "Capaian penurunan emisi nasional dan kontribusi proyek karbon...",
+      "Capaian penurunan konsumsi nasional dan kontribusi proyek air...",
 
     // Agenda Section
     agenda_title: "Agenda Aksi Iklim Indonesia",
     agenda_desc:
-      "Acara dan konferensi terkait aksi iklim, manajemen karbon, dan ekonomi hijau di Indonesia",
+      "Acara dan konferensi terkait aksi iklim, manajemen air, dan ekonomi hijau di Indonesia",
     view_all_agenda: "Lihat Semua Agenda",
     agenda_meeting_title: "Rapat Koordinasi Implementasi NEK 2025",
     meeting_type: "Rapat Koordinasi",
     officials_participants: "Pejabat Pemda & Kementerian",
-    agenda_dialog_title: "Dialog Publik: Pasar Karbon untuk Masyarakat",
+    agenda_dialog_title: "Dialog Publik: Pasar Air untuk Masyarakat",
     public_dialog_type: "Dialog Publik",
     public_officials_participants: "Masyarakat Umum & Pejabat",
     agenda_smart_city_title: "Sosialisasi Smart City & Green Economy",
@@ -532,10 +613,10 @@ const translations: Record<Language, Translations> = {
 
     // Transparency Section
     transparency_badge: "Transparansi Blockchain",
-    transparency_title_1: "Data Karbon Terverifikasi",
+    transparency_title_1: "Data Air Terverifikasi",
     transparency_title_2: "& Transparan",
     transparency_desc:
-      "Setiap transaksi karbon tercatat di blockchain untuk mencegah double counting dan menjamin integritas data",
+      "Setiap transaksi air tercatat di blockchain untuk mencegah double counting dan menjamin integritas data",
     transparency_features: "MRV • Blockchain • Integrasi SRN-PPI",
 
     // Transparency Widgets
@@ -556,10 +637,10 @@ const translations: Record<Language, Translations> = {
     projects_completed: "Proyek Selesai",
 
     // Portal
-    portal_title: "Dashboard C-NEX Real-time",
+    portal_title: "Dashboard HYDREX Real-time",
     portal_desc:
-      "Akses data stok karbon, kredit karbon, dan proyek karbon Indonesia dalam satu dashboard interaktif",
-    carbon_sequestered: "Karbon Terserap",
+      "Akses data stok air, kredit air, dan proyek air Indonesia dalam satu dashboard interaktif",
+    water_sequestered: "Air Terserap",
     projects_active: "Proyek Aktif",
     transparency_score: "Skor Transparansi",
     access_portal: "Akses Dashboard",
@@ -567,10 +648,10 @@ const translations: Record<Language, Translations> = {
     // Testimonials
     testimonials_title: "Testimoni Stakeholder & Partner",
     testimonials_desc:
-      "Pengalaman pemerintah daerah, koperasi, masyarakat adat, dan perusahaan dalam program manajemen karbon",
+      "Pengalaman pemerintah daerah, koperasi, masyarakat adat, dan perusahaan dalam program manajemen air",
     testimonials_cta_1: "Tulis Testimoni",
     testimonials_cta_2: "Daftar Jadi Mitra",
-    testimonials_question: "Ingin bergabung dengan program karbon?",
+    testimonials_question: "Ingin bergabung dengan program air?",
 
     // Priority and Category Labels
     priority_important: "Penting",
@@ -588,7 +669,7 @@ const translations: Record<Language, Translations> = {
     language: "Bahasa",
 
     // Footer Links
-    contact_us: "Hubungi C-NEX",
+    contact_us: "Hubungi HYDREX",
     main_services: "Layanan Utama",
     information: "Informasi",
     transparency: "Transparansi",
@@ -596,25 +677,25 @@ const translations: Record<Language, Translations> = {
     privacy_policy: "Kebijakan Privasi",
     terms_conditions: "Syarat & Ketentuan",
     sitemap: "Peta Situs",
-    copyright: "2025 C-NEX - Carbon Network & Intelligence Exchange Indonesia.",
+    copyright: "2025 HYDREX - Hydrological Resource Exchange.",
     disability_support: "Dukungan Disabilitas",
     access_guide: "Panduan Akses",
 
     // MRV Dashboard
-    mrv_dashboard_badge: "Dashboard MRV C-NEX",
-    mrv_dashboard_title: "Dashboard MRV C-NEX",
+    mrv_dashboard_badge: "Dashboard MRV HYDREX",
+    mrv_dashboard_title: "Dashboard MRV HYDREX",
     mrv_dashboard_desc:
-      "Akses data MRV, proyek, dan laporan karbon dalam satu dashboard interaktif",
+      "Akses data MRV, proyek, dan laporan air dalam satu dashboard interaktif",
     mrv_module_summary: "Ringkasan",
     mrv_module_baseline: "Baseline",
-    mrv_module_stock: "Stok Karbon",
+    mrv_module_stock: "Stok Air",
     mrv_module_mitigation: "Mitigasi",
     mrv_module_nek: "NEK",
     mrv_module_economic: "Nilai Ekonomi",
     mrv_module_compliance: "Kepatuhan",
-    mrv_carbon_stock: "Stok Karbon",
-    mrv_emission_reduction: "Penurunan Emisi",
-    mrv_carbon_units: "Unit Karbon",
+    mrv_water_stock: "Stok Air",
+    mrv_emission_reduction: "Penurunan Konsumsi",
+    mrv_water_units: "Unit Air",
     mrv_economic_value: "Nilai Ekonomi",
     mrv_total_area: "Total Area",
     mrv_monitoring_period: "Periode Monitoring",
@@ -630,20 +711,20 @@ const translations: Record<Language, Translations> = {
     mrv_percentage: "Persentase",
     mrv_map_placeholder: "Peta",
     mrv_map_desc: "Peta interaktif untuk melihat distribusi ekosistem",
-    mrv_stock_title: "Stok Karbon",
+    mrv_stock_title: "Stok Air",
     mrv_initial_stock: "Stok Awal",
     mrv_current_stock: "Stok Saat Ini",
     mrv_stock_trend: "Tren Stok",
     mrv_actual_stock: "Stok Aktual",
     mrv_target_stock: "Target Stok",
     mrv_methodology: "Metodologi",
-    mrv_carbon_fraction: "Fraksi Karbon",
+    mrv_water_fraction: "Fraksi Air",
     mrv_conversion_factor: "Faktor Konversi",
-    mrv_emission_source: "Sumber Emisi",
+    mrv_emission_source: "Sumber Konsumsi",
     mrv_allometric: "Allometrik",
     mrv_mitigation_title: "Mitigasi",
-    mrv_gross_er: "Penurunan Emisi Bruto",
-    mrv_net_er: "Penurunan Emisi Neto",
+    mrv_gross_er: "Penurunan Konsumsi Bruto",
+    mrv_net_er: "Penurunan Konsumsi Neto",
     mrv_after_deductions: "Setelah Deduksi",
     mrv_deductions: "Deduksi",
     mrv_leakage: "Kebocoran",
@@ -699,6 +780,105 @@ const translations: Record<Language, Translations> = {
     mrv_valid_until: "Berlaku Hingga",
     mrv_download_report: "Unduh Laporan",
     mrv_share_stakeholders: "Bagikan ke Stakeholder",
+
+    // NRECA Model
+    nreca_tab_params: "⚙️ Parameter Model",
+    nreca_tab_data: "📋 Data Hujan & PET",
+    nreca_tab_results: "📊 Hasil & Statistik",
+    nreca_tab_charts: "📈 Grafik Kalibrasi",
+    nreca_reset: "Reset",
+    nreca_params_title: "Parameter Kalibrasi NRECA",
+    nreca_params_subtitle: "PSUB · GWF · Cr · Simpanan Awal · Luas DAS",
+    nreca_params_main: "Parameter Utama",
+    nreca_psub_hint: "0.3 = tanah kedap air  |  0.9 = sangat permeabel",
+    nreca_gwf_hint:
+      "0.2 = kedap (baseflow lambat)  |  0.8 = sangat lulus air (baseflow cepat)",
+    nreca_cr_label: "Cr — Koef. Reduksi Evapotranspirasi",
+    nreca_cr_hint: "Faktor koreksi PET berdasarkan kemiringan lahan",
+    nreca_run_btn: "▶ Jalankan Model NRECA",
+    nreca_results_title: "Hasil & Statistik Kalibrasi",
+    nreca_results_subtitle: "Rerata · Min · Max · NSE · Korelasi Pearson",
+    nreca_charts_subtitle:
+      "Time Series · Kurva Durasi · Moisture Storage · GW Storage",
+    nreca_chart_timeseries_title: "KALIBRASI TIME SERIES — DEBIT (M³/S)",
+    nreca_chart_timeseries_xaxis: "Sumbu X: Waktu (Bulan–Tahun)",
+    nreca_chart_timeseries_yaxis:
+      "Sumbu Y: Debit Q (m³/s) — laju aliran air tiap detik",
+    nreca_chart_duration_title: "KURVA DURASI DEBIT — KALIBRASI",
+    nreca_chart_duration_xaxis: "Sumbu X: Probabilitas Terlampaui P (0–1)",
+    nreca_chart_duration_yaxis: "Sumbu Y: Debit Q (m³/s)",
+    nreca_chart_duration_tip:
+      "💡 P=0.05 → debit terlampaui 5% waktu (banjir)  ·  P=0.95 → debit terlampaui 95% waktu (kemarau)",
+    nreca_rekap_title: "Rekap Probabilitas Debit",
+    nreca_rekap_subtitle:
+      "Debit pada berbagai probabilitas terlampaui — digunakan untuk perencanaan teknis & hidrologi",
+    nreca_rekap_col_prob: "Probabilitas",
+    nreca_rekap_col_qobs: "Q Obs (m³/s)",
+    nreca_rekap_col_qmodel: "Q Model (m³/s)",
+    nreca_rekap_col_use: "Kegunaan",
+    nreca_rekap_method_note:
+      "📌 Metode: Weibull plotting position — P = m/(n+1) dimana m = peringkat dari besar ke kecil, n = jumlah data",
+    nreca_rekap_q95_use: "PLTA / Pembangkit Listrik Tenaga Air",
+    nreca_rekap_q90_use: "Air Domestik & Industri",
+    nreca_rekap_q80_use: "Irigasi",
+    nreca_rekap_q60_use: "Perencanaan Bendungan / Waduk",
+    nreca_rekap_q50_use: "Ketersediaan Air Rata-Rata Tahunan",
+    nreca_rekap_q40_use: "Analisis Banjir (Batas Bawah)",
+    nreca_rekap_q20_use: "Analisis Banjir (Desain)",
+    nreca_nse_formula_title: "Formula NSE",
+    nreca_nse_class_title: "Klasifikasi NSE (Moriasi et al.)",
+    nreca_metric_guide_title: "Panduan Singkatan & Metrik",
+    nreca_axis_xaxis: "Sumbu X",
+    nreca_axis_yaxis: "Sumbu Y",
+    nreca_calib_very_good: "Kalibrasi: SANGAT BAIK ✓",
+    nreca_calib_good: "Kalibrasi: BAIK ✓",
+    nreca_calib_satisfactory: "Kalibrasi: CUKUP — perlu penyesuaian parameter",
+    nreca_calib_unsatisfactory:
+      "Kalibrasi: KURANG BAIK — sesuaikan PSUB, GWF, Cr",
+    nreca_no_obs: "Masukkan data observasi untuk menghitung NSE",
+    nreca_run_first: "Jalankan model NRECA untuk melihat hasil",
+    nreca_mean_obs: "Rerata Data Obs",
+    nreca_mean_model: "Rerata Model",
+    nreca_corr_coef: "Koef. Korelasi (r)",
+    nreca_min_data_model: "Min Data / Model",
+    nreca_max_data_model: "Max Data / Model",
+    nreca_nom_formula: "Nom = 100 + 0.2·Ra",
+    nreca_table_title: "Tabel Hasil Lengkap (21 Kolom)",
+    nreca_table_subtitle: "Semua variabel antara model NRECA per bulan",
+    nreca_table_show: "Tampilkan",
+    nreca_table_hide: "Sembunyikan",
+
+    // NRECA Metric Guide Descriptions
+    nreca_metric_nse_desc:
+      "Mengukur seberapa baik model mereproduksi data observasi. Semakin mendekati 1 = semakin baik. NSE = 1 berarti model sempurna.",
+    nreca_metric_nse_range: "Terbaik: mendekati 1",
+    nreca_metric_r_desc:
+      "Mengukur kekuatan hubungan linear antara debit model dan observasi. Berkisar dari -1 hingga 1.",
+    nreca_metric_r_range: "Terbaik: mendekati 1",
+    nreca_metric_qcomp_desc:
+      "Debit yang dihasilkan oleh model NRECA berdasarkan parameter kalibrasi dan data hujan-PET.",
+    nreca_metric_qcomp_range: "Bandingkan dengan Qobs",
+    nreca_metric_qobs_desc:
+      "Debit hasil pengukuran lapangan di pos AWLR atau stasiun hidrologi. Digunakan sebagai acuan kalibrasi.",
+    nreca_metric_qobs_range: "Data referensi lapangan",
+    nreca_metric_pet_desc:
+      "Evapotranspirasi potensial (mm): jumlah air yang bisa menguap jika air tersedia cukup. Dikalikan faktor koreksi Cr.",
+    nreca_metric_pet_range: "Input model, satuan mm",
+    nreca_metric_aet_desc:
+      "Evapotranspirasi aktual (mm): bagian dari PET yang benar-benar terjadi, bergantung pada kelembaban tanah (STOR_RATIO).",
+    nreca_metric_aet_range: "AET ≤ PET selalu",
+    nreca_metric_psub_desc:
+      "Fraksi kelebihan air yang masuk ke reservoir air tanah (groundwater). Sisanya (1−PSUB) menjadi aliran langsung.",
+    nreca_metric_psub_range: "0 – 1 (umumnya 0.5–0.9)",
+    nreca_metric_gwf_desc:
+      "Fraksi simpanan air tanah yang keluar sebagai baseflow setiap bulan. Nilai kecil = air tanah lambat keluar.",
+    nreca_metric_gwf_range: "0 – 1 (umumnya 0.1–0.3)",
+    nreca_metric_nom_desc:
+      "Nom = 100 + 0.2×Ra adalah kapasitas simpanan tanah nominal (mm). Ra = rata-rata curah hujan tahunan (mm).",
+    nreca_metric_nom_range: "Dihitung otomatis dari Ra",
+    nreca_metric_cr_desc:
+      "Koefisien pengali untuk menyesuaikan PET ke kondisi DAS lokal. Nilai < 1 = PET efektif lebih rendah.",
+    nreca_metric_cr_range: "0.5 – 1.2 (umumnya ≈ 0.8)",
   },
   en: {
     // Loading
@@ -706,7 +886,7 @@ const translations: Record<Language, Translations> = {
     loading_subtitle: "Please wait a moment",
 
     // Header
-    search_placeholder: "Search carbon services...",
+    search_placeholder: "Search water services...",
     login: "Login",
     home: "Home",
     services: "Services",
@@ -719,38 +899,38 @@ const translations: Record<Language, Translations> = {
     reports: "Reports",
 
     // Hero Section
-    hero_badge: "🌱 Indonesia's Certified Carbon System",
+    hero_badge: "🌱 Indonesia's Certified Water System",
     hero_title_1: "Indonesia's Trusted",
-    hero_title_2: "Carbon Platform",
+    hero_title_2: "Water Platform",
     hero_description:
-      "Manage, trade, and monitor your carbon credits with blockchain-based MRV system that's transparent and certified according to Indonesia's NEK regulations",
+      "Manage, trade, and monitor your water credits with blockchain-based MRV system that's transparent and certified according to Indonesia's NEK regulations",
     hero_features: "MRV • Blockchain • SRN-PPI",
     hero_cta_primary: "Get Started",
     hero_cta_secondary: "Learn More",
     hero_main_services: "Main Services",
-    hero_services_desc: "Complete carbon management solutions for Indonesia",
+    hero_services_desc: "Complete water management solutions for Indonesia",
 
     // Service Categories
-    service_carbon_tracking: "Carbon Tracking",
-    service_carbon_tracking_desc:
-      "Monitor real-time carbon stocks with satellite technology and AI",
-    service_carbon_credit: "Carbon Credits",
-    service_carbon_credit_desc:
-      "Trade certified carbon credits on blockchain marketplace",
-    service_carbon_offset: "Carbon Offset",
-    service_carbon_offset_desc:
-      "Offset programs to achieve net-zero emissions targets",
-    service_carbon_report: "Carbon Reports",
-    service_carbon_report_desc:
+    service_water_tracking: "Water Tracking",
+    service_water_tracking_desc:
+      "Monitor real-time water stocks with satellite technology and AI",
+    service_water_credit: "Water Credits",
+    service_water_credit_desc:
+      "Trade certified water credits on blockchain marketplace",
+    service_water_offset: "Water Conservation",
+    service_water_offset_desc:
+      "Offset programs to achieve net-zero consumption targets",
+    service_water_report: "Water Reports",
+    service_water_report_desc:
       "Complete MRV reports according to NEK and international standards",
-    service_carbon_audit: "Carbon Audit",
-    service_carbon_audit_desc:
-      "Verification and validation of carbon projects by certified auditors",
+    service_water_audit: "Water Audit",
+    service_water_audit_desc:
+      "Verification and validation of water projects by certified auditors",
 
     // Trust Points
     trust_certified: "NEK Certified",
     trust_certified_desc:
-      "Compliant with Indonesia's Carbon Economic Value regulations",
+      "Compliant with Indonesia's Water Economic Value regulations",
     trust_transparent: "Full Transparency",
     trust_transparent_desc: "All transactions recorded on blockchain",
     trust_verified: "Third-party Verified",
@@ -759,7 +939,7 @@ const translations: Record<Language, Translations> = {
     // Quick Access
     quick_access_badge: "Quick Access",
     quick_access_title: "Popular Services",
-    quick_access_desc: "Direct access to the most used carbon services",
+    quick_access_desc: "Direct access to the most used water services",
     start_now: "Start Now",
     estimated_time: "Estimated Time",
     completed_today: "Completed Today",
@@ -769,13 +949,13 @@ const translations: Record<Language, Translations> = {
     online_services: "Online Services",
     popular_label: "Popular",
 
-    // Carbon Calculator
-    calculator_badge: "C-NEX Carbon Calculator",
-    calculator_title: "Indonesia Carbon Calculator",
+    // Water Calculator
+    calculator_badge: "HYDREX Water Calculator",
+    calculator_title: "Indonesia Water Calculator",
     calculator_desc:
-      "Calculate carbon stock, credits, and economic value with Indonesia standards",
-    carbon_stock: "Carbon Stock",
-    carbon_credit: "Carbon Credit",
+      "Calculate water stock, credits, and economic value with Indonesia standards",
+    water_stock: "Water Resources",
+    water_credit: "Water Credit",
     land_area: "Land Area",
     land_cover_type: "Land Cover Type",
     land_cover_primary_forest: "Primary Forest",
@@ -792,14 +972,14 @@ const translations: Record<Language, Translations> = {
     project_reforestation: "Reforestation",
     project_renewable: "Renewable Energy",
     project_efficiency: "Energy Efficiency",
-    total_carbon_stock: "Total Carbon Stock",
+    total_water_stock: "Total Water Resources",
     equivalent_to: "Equivalent to",
-    carbon_per_hectare: "Carbon per Hectare",
-    carbon_per_tree: "Carbon per Tree",
+    water_per_hectare: "Water per Hectare",
+    water_per_tree: "Water per Tree",
     environmental_impact: "Environmental Impact",
     impact_description: "Contribution to Indonesia's NDC",
     positive: "Positive",
-    impact_1: "Removes emissions from",
+    impact_1: "Removes consumption from",
     cars_year: "cars/year",
     impact_2: "Produces",
     oxygen_year: "kg O₂/year",
@@ -822,70 +1002,69 @@ const translations: Record<Language, Translations> = {
     // Services by Sector
     persona_title: "Solutions for Every Sector",
     persona_desc:
-      "C-NEX services tailored to Indonesia's ecosystem needs and regulations",
+      "HYDREX services tailored to Indonesia's ecosystem needs and regulations",
     persona_forestry: "Forestry",
     persona_agriculture: "Agriculture",
     persona_energy: "Energy",
     persona_industry: "Industry",
 
     // News Section
-    news_title: "Indonesia Carbon Market Updates",
+    news_title: "Indonesia Water Market Updates",
     news_desc:
-      "Latest news about carbon market, NEK regulations, and carbon offsetting projects in Indonesia",
+      "Latest news about water market, NEK regulations, and water offsetting projects in Indonesia",
     news_tab: "📰 News",
     announcements_tab: "📢 Announcements",
-    news_scholarship_title: "Carbon Scholarships for Indonesian Students",
+    news_scholarship_title: "Water Scholarships for Indonesian Students",
     news_scholarship_desc:
-      "Supporting the next generation of carbon market professionals in Indonesia",
+      "Supporting the next generation of water market professionals in Indonesia",
     category_education: "Education",
-    news_app_title: "C-NEX Launches Mobile App for Carbon Management",
+    news_app_title: "HYDREX Launches Mobile App for Water Management",
     news_app_desc:
-      "New app enables users to track carbon credits and projects on-the-go",
-    news_festival_title: "2025 Carbon & Environment Festival",
+      "New app enables users to track water credits and projects on-the-go",
+    news_festival_title: "2025 Water & Environment Festival",
     news_festival_desc:
-      "Celebrating climate action and carbon innovation in Indonesia",
+      "Celebrating climate action and water innovation in Indonesia",
     category_culture: "Culture",
-    announce_holiday_title: "Liburan Kebijakan Karbon 2025",
-    announce_holiday_desc:
-      "Pengumuman liburan kebijakan karbon untuk tahun 2025",
-    announce_infrastructure_title: "Pengembangan Infrastruktur Karbon",
+    announce_holiday_title: "Liburan Kebijakan Air 2025",
+    announce_holiday_desc: "Pengumuman liburan kebijakan air untuk tahun 2025",
+    announce_infrastructure_title: "Pengembangan Infrastruktur Air",
     announce_infrastructure_desc:
-      "Pengumuman pengembangan infrastruktur karbon untuk tahun 2025",
-    announce_health_title: "Health Sector Carbon Initiatives",
+      "Pengumuman pengembangan infrastruktur air untuk tahun 2025",
+    announce_health_title: "Health Sector Water Initiatives",
     announce_health_desc:
-      "New carbon offset programs in Indonesia's health sector",
+      "New water offset programs in Indonesia's health sector",
 
     // Sample News
     news_forest_title: "Central Kalimantan REDD+ Project Launched",
     news_forest_desc:
-      "Reducing Emissions from Deforestation and Forest Degradation program targeting 500K ha...",
-    news_market_title: "Indonesia Carbon Credit Prices Up 30% in Q1 2025",
+      "Reducing Consumption from Deforestation and Forest Degradation program targeting 500K ha...",
+    news_market_title: "Indonesia Water Credit Prices Up 30% in Q1 2025",
     news_market_desc:
-      "Domestic carbon market shows significant growth with SRN-PPI integration...",
-    news_technology_title: "C-NEX Launches AI and Satellite-based MRV Feature",
+      "Domestic water market shows significant growth with SRN-PPI integration...",
+    news_technology_title: "HYDREX Launches AI and Satellite-based MRV Feature",
     news_technology_desc:
-      "Real-time carbon stock monitoring using Sentinel-2 technology and machine learning...",
+      "Real-time water stock monitoring using Sentinel-2 technology and machine learning...",
 
     // Sample Announcements
     announce_regulation_title: "NEK Implementation and SRN-PPI Integration",
     announce_regulation_desc:
-      "Government strengthens Carbon Economic Value regulations for Indonesia's carbon market...",
-    announce_project_title: "Opening of C-NEX Carbon Credit Marketplace",
+      "Government strengthens Water Economic Value regulations for Indonesia's water market...",
+    announce_project_title: "Opening of HYDREX Water Credit Marketplace",
     announce_project_desc:
-      "Blockchain-integrated carbon marketplace for full transparency...",
+      "Blockchain-integrated water marketplace for full transparency...",
     announce_report_title: "Indonesia's NDC Report: 29% Unconditional Target",
     announce_report_desc:
-      "National emission reduction achievements and carbon project contributions...",
+      "National emission reduction achievements and water project contributions...",
 
     // Agenda Section
     agenda_title: "Indonesia Climate Action Agenda",
     agenda_desc:
-      "Events and conferences about climate action, carbon management, and green economy in Indonesia",
+      "Events and conferences about climate action, water management, and green economy in Indonesia",
     view_all_agenda: "View All Agenda",
     agenda_meeting_title: "NEK 2025 Implementation Coordination Meeting",
     meeting_type: "Coordination Meeting",
     officials_participants: "Local Government & Ministry Officials",
-    agenda_dialog_title: "Public Dialogue: Carbon Market for Communities",
+    agenda_dialog_title: "Public Dialogue: Water Market for Communities",
     public_dialog_type: "Public Dialogue",
     public_officials_participants: "General Public & Officials",
     agenda_smart_city_title: "Smart City & Green Economy Socialization",
@@ -895,9 +1074,9 @@ const translations: Record<Language, Translations> = {
     // Transparency Section
     transparency_badge: "Blockchain Transparency",
     transparency_title_1: "Verified",
-    transparency_title_2: "& Transparent Carbon Data",
+    transparency_title_2: "& Transparent Water Data",
     transparency_desc:
-      "Every carbon transaction is recorded on blockchain to prevent double counting and ensure data integrity",
+      "Every water transaction is recorded on blockchain to prevent double counting and ensure data integrity",
     transparency_features: "MRV • Blockchain • SRN-PPI Integration",
 
     // Transparency Widgets
@@ -918,10 +1097,10 @@ const translations: Record<Language, Translations> = {
     projects_completed: "Projects Completed",
 
     // Portal
-    portal_title: "Real-time C-NEX Dashboard",
+    portal_title: "Real-time HYDREX Dashboard",
     portal_desc:
-      "Access carbon stock data, carbon credits, and Indonesia's carbon projects in one interactive dashboard",
-    carbon_sequestered: "Carbon Sequestered",
+      "Access water stock data, water credits, and Indonesia's water projects in one interactive dashboard",
+    water_sequestered: "Water Sequestered",
     projects_active: "Active Projects",
     transparency_score: "Transparency Score",
     access_portal: "Access Dashboard",
@@ -929,10 +1108,10 @@ const translations: Record<Language, Translations> = {
     // Testimonials
     testimonials_title: "Stakeholder & Partner Testimonials",
     testimonials_desc:
-      "Experiences of local governments, cooperatives, indigenous communities, and companies in carbon management programs",
+      "Experiences of local governments, cooperatives, indigenous communities, and companies in water management programs",
     testimonials_cta_1: "Write Testimonial",
     testimonials_cta_2: "Register as Partner",
-    testimonials_question: "Want to join the carbon program?",
+    testimonials_question: "Want to join the water program?",
 
     // Priority and Category Labels
     priority_important: "Important",
@@ -950,7 +1129,7 @@ const translations: Record<Language, Translations> = {
     language: "Language",
 
     // Footer Links
-    contact_us: "Contact C-NEX",
+    contact_us: "Contact HYDREX",
     main_services: "Main Services",
     information: "Information",
     transparency: "Transparency",
@@ -958,25 +1137,25 @@ const translations: Record<Language, Translations> = {
     privacy_policy: "Privacy Policy",
     terms_conditions: "Terms & Conditions",
     sitemap: "Site Map",
-    copyright: "2025 C-NEX - Carbon Network & Intelligence Exchange Indonesia.",
+    copyright: "2025 HYDREX - Hydrological Resource Exchange.",
     disability_support: "Dukungan Disabilitas",
     access_guide: "Panduan Akses",
 
     // MRV Dashboard
-    mrv_dashboard_badge: "C-NEX MRV Dashboard",
-    mrv_dashboard_title: "C-NEX MRV Dashboard",
+    mrv_dashboard_badge: "HYDREX MRV Dashboard",
+    mrv_dashboard_title: "HYDREX MRV Dashboard",
     mrv_dashboard_desc:
-      "Access MRV data, projects, and carbon reports in one interactive dashboard",
+      "Access MRV data, projects, and water reports in one interactive dashboard",
     mrv_module_summary: "Summary",
     mrv_module_baseline: "Baseline",
-    mrv_module_stock: "Carbon Stock",
+    mrv_module_stock: "Water Resources",
     mrv_module_mitigation: "Mitigation",
     mrv_module_nek: "NEK",
     mrv_module_economic: "Economic Value",
     mrv_module_compliance: "Compliance",
-    mrv_carbon_stock: "Carbon Stock",
+    mrv_water_stock: "Water Resources",
     mrv_emission_reduction: "Emission Reduction",
-    mrv_carbon_units: "Carbon Units",
+    mrv_water_units: "Water Units",
     mrv_economic_value: "Economic Value",
     mrv_total_area: "Total Area",
     mrv_monitoring_period: "Monitoring Period",
@@ -992,14 +1171,14 @@ const translations: Record<Language, Translations> = {
     mrv_percentage: "Percentage",
     mrv_map_placeholder: "Map",
     mrv_map_desc: "Interactive map to view ecosystem distribution",
-    mrv_stock_title: "Carbon Stock",
+    mrv_stock_title: "Water Resources",
     mrv_initial_stock: "Initial Stock",
     mrv_current_stock: "Current Stock",
     mrv_stock_trend: "Stock Trend",
     mrv_actual_stock: "Actual Stock",
     mrv_target_stock: "Target Stock",
     mrv_methodology: "Methodology",
-    mrv_carbon_fraction: "Carbon Fraction",
+    mrv_water_fraction: "Water Fraction",
     mrv_conversion_factor: "Conversion Factor",
     mrv_emission_source: "Emission Source",
     mrv_allometric: "Allometric",
@@ -1061,6 +1240,105 @@ const translations: Record<Language, Translations> = {
     mrv_valid_until: "Valid Until",
     mrv_download_report: "Download Report",
     mrv_share_stakeholders: "Share with Stakeholders",
+
+    // NRECA Model
+    nreca_tab_params: "⚙️ Model Parameters",
+    nreca_tab_data: "📋 Rainfall & PET Data",
+    nreca_tab_results: "📊 Results & Statistics",
+    nreca_tab_charts: "📈 Calibration Charts",
+    nreca_reset: "Reset",
+    nreca_params_title: "NRECA Calibration Parameters",
+    nreca_params_subtitle: "PSUB · GWF · Cr · Initial Storage · Catchment Area",
+    nreca_params_main: "Main Parameters",
+    nreca_psub_hint: "0.3 = impervious soil  |  0.9 = highly permeable",
+    nreca_gwf_hint: "0.2 = slow baseflow  |  0.8 = fast baseflow",
+    nreca_cr_label: "Cr — ET Reduction Coefficient",
+    nreca_cr_hint: "PET correction factor based on land slope",
+    nreca_run_btn: "▶ Run NRECA Model",
+    nreca_results_title: "Calibration Results & Statistics",
+    nreca_results_subtitle: "Mean · Min · Max · NSE · Pearson Correlation",
+    nreca_charts_subtitle:
+      "Time Series · Duration Curve · Moisture Storage · GW Storage",
+    nreca_chart_timeseries_title: "CALIBRATION TIME SERIES — STREAMFLOW (M³/S)",
+    nreca_chart_timeseries_xaxis: "X-axis: Time (Month–Year)",
+    nreca_chart_timeseries_yaxis:
+      "Y-axis: Streamflow Q (m³/s) — flow rate per second",
+    nreca_chart_duration_title: "FLOW DURATION CURVE — CALIBRATION",
+    nreca_chart_duration_xaxis: "X-axis: Exceedance Probability P (0–1)",
+    nreca_chart_duration_yaxis: "Y-axis: Streamflow Q (m³/s)",
+    nreca_chart_duration_tip:
+      "💡 P=0.05 → flow exceeded 5% of time (flood)  ·  P=0.95 → flow exceeded 95% of time (dry season)",
+    nreca_rekap_title: "Flow Duration Summary",
+    nreca_rekap_subtitle:
+      "Streamflow at key exceedance probabilities — used for engineering & hydrology planning",
+    nreca_rekap_col_prob: "Exceedance Probability",
+    nreca_rekap_col_qobs: "Q Obs (m³/s)",
+    nreca_rekap_col_qmodel: "Q Model (m³/s)",
+    nreca_rekap_col_use: "Use Case",
+    nreca_rekap_method_note:
+      "📌 Method: Weibull plotting position — P = m/(n+1) where m = rank (descending) and n = total data points",
+    nreca_rekap_q95_use: "Hydropower (dependable flow)",
+    nreca_rekap_q90_use: "Domestic & Industrial Supply",
+    nreca_rekap_q80_use: "Irrigation",
+    nreca_rekap_q60_use: "Dam / Reservoir Design",
+    nreca_rekap_q50_use: "Mean Annual Flow Availability",
+    nreca_rekap_q40_use: "Flood Analysis (Lower Bound)",
+    nreca_rekap_q20_use: "Flood Analysis (Design)",
+    nreca_nse_formula_title: "NSE Formula",
+    nreca_nse_class_title: "NSE Classification (Moriasi et al.)",
+    nreca_metric_guide_title: "Abbreviations & Metrics Guide",
+    nreca_axis_xaxis: "X-axis",
+    nreca_axis_yaxis: "Y-axis",
+    nreca_calib_very_good: "Calibration: VERY GOOD ✓",
+    nreca_calib_good: "Calibration: GOOD ✓",
+    nreca_calib_satisfactory:
+      "Calibration: SATISFACTORY — parameter adjustment needed",
+    nreca_calib_unsatisfactory:
+      "Calibration: UNSATISFACTORY — adjust PSUB, GWF, Cr",
+    nreca_no_obs: "Enter observed data to compute NSE",
+    nreca_run_first: "Run the NRECA model to view results",
+    nreca_mean_obs: "Mean Observed Data",
+    nreca_mean_model: "Mean Model",
+    nreca_corr_coef: "Correlation Coef. (r)",
+    nreca_min_data_model: "Min Data / Model",
+    nreca_max_data_model: "Max Data / Model",
+    nreca_nom_formula: "Nom = 100 + 0.2·Ra",
+    nreca_table_title: "Full Results Table (21 Columns)",
+    nreca_table_subtitle: "All NRECA model intermediate variables per month",
+    nreca_table_show: "Show",
+    nreca_table_hide: "Hide",
+
+    // NRECA Metric Guide Descriptions
+    nreca_metric_nse_desc:
+      "Measures how well the model reproduces observed data. Closer to 1 = better. NSE = 1 means perfect model.",
+    nreca_metric_nse_range: "Best: close to 1",
+    nreca_metric_r_desc:
+      "Measures the linear correlation between modeled and observed streamflow. Ranges from -1 to 1.",
+    nreca_metric_r_range: "Best: close to 1",
+    nreca_metric_qcomp_desc:
+      "Streamflow computed by the NRECA model based on calibration parameters and rainfall-PET input.",
+    nreca_metric_qcomp_range: "Compare with Qobs",
+    nreca_metric_qobs_desc:
+      "Observed streamflow measured at a gauging station. Used as the calibration reference.",
+    nreca_metric_qobs_range: "Field reference data",
+    nreca_metric_pet_desc:
+      "Potential Evapotranspiration (mm): water that could evaporate if supply is unlimited. Multiplied by correction factor Cr.",
+    nreca_metric_pet_range: "Model input, unit mm",
+    nreca_metric_aet_desc:
+      "Actual Evapotranspiration (mm): portion of PET that actually occurs, depending on soil moisture (STOR_RATIO).",
+    nreca_metric_aet_range: "AET ≤ PET always",
+    nreca_metric_psub_desc:
+      "Fraction of excess moisture that recharges the groundwater reservoir. Remainder (1−PSUB) becomes direct runoff.",
+    nreca_metric_psub_range: "0 – 1 (typically 0.5–0.9)",
+    nreca_metric_gwf_desc:
+      "Fraction of groundwater storage that exits as baseflow each month. Small = slow baseflow release.",
+    nreca_metric_gwf_range: "0 – 1 (typically 0.1–0.3)",
+    nreca_metric_nom_desc:
+      "Nom = 100 + 0.2×Ra is the nominal soil storage capacity (mm). Ra = mean annual rainfall (mm).",
+    nreca_metric_nom_range: "Auto-calculated from Ra",
+    nreca_metric_cr_desc:
+      "Multiplication factor to adjust PET to local watershed conditions. Value < 1 = lower effective PET.",
+    nreca_metric_cr_range: "0.5 – 1.2 (typically ≈ 0.8)",
   },
 };
 

@@ -1,1642 +1,5305 @@
-import React, { useState, useEffect, useRef } from "react";
+// HYDREX — VWBA 2.0 Hydrological Calculator
+// Volumetric Water Benefit Accounting Platform
+// Water Footprint · Water Stock · Water Credit · VWB Methods (D-1 to D-9)
+// Integrated PDF download via waterPdfGenerator
+
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "../context/LanguageContext";
+import { useTheme } from "../components/ThemeProvider";
 import {
+  Droplets,
   Calculator,
-  Car,
-  Plane,
-  Zap,
-  Leaf,
-  TrendingDown,
-  TrendingUp,
-  RefreshCw,
-  Download,
-  Info,
-  TreeDeciduous,
-  Factory,
-  Fuel,
-  Globe,
-  Award,
-  Target,
-  Map,
-  Layers,
-  MapPin,
-  Ruler,
-  DollarSign,
-  FileText,
   CheckCircle,
+  Info,
+  RefreshCw,
+  BarChart3,
+  FileText,
+  Activity,
+  Download,
+  FileDown,
+  Leaf,
+  CloudRain,
+  Factory,
+  Sprout,
+  Recycle,
+  Home,
+  ChevronDown,
+  TrendingUp,
+  TrendingDown,
   AlertCircle,
-  Beef,
-  Trash2,
-  Plus,
-  Minus,
-  Maximize2,
+  Table2,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useLanguage } from "../components/LanguageProvider";
+import {
+  generateWaterFootprintPDF,
+  generateWaterStockPDF,
+  generateWaterCreditPDF,
+  generateCompleteWaterReportPDF,
+} from "../services/waterPdfGenerator";
+import type {
+  WaterFootprintData,
+  WaterStockData,
+  WaterCreditData,
+  HydrexReportData,
+} from "../services/waterPdfGenerator";
 
-// =============================================
-// TYPES
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// THEME COLORS
+// ═══════════════════════════════════════════════════════════════
 
-interface EmissionFactor {
-  nameId: string;
-  nameEn: string;
-  factor: number;
-  unitId: string;
-  unitEn: string;
-  source: string;
-}
-
-interface LandType {
-  nameId: string;
-  nameEn: string;
-  icon: string;
-  aboveground: number;
-  belowground: number;
-  deadwood: number;
-  litter: number;
-  soil: number;
-  total: number;
-  color: string;
-  bgColor: string;
-  descId: string;
-  descEn: string;
-}
-
-// =============================================
-// DATA - IPCC 2019
-// =============================================
-
-const EMISSION_FACTORS: Record<string, EmissionFactor> = {
-  electricity: {
-    nameId: "Listrik",
-    nameEn: "Electricity",
-    factor: 0.855,
-    unitId: "kWh/bulan",
-    unitEn: "kWh/month",
-    source: "ESDM Indonesia 2023",
-  },
-  transport: {
-    nameId: "Transportasi Darat",
-    nameEn: "Ground Transport",
-    factor: 0.21,
-    unitId: "km/bulan",
-    unitEn: "km/month",
-    source: "IPCC 2019",
-  },
-  flight: {
-    nameId: "Penerbangan",
-    nameEn: "Air Travel",
-    factor: 0.255,
-    unitId: "km/tahun",
-    unitEn: "km/year",
-    source: "ICAO",
-  },
-  fuel_gasoline: {
-    nameId: "Bensin",
-    nameEn: "Gasoline",
-    factor: 2.31,
-    unitId: "liter/bulan",
-    unitEn: "liters/month",
-    source: "IPCC 2019",
-  },
-  fuel_diesel: {
-    nameId: "Solar",
-    nameEn: "Diesel",
-    factor: 2.68,
-    unitId: "liter/bulan",
-    unitEn: "liters/month",
-    source: "IPCC 2019",
-  },
-  lpg: {
-    nameId: "Gas LPG",
-    nameEn: "LPG Gas",
-    factor: 2.98,
-    unitId: "kg/bulan",
-    unitEn: "kg/month",
-    source: "IPCC 2019",
-  },
-  meat_beef: {
-    nameId: "Daging Sapi",
-    nameEn: "Beef",
-    factor: 27.0,
-    unitId: "kg/bulan",
-    unitEn: "kg/month",
-    source: "Poore & Nemecek 2018",
-  },
-  meat_chicken: {
-    nameId: "Daging Ayam",
-    nameEn: "Chicken",
-    factor: 6.9,
-    unitId: "kg/bulan",
-    unitEn: "kg/month",
-    source: "Poore & Nemecek 2018",
-  },
-  waste: {
-    nameId: "Sampah",
-    nameEn: "Waste",
-    factor: 0.5,
-    unitId: "kg/bulan",
-    unitEn: "kg/month",
-    source: "IPCC 2019",
-  },
+const darkC = {
+  ocean: "#0ea5e9",
+  teal: "#14b8a6",
+  emerald: "#10b981",
+  amber: "#f59e0b",
+  rose: "#f43f5e",
+  purple: "#a78bfa",
+  ink: "#050d1a",
+  card: "#0a1628",
+  surface: "#0f1f38",
+  border: "rgba(14,165,233,0.18)",
+  text: "#e2f0ff",
+  muted: "#6b8cad",
 };
 
-const CARBON_STOCK_FACTORS: Record<string, LandType> = {
-  tropical_rainforest: {
-    nameId: "Hutan Hujan Tropis",
-    nameEn: "Tropical Rainforest",
-    icon: "🌳",
-    aboveground: 180,
-    belowground: 49,
-    deadwood: 20,
-    litter: 5,
-    soil: 86,
-    total: 340,
-    color: "from-green-600 to-emerald-700",
-    bgColor: "#059669",
-    descId: "Hutan primer dengan keanekaragaman tinggi",
-    descEn: "Primary forest with high biodiversity",
-  },
-  mangrove: {
-    nameId: "Mangrove",
-    nameEn: "Mangrove Forest",
-    icon: "🌿",
-    aboveground: 120,
-    belowground: 60,
-    deadwood: 15,
-    litter: 3,
-    soil: 386,
-    total: 584,
-    color: "from-teal-600 to-cyan-700",
-    bgColor: "#0d9488",
-    descId: "Ekosistem pesisir dengan stok karbon tanah tinggi",
-    descEn: "Coastal ecosystem with high soil carbon stock",
-  },
-  peatland_forest: {
-    nameId: "Hutan Gambut",
-    nameEn: "Peatland Forest",
-    icon: "🌲",
-    aboveground: 150,
-    belowground: 40,
-    deadwood: 18,
-    litter: 4,
-    soil: 2000,
-    total: 2212,
-    color: "from-amber-700 to-orange-800",
-    bgColor: "#b45309",
-    descId: "Hutan di lahan gambut dengan stok karbon sangat tinggi",
-    descEn: "Forest on peatland with very high carbon stock",
-  },
-  secondary_forest: {
-    nameId: "Hutan Sekunder",
-    nameEn: "Secondary Forest",
-    icon: "🌳",
-    aboveground: 100,
-    belowground: 27,
-    deadwood: 10,
-    litter: 3,
-    soil: 70,
-    total: 210,
-    color: "from-lime-600 to-green-700",
-    bgColor: "#65a30d",
-    descId: "Hutan yang telah mengalami regenerasi",
-    descEn: "Forest that has undergone regeneration",
-  },
-  agroforestry: {
-    nameId: "Agroforestri",
-    nameEn: "Agroforestry",
-    icon: "🌴",
-    aboveground: 60,
-    belowground: 16,
-    deadwood: 5,
-    litter: 2,
-    soil: 60,
-    total: 143,
-    color: "from-yellow-600 to-amber-700",
-    bgColor: "#ca8a04",
-    descId: "Kombinasi pertanian dan kehutanan",
-    descEn: "Combination of agriculture and forestry",
-  },
-  rubber_plantation: {
-    nameId: "Perkebunan Karet",
-    nameEn: "Rubber Plantation",
-    icon: "🌳",
-    aboveground: 55,
-    belowground: 15,
-    deadwood: 3,
-    litter: 2,
-    soil: 45,
-    total: 120,
-    color: "from-emerald-600 to-green-700",
-    bgColor: "#059669",
-    descId: "Perkebunan karet monokultur",
-    descEn: "Monoculture rubber plantation",
-  },
-  oil_palm: {
-    nameId: "Kelapa Sawit",
-    nameEn: "Oil Palm",
-    icon: "🌴",
-    aboveground: 40,
-    belowground: 11,
-    deadwood: 2,
-    litter: 2,
-    soil: 40,
-    total: 95,
-    color: "from-orange-600 to-red-700",
-    bgColor: "#ea580c",
-    descId: "Perkebunan kelapa sawit",
-    descEn: "Oil palm plantation",
-  },
-  grassland: {
-    nameId: "Padang Rumput",
-    nameEn: "Grassland",
-    icon: "🌾",
-    aboveground: 3,
-    belowground: 12,
-    deadwood: 0,
-    litter: 1,
-    soil: 50,
-    total: 66,
-    color: "from-lime-500 to-yellow-600",
-    bgColor: "#84cc16",
-    descId: "Lahan rumput alami atau savana",
-    descEn: "Natural grassland or savanna",
-  },
-  rice_paddy: {
-    nameId: "Sawah Padi",
-    nameEn: "Rice Paddy",
-    icon: "🌾",
-    aboveground: 2,
-    belowground: 1,
-    deadwood: 0,
-    litter: 1,
-    soil: 55,
-    total: 59,
-    color: "from-green-500 to-lime-600",
-    bgColor: "#22c55e",
-    descId: "Lahan pertanian padi",
-    descEn: "Rice paddy field",
-  },
+const lightC = {
+  ocean: "#0284c7",
+  teal: "#0d9488",
+  emerald: "#059669",
+  amber: "#d97706",
+  rose: "#e11d48",
+  purple: "#7c3aed",
+  ink: "#f0f9ff",
+  card: "#ffffff",
+  surface: "#f1f5f9",
+  border: "rgba(2,132,199,0.2)",
+  text: "#0c4a6e",
+  muted: "#0369a1",
 };
 
-const CARBON_CREDIT_PRICES = {
-  voluntary: {
-    vcs: { name: "VCS (Verra)", min: 5, max: 20, avg: 12 },
-    gold_standard: { name: "Gold Standard", min: 8, max: 30, avg: 18 },
-    plan_vivo: { name: "Plan Vivo", min: 10, max: 25, avg: 15 },
-  },
-  compliance: {
-    eu_ets: { name: "EU ETS", min: 80, max: 100, avg: 90 },
-    korea_ets: { name: "Korea ETS", min: 15, max: 25, avg: 20 },
-    china_ets: { name: "China ETS", min: 8, max: 12, avg: 10 },
-  },
-  indonesia: {
-    idx_carbon: { name: "IDX Carbon", min: 5, max: 15, avg: 10 },
-    srn_ppi: { name: "SRN-PPI", min: 2, max: 10, avg: 5 },
-  },
+// ═══════════════════════════════════════════════════════════════
+// VWBA 2.0 CONSTANTS & STANDARDS
+// ═══════════════════════════════════════════════════════════════
+
+const CURVE_NUMBERS = {
+  forest_good: 36,
+  forest_fair: 60,
+  grassland_good: 39,
+  grassland_fair: 61,
+  agricultural_good: 67,
+  agricultural_poor: 81,
+  urban_impervious: 98,
+  wetland: 98,
 };
 
-const INDONESIA_LOCATIONS = [
+const RETURN_FLOW = {
+  flood_irrigation: 30,
+  sprinkler: 15,
+  drip: 5,
+  surface_water: 20,
+};
+
+const WATER_STANDARDS = {
+  reasonable_access: 20,
+  basic_hygiene: 2,
+  handwashing: 1.5,
+  flush_toilet: 30,
+  pour_flush: 4,
+};
+
+const RUNOFF_COEF = {
+  concrete: 0.85,
+  asphalt: 0.9,
+  metal_roof: 0.9,
+  tile_roof: 0.85,
+  gravel: 0.5,
+  lawn_flat: 0.2,
+  lawn_steep: 0.35,
+  forest: 0.1,
+};
+
+const BMP_FACTORS = {
+  bioretention: 80,
+  rain_garden: 75,
+  green_roof: 60,
+  permeable_pavement: 90,
+  constructed_wetland: 85,
+  retention_pond: 70,
+  detention_pond: 50,
+};
+
+const PROJECT_TYPES = [
   {
-    nameId: "Kalimantan Timur",
-    nameEn: "East Kalimantan",
-    lat: 0.5387,
-    lng: 116.4194,
-    zoom: 8,
+    value: "groundwater_recharge",
+    label: "💧 Recharge Air Tanah (D-4)",
+    method: "D-4",
   },
   {
-    nameId: "Riau (Gambut)",
-    nameEn: "Riau (Peatland)",
-    lat: 1.4927,
-    lng: 102.1489,
-    zoom: 8,
+    value: "rainwater_harvesting",
+    label: "🌧️ Panen Air Hujan (D-4)",
+    method: "D-4",
   },
   {
-    nameId: "Papua Barat",
-    nameEn: "West Papua",
-    lat: -1.3361,
-    lng: 133.1747,
-    zoom: 7,
+    value: "wetland_restoration",
+    label: "🌿 Restorasi Lahan Basah (D-5)",
+    method: "D-5",
+  },
+  { value: "stormwater_bmp", label: "🌊 Stormwater BMP (D-5)", method: "D-5" },
+  {
+    value: "wash_supply",
+    label: "🚰 WASH Penyediaan Air (D-3)",
+    method: "D-3",
   },
   {
-    nameId: "Sulawesi Selatan",
-    nameEn: "South Sulawesi",
-    lat: -3.6687,
-    lng: 119.974,
-    zoom: 8,
+    value: "wastewater_treatment",
+    label: "🔬 Pengolahan Limbah (D-6)",
+    method: "D-6",
   },
+  { value: "reforestation", label: "🌳 Reforestasi (D-1/D-4)", method: "D-1" },
   {
-    nameId: "Sumatra Barat",
-    nameEn: "West Sumatra",
-    lat: -0.7399,
-    lng: 100.8,
-    zoom: 8,
-  },
-  { nameId: "Bali", nameEn: "Bali", lat: -8.3405, lng: 115.092, zoom: 10 },
-  {
-    nameId: "Jawa Tengah",
-    nameEn: "Central Java",
-    lat: -7.151,
-    lng: 110.1403,
-    zoom: 9,
-  },
-  {
-    nameId: "NTT (Mangrove)",
-    nameEn: "NTT (Mangrove)",
-    lat: -8.6574,
-    lng: 121.0794,
-    zoom: 8,
+    value: "irrigation_efficiency",
+    label: "🌾 Efisiensi Irigasi (D-2)",
+    method: "D-2",
   },
 ];
 
-// =============================================
-// MAIN COMPONENT
-// =============================================
+// ═══════════════════════════════════════════════════════════════
+// CALCULATION FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
 
-export const CalculatorPage: React.FC = () => {
-  const { language, t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<"footprint" | "stock" | "credit">(
-    "footprint",
+// D-1: Curve Number Method
+function calculateCurveNumberRunoff(P: number, CN: number): number {
+  const S = 25400 / CN - 254;
+  const threshold = 0.2 * S;
+  if (P > threshold) {
+    return Math.pow(P - threshold, 2) / (P + 0.8 * S);
+  }
+  return 0;
+}
+
+// D-2: Consumption
+function calculateConsumption(
+  withdrawal: number,
+  returnFlowPercent: number,
+): number {
+  return withdrawal * (1 - returnFlowPercent / 100);
+}
+
+// D-3: Volume Provided
+function calculateVolumeProvided(
+  option: string,
+  value1: number,
+  value2: number,
+  value3: number,
+): number {
+  if (option === "metered") return value1;
+  if (option === "capacity") return value1 * value2 * value3;
+  if (option === "beneficiaries") return (value1 * value2 * value3) / 1000;
+  return 0;
+}
+
+// D-4: Recharge Method
+function calculateRecharge(
+  catchmentArea: number,
+  runoffCoef: number,
+  precipitation: number,
+  storageCapacity: number,
+  timesFilled: number,
+  evaporation: number,
+  withdrawal: number,
+): number {
+  const availableSupply = catchmentArea * runoffCoef * (precipitation / 1000);
+  const storagePotential = storageCapacity * timesFilled;
+  const volumeCaptured = Math.min(availableSupply, storagePotential);
+  return Math.max(0, volumeCaptured - evaporation - withdrawal);
+}
+
+// D-5: Volume Captured
+function calculateVolumeCaptured(
+  precipitation: number,
+  area: number,
+  runoffCoef: number,
+  reductionFactor: number,
+): number {
+  const supplyVolume = (precipitation / 1000) * area * runoffCoef;
+  return supplyVolume * (reductionFactor / 100);
+}
+
+// D-6: Volume Treated
+function calculateVolumeTreated(
+  annualVolume: number,
+  numChallenges: number,
+  influentConc: number,
+  effluentConc: number,
+  targetConc: number,
+): number {
+  const incrementalImprovement = influentConc - effluentConc;
+  const totalImprovementNeeded = influentConc - targetConc;
+
+  if (totalImprovementNeeded <= 0) return 0;
+
+  const fractionImproved = Math.min(
+    1.0,
+    incrementalImprovement / totalImprovementNeeded,
   );
+  return annualVolume * (1 / numChallenges) * fractionImproved;
+}
 
-  const tabLabels = {
-    footprint: language === "id" ? "Jejak Karbon" : "Carbon Footprint",
-    stock: language === "id" ? "Stok Karbon & Peta" : "Carbon Stock & Map",
-    credit: language === "id" ? "Kredit Karbon" : "Carbon Credit",
+// Water Stock
+function calculateWaterStock(
+  precipitation: number,
+  evapotranspiration: number,
+  surfaceRunoff: number,
+  totalWithdrawal: number,
+  watershedArea: number,
+) {
+  const areaM2 = watershedArea * 1_000_000;
+  const P_vol = (precipitation / 1000) * areaM2;
+  const ET_vol = (evapotranspiration / 1000) * areaM2;
+  const Q_vol = (surfaceRunoff / 1000) * areaM2;
+  const deltaS = P_vol - ET_vol - Q_vol - totalWithdrawal;
+
+  let status = "";
+  let pressureLevel = "";
+  let recommendation = "";
+
+  if (deltaS > 5_000_000) {
+    status = "Surplus Besar";
+    pressureLevel = "Rendah";
+    recommendation =
+      "DAS dalam kondisi baik. Dapat menerima aktivitas tambahan dengan monitoring berkala.";
+  } else if (deltaS > 0) {
+    status = "Surplus Kecil";
+    pressureLevel = "Sedang";
+    recommendation =
+      "DAS dalam kondisi cukup. Pertahankan dan lakukan monitoring rutin.";
+  } else if (deltaS > -5_000_000) {
+    status = "Defisit Ringan";
+    pressureLevel = "Tinggi";
+    recommendation =
+      "DAS mulai tertekan. Implementasikan program konservasi dan kurangi konsumsi.";
+  } else {
+    status = "Defisit Berat";
+    pressureLevel = "Sangat Tinggi";
+    recommendation =
+      "DAS mengalami tekanan kritis. WAJIB implementasi proyek konservasi dan water credit segera.";
+  }
+
+  return {
+    deltaS,
+    status,
+    pressureLevel,
+    recommendation,
+    P_vol,
+    ET_vol,
+    Q_vol,
   };
+}
 
+// Water Footprint
+function calculateWaterFootprint(
+  withdrawal: number,
+  returnFlow: number,
+  sector: string,
+) {
+  const netConsumption = withdrawal - returnFlow;
+  const blueWater = withdrawal;
+
+  let category = "";
+  let status = "";
+
+  if (netConsumption < 1_000_000) {
+    category = "Rendah";
+    status = "Konsumsi dalam batas wajar — pertahankan efisiensi";
+  } else if (netConsumption < 10_000_000) {
+    category = "Sedang";
+    status = "Perlu monitoring rutin dan strategi efisiensi air";
+  } else if (netConsumption < 50_000_000) {
+    category = "Tinggi";
+    status = "Perlu strategi efisiensi agresif dan water credit";
+  } else {
+    category = "Sangat Tinggi - Kritis";
+    status = "Wajib kurangi konsumsi dan peroleh water credit segera";
+  }
+
+  return { netConsumption, blueWater, category, status };
+}
+
+// Water Credit
+function calculateWaterCredit(
+  volumeWithProject: number,
+  volumeWithoutProject: number,
+  fundingContribution: number,
+  projectType: string,
+) {
+  const vwb = volumeWithProject - volumeWithoutProject;
+  const eligibleCredit = vwb * (fundingContribution / 100);
+
+  let projectImpact = "";
+  if (vwb > 100_000) {
+    projectImpact =
+      "Positif Besar — Kontribusi signifikan terhadap ketersediaan air";
+  } else if (vwb > 10_000) {
+    projectImpact = "Positif Sedang — Meningkatkan ketahanan air lokal";
+  } else if (vwb > 0) {
+    projectImpact = "Positif Ringan — Dampak terbatas namun berkontribusi";
+  } else if (vwb === 0) {
+    projectImpact = "Netral — Tidak ada perubahan volumetrik";
+  } else {
+    projectImpact = "Negatif — Mengurangi ketersediaan air";
+  }
+
+  return { vwb, eligibleCredit, projectImpact };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NRECA MODEL ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+const NRECA_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Agu",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
+];
+
+interface NRECAMonthlyInput {
+  year: number;
+  month: number;
+  days: number;
+  rainfall: number; // R (mm)
+  pet: number; // PET (mm)
+  qObs?: number; // Debit observasi (m³/s)
+}
+
+interface NRECAParams {
+  PSUB: number;
+  GWF: number;
+  Cr: number;
+  Wo_i: number;
+  Gw_i: number;
+  Ra: number;
+  A: number;
+}
+
+interface NRECAResult {
+  year: number;
+  month: number;
+  days: number;
+  R: number;
+  PET: number;
+  Wo: number;
+  Wi: number;
+  STOR_RATIO: number;
+  PRECIP_PET: number;
+  AET_PET: number;
+  AET: number;
+  WATER_BALANCE: number;
+  EXCESS_MOIST_RATIO: number;
+  EXCESS_MOIST: number;
+  DELTA_STORAGE: number;
+  RECHG_GW: number;
+  BEGIN_GW: number;
+  END_GW: number;
+  GW_FLOW: number;
+  DIRECT_FLOW: number;
+  TOTAL_DISCH_mm: number;
+  Qcomp: number;
+  Qobs?: number;
+  sqError?: number;
+  sqObsDev?: number;
+}
+
+function nrecaCalcAETPET(storRatio: number, precipPET: number): number {
+  if (precipPET >= 1.0) return 1.0;
+  return Math.min(1.0, storRatio + precipPET);
+}
+
+function nrecaExcessRatio(storRatio: number): number {
+  if (storRatio >= 2.0) return 0.99;
+  if (storRatio <= 0.1) return 0.01;
+  return Math.min(0.99, Math.max(0.01, Math.pow(storRatio / 2.0, 0.5)));
+}
+
+function runNRECA(
+  inputs: NRECAMonthlyInput[],
+  params: NRECAParams,
+): NRECAResult[] {
+  const { PSUB, GWF, Cr, Wo_i, Gw_i, Ra, A } = params;
+  const Nom = 100 + 0.2 * Ra;
+  const results: NRECAResult[] = [];
+  let Wo = Wo_i;
+  let GwBegin = Gw_i;
+
+  for (const inp of inputs) {
+    const PET = Cr * inp.pet;
+    const STOR_RATIO = Wo / Nom;
+    const PRECIP_PET = PET > 0 ? inp.rainfall / PET : inp.rainfall / 0.001;
+    const AET_PET = nrecaCalcAETPET(STOR_RATIO, PRECIP_PET);
+    const AET = AET_PET * PET;
+    const WATER_BALANCE = inp.rainfall - AET;
+    const EXCESS_MOIST_RATIO = nrecaExcessRatio(STOR_RATIO);
+    const EXCESS_MOIST = Math.max(0, WATER_BALANCE * EXCESS_MOIST_RATIO);
+    const DELTA_STORAGE = WATER_BALANCE - EXCESS_MOIST;
+    const Wi = Math.max(0, Wo + DELTA_STORAGE);
+    const RECHG_GW = EXCESS_MOIST * PSUB;
+    const DIRECT_FLOW = EXCESS_MOIST * (1 - PSUB);
+    const BEGIN_GW = GwBegin;
+    const END_GW = BEGIN_GW + RECHG_GW;
+    const GW_FLOW = END_GW * GWF;
+    const END_GW_after = END_GW - GW_FLOW;
+    const TOTAL_DISCH_mm = DIRECT_FLOW + GW_FLOW;
+    const secPerMonth = inp.days * 86400;
+    const areaM2 = A * 1e6;
+    const Qcomp = ((TOTAL_DISCH_mm / 1000) * areaM2) / secPerMonth;
+    const sqError =
+      inp.qObs !== undefined ? Math.pow(Qcomp - inp.qObs, 2) : undefined;
+
+    results.push({
+      year: inp.year,
+      month: inp.month,
+      days: inp.days,
+      R: inp.rainfall,
+      PET,
+      Wo,
+      Wi,
+      STOR_RATIO,
+      PRECIP_PET,
+      AET_PET,
+      AET,
+      WATER_BALANCE,
+      EXCESS_MOIST_RATIO,
+      EXCESS_MOIST,
+      DELTA_STORAGE,
+      RECHG_GW,
+      BEGIN_GW,
+      END_GW,
+      GW_FLOW,
+      DIRECT_FLOW,
+      TOTAL_DISCH_mm,
+      Qcomp,
+      Qobs: inp.qObs,
+      sqError,
+    });
+
+    Wo = Wi;
+    GwBegin = END_GW_after;
+  }
+
+  // Calculate sqObsDev for NSE
+  const obsVals = results
+    .filter((r) => r.Qobs !== undefined)
+    .map((r) => r.Qobs!);
+  const Qo_mean =
+    obsVals.length > 0
+      ? obsVals.reduce((a, b) => a + b, 0) / obsVals.length
+      : 0;
+  results.forEach((r) => {
+    if (r.Qobs !== undefined) r.sqObsDev = Math.pow(r.Qobs - Qo_mean, 2);
+  });
+  return results;
+}
+
+function calcNRECAStats(results: NRECAResult[]) {
+  const compVals = results.map((r) => r.Qcomp);
+  const obsVals = results
+    .filter((r) => r.Qobs !== undefined)
+    .map((r) => r.Qobs!);
+  const mean = (a: number[]) =>
+    a.length ? a.reduce((s, v) => s + v, 0) / a.length : 0;
+  const withObs = results.filter(
+    (r) => r.Qobs !== undefined && r.sqError !== undefined,
+  );
+  const sumSqErr = withObs.reduce((s, r) => s + r.sqError!, 0);
+  const sumSqDev = withObs.reduce((s, r) => s + r.sqObsDev!, 0);
+  const NSE = sumSqDev > 0 ? 1 - sumSqErr / sumSqDev : NaN;
+  let r = 0;
+  if (obsVals.length > 0 && obsVals.length === compVals.length) {
+    const mO = mean(obsVals);
+    const mC = mean(compVals);
+    const num = obsVals.reduce(
+      (s, o, i) => s + (o - mO) * (compVals[i] - mC),
+      0,
+    );
+    const dA = Math.sqrt(obsVals.reduce((s, o) => s + Math.pow(o - mO, 2), 0));
+    const dB = Math.sqrt(
+      compVals.reduce((s, c) => s + Math.pow(c - mean(compVals), 2), 0),
+    );
+    r = dA * dB > 0 ? num / (dA * dB) : 0;
+  }
+  return {
+    meanObs: mean(obsVals),
+    minObs: obsVals.length ? Math.min(...obsVals) : 0,
+    maxObs: obsVals.length ? Math.max(...obsVals) : 0,
+    meanComp: mean(compVals),
+    minComp: Math.min(...compVals),
+    maxComp: Math.max(...compVals),
+    r,
+    NSE,
+  };
+}
+
+const NRECA_DEFAULT_DATA: NRECAMonthlyInput[] = [
+  { year: 2007, month: 1, days: 31, rainfall: 264.8, pet: 145.9, qObs: 35.2 },
+  { year: 2007, month: 2, days: 28, rainfall: 426.8, pet: 140.9, qObs: 69.4 },
+  { year: 2007, month: 3, days: 31, rainfall: 815.0, pet: 156.7, qObs: 51.3 },
+  { year: 2007, month: 4, days: 30, rainfall: 233.7, pet: 157.9, qObs: 30.7 },
+  { year: 2007, month: 5, days: 31, rainfall: 280.7, pet: 170.6, qObs: 10.2 },
+  { year: 2007, month: 6, days: 30, rainfall: 346.2, pet: 152.0, qObs: 13.8 },
+  { year: 2007, month: 7, days: 31, rainfall: 372.3, pet: 145.9, qObs: 20.0 },
+  { year: 2007, month: 8, days: 31, rainfall: 308.8, pet: 151.9, qObs: 35.1 },
+  { year: 2007, month: 9, days: 30, rainfall: 539.2, pet: 137.5, qObs: 20.1 },
+  { year: 2007, month: 10, days: 31, rainfall: 602.2, pet: 142.3, qObs: 14.4 },
+  { year: 2007, month: 11, days: 30, rainfall: 580.0, pet: 132.4, qObs: 12.6 },
+  { year: 2007, month: 12, days: 31, rainfall: 205.9, pet: 135.6, qObs: 9.18 },
+];
+
+const NRECA_DEFAULT_PARAMS: NRECAParams = {
+  PSUB: 0.87,
+  GWF: 0.2,
+  Cr: 0.8,
+  Wo_i: 700.0,
+  Gw_i: 20.0,
+  Ra: 2000.0,
+  A: 513.403,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════
+
+interface WaterFootprintInput {
+  withdrawal: number;
+  returnFlow: number;
+  sector: string;
+}
+
+interface WaterStockInput {
+  precipitation: number;
+  evapotranspiration: number;
+  surfaceRunoff: number;
+  totalWithdrawal: number;
+  watershedArea: number;
+}
+
+interface WaterCreditInput {
+  volumeWithProject: number;
+  volumeWithoutProject: number;
+  projectType: string;
+  fundingContribution: number;
+}
+
+interface VWBAMethodInput {
+  method: string;
+  cnPrecipitation?: number;
+  cnCurveNumber?: number;
+  cnArea?: number;
+  cnDays?: number;
+  d2Withdrawal?: number;
+  d2ReturnFlow?: number;
+  d3Option?: string;
+  d3Value1?: number;
+  d3Value2?: number;
+  d3Value3?: number;
+  d4CatchmentArea?: number;
+  d4RunoffCoef?: number;
+  d4Precipitation?: number;
+  d4StorageCapacity?: number;
+  d4TimesFilled?: number;
+  d4Evaporation?: number;
+  d4Withdrawal?: number;
+  d5Precipitation?: number;
+  d5Area?: number;
+  d5RunoffCoef?: number;
+  d5ReductionFactor?: number;
+  d6AnnualVolume?: number;
+  d6NumChallenges?: number;
+  d6Influent?: number;
+  d6Effluent?: number;
+  d6Target?: number;
+}
+
+interface CalculationResults {
+  waterFootprint?: {
+    netConsumption: number;
+    blueWater: number;
+    status: string;
+    category: string;
+  };
+  waterStock?: {
+    deltaS: number;
+    status: string;
+    pressureLevel: string;
+    recommendation: string;
+    P_vol: number;
+    ET_vol: number;
+    Q_vol: number;
+  };
+  waterCredit?: {
+    vwb: number;
+    eligibleCredit: number;
+    projectImpact: string;
+  };
+  vwbaMethod?: {
+    method: string;
+    result: number;
+    unit: string;
+    description: string;
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+
+const fmt = (n: number) =>
+  n.toLocaleString("id-ID", { maximumFractionDigits: 1 });
+
+const statusColor = (s: string, C: typeof darkC): string => {
+  if (
+    s.includes("Surplus") ||
+    s.includes("Positif Besar") ||
+    s.includes("Seimbang") ||
+    s.includes("Rendah") ||
+    s.includes("baik") ||
+    s.includes("Efisien")
+  )
+    return C.emerald;
+  if (s.includes("Sedang") || s.includes("Netral") || s.includes("Ringan"))
+    return C.amber;
+  return C.rose;
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SUB-COMPONENTS
+// ═══════════════════════════════════════════════════════════════
+
+const FormulaBox: React.FC<{ formula: string; vars: [string, string][] }> = ({
+  formula,
+  vars,
+}) => {
+  const { theme: colorTheme } = useTheme();
+  const C = colorTheme === "dark" ? darkC : lightC;
   return (
-    <div className="space-y-6 pb-8">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <Calculator className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">
-                {language === "id" ? "Kalkulator Karbon" : "Carbon Calculator"}
-              </h1>
-              <p className="text-gray-400 text-sm">
-                {language === "id"
-                  ? "Metodologi IPCC 2019"
-                  : "IPCC 2019 Methodology"}
-              </p>
-            </div>
-          </div>
-          <p className="text-gray-400 mt-2">
-            {language === "id"
-              ? "Hitung jejak karbon, stok karbon lahan dengan peta interaktif, dan estimasi kredit karbon"
-              : "Calculate carbon footprint, land carbon stock with interactive map, and carbon credit estimation"}
-          </p>
-        </div>
+    <div
+      style={{
+        background: "rgba(14,165,233,0.06)",
+        border: `1px solid ${C.border}`,
+        borderRadius: 12,
+        padding: "14px 18px",
+        marginBottom: 20,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+          color: C.ocean,
+          fontSize: 13,
+          fontWeight: 700,
+          marginBottom: 10,
+        }}
+      >
+        {formula}
       </div>
-
-      {/* Tab Navigation */}
-      <div className="flex gap-2 p-1 bg-[#1a2420] rounded-2xl border border-emerald-900/30">
-        {[
-          {
-            id: "footprint" as const,
-            icon: <TrendingUp className="w-4 h-4" />,
-          },
-          { id: "stock" as const, icon: <Map className="w-4 h-4" /> },
-          { id: "credit" as const, icon: <DollarSign className="w-4 h-4" /> },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${
-              activeTab === tab.id
-                ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg"
-                : "text-gray-400 hover:text-white hover:bg-emerald-500/10"
-            }`}
-          >
-            {tab.icon}
-            <span className="hidden sm:inline">{tabLabels[tab.id]}</span>
-          </button>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "4px 24px",
+        }}
+      >
+        {vars.map(([sym, desc]) => (
+          <div key={sym} style={{ fontSize: 11.5, color: C.muted }}>
+            <span style={{ color: C.teal, fontFamily: "monospace" }}>{sym}</span>{" "}
+            = {desc}
+          </div>
         ))}
       </div>
-
-      {/* Tab Content */}
-      <AnimatePresence mode="wait">
-        {activeTab === "footprint" && (
-          <CarbonFootprintCalculator key="footprint" />
-        )}
-        {activeTab === "stock" && <CarbonStockCalculator key="stock" />}
-        {activeTab === "credit" && <CarbonCreditCalculator key="credit" />}
-      </AnimatePresence>
     </div>
   );
 };
 
-// =============================================
-// CARBON FOOTPRINT CALCULATOR
-// =============================================
-
-const CarbonFootprintCalculator: React.FC = () => {
-  const { language } = useLanguage();
-  const [values, setValues] = useState<Record<string, number>>({
-    electricity: 350,
-    transport: 500,
-    flight: 5000,
-    fuel_gasoline: 60,
-    fuel_diesel: 0,
-    lpg: 12,
-    meat_beef: 3,
-    meat_chicken: 5,
-    waste: 30,
-  });
-
-  const categories = [
-    {
-      id: "electricity",
-      icon: <Zap className="w-5 h-5" />,
-      color: "from-yellow-500 to-amber-500",
-      max: 2000,
-    },
-    {
-      id: "transport",
-      icon: <Car className="w-5 h-5" />,
-      color: "from-blue-500 to-cyan-500",
-      max: 3000,
-    },
-    {
-      id: "flight",
-      icon: <Plane className="w-5 h-5" />,
-      color: "from-purple-500 to-pink-500",
-      max: 50000,
-    },
-    {
-      id: "fuel_gasoline",
-      icon: <Fuel className="w-5 h-5" />,
-      color: "from-orange-500 to-red-500",
-      max: 500,
-    },
-    {
-      id: "fuel_diesel",
-      icon: <Fuel className="w-5 h-5" />,
-      color: "from-gray-500 to-slate-600",
-      max: 500,
-    },
-    {
-      id: "lpg",
-      icon: <Factory className="w-5 h-5" />,
-      color: "from-teal-500 to-emerald-500",
-      max: 50,
-    },
-    {
-      id: "meat_beef",
-      icon: <Beef className="w-5 h-5" />,
-      color: "from-red-500 to-rose-500",
-      max: 30,
-    },
-    {
-      id: "meat_chicken",
-      icon: <Beef className="w-5 h-5" />,
-      color: "from-amber-500 to-yellow-500",
-      max: 30,
-    },
-    {
-      id: "waste",
-      icon: <Trash2 className="w-5 h-5" />,
-      color: "from-stone-500 to-zinc-600",
-      max: 100,
-    },
-  ];
-
-  const calculateEmission = (id: string) => {
-    const value = values[id] || 0;
-    const factor = EMISSION_FACTORS[id].factor;
-    if (id === "flight") return (value * factor) / 1000;
-    return (value * factor * 12) / 1000;
-  };
-
-  const totalEmissions = Object.keys(EMISSION_FACTORS).reduce(
-    (sum, id) => sum + calculateEmission(id),
-    0,
-  );
-
-  const getEmissionLevel = () => {
-    if (totalEmissions < 2)
-      return {
-        levelId: "Rendah",
-        levelEn: "Low",
-        bg: "from-emerald-500 to-green-500",
-        emoji: "🌱",
-      };
-    if (totalEmissions < 5)
-      return {
-        levelId: "Sedang",
-        levelEn: "Medium",
-        bg: "from-yellow-500 to-amber-500",
-        emoji: "⚠️",
-      };
-    if (totalEmissions < 10)
-      return {
-        levelId: "Tinggi",
-        levelEn: "High",
-        bg: "from-orange-500 to-red-500",
-        emoji: "🔥",
-      };
-    return {
-      levelId: "Sangat Tinggi",
-      levelEn: "Very High",
-      bg: "from-red-500 to-rose-600",
-      emoji: "🚨",
-    };
-  };
-
-  const level = getEmissionLevel();
-  const treesNeeded = Math.ceil((totalEmissions * 1000) / 22);
-
+const InputField: React.FC<{
+  label: string;
+  unit?: string;
+  value: number;
+  hint?: string;
+  onChange: (v: number) => void;
+}> = ({ label, unit, value, hint, onChange }) => {
+  const { theme: colorTheme } = useTheme();
+  const C = colorTheme === "dark" ? darkC : lightC;
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="grid lg:grid-cols-3 gap-6"
-    >
-      <div className="lg:col-span-2 space-y-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold text-white">
-            {language === "id" ? "Input Aktivitas" : "Activity Input"}
-          </h3>
-          <button
-            onClick={() =>
-              setValues(
-                Object.fromEntries(Object.keys(values).map((k) => [k, 0])),
-              )
-            }
-            className="text-sm text-gray-400 hover:text-emerald-400 flex items-center gap-1"
-          >
-            <RefreshCw className="w-4 h-4" /> Reset
-          </button>
-        </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          {categories.map((cat) => {
-            const ef = EMISSION_FACTORS[cat.id];
-            const emission = calculateEmission(cat.id);
-            return (
-              <div
-                key={cat.id}
-                className="bg-[#1a2420] rounded-xl border border-emerald-900/30 p-4 hover:border-emerald-500/30 transition-all"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`p-2 bg-gradient-to-br ${cat.color} rounded-lg`}
-                    >
-                      <span className="text-white">{cat.icon}</span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-white text-sm">
-                        {language === "id" ? ef.nameId : ef.nameEn}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {language === "id" ? ef.unitId : ef.unitEn}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-emerald-400">
-                      {emission.toFixed(2)}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      tCO₂/{language === "id" ? "tahun" : "year"}
-                    </p>
-                  </div>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max={cat.max}
-                  value={values[cat.id] || 0}
-                  onChange={(e) =>
-                    setValues({ ...values, [cat.id]: Number(e.target.value) })
-                  }
-                  className="w-full h-2 bg-[#0d1411] rounded-lg appearance-none cursor-pointer mb-2"
-                  style={{
-                    background: `linear-gradient(to right, rgb(16, 185, 129) 0%, rgb(16, 185, 129) ${((values[cat.id] || 0) / cat.max) * 100}%, rgb(13, 20, 17) ${((values[cat.id] || 0) / cat.max) * 100}%, rgb(13, 20, 17) 100%)`,
-                  }}
-                />
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-600">0</span>
-                  <input
-                    type="number"
-                    value={values[cat.id] || 0}
-                    onChange={(e) =>
-                      setValues({ ...values, [cat.id]: Number(e.target.value) })
-                    }
-                    className="w-20 px-2 py-1 bg-[#0d1411] border border-emerald-900/30 rounded-lg text-center text-white text-sm"
-                  />
-                  <span className="text-xs text-gray-600">{cat.max}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+    <div style={{ marginBottom: 18 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: 6,
+        }}
+      >
+        <label style={{ color: C.text, fontSize: 13, fontWeight: 600 }}>
+          {label}
+        </label>
+        {unit && <span style={{ color: C.muted, fontSize: 12 }}>{unit}</span>}
       </div>
-
-      <div className="space-y-4">
-        <div
-          className={`bg-gradient-to-br ${level.bg} rounded-2xl p-6 text-white`}
-        >
-          <p className="text-sm opacity-80 mb-1">
-            {language === "id"
-              ? "Total Emisi Tahunan"
-              : "Total Annual Emissions"}
-          </p>
-          <div className="flex items-baseline gap-2 mb-3">
-            <span className="text-4xl font-bold">
-              {totalEmissions.toFixed(1)}
-            </span>
-            <span className="text-lg opacity-80">
-              tCO₂/{language === "id" ? "tahun" : "year"}
-            </span>
-          </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full">
-            <span>{level.emoji}</span>
-            <span className="font-medium">
-              Level: {language === "id" ? level.levelId : level.levelEn}
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-[#1a2420] rounded-xl border border-emerald-900/30 p-4 space-y-3">
-          <h4 className="font-medium text-white text-sm flex items-center gap-2">
-            <Globe className="w-4 h-4 text-emerald-400" />
-            {language === "id" ? "Perbandingan" : "Comparison"}
-          </h4>
-          <div className="space-y-2">
-            <div className="flex justify-between p-2 bg-[#0d1411] rounded-lg">
-              <span className="text-gray-400 text-sm">
-                {language === "id"
-                  ? "vs Rata-rata Indonesia"
-                  : "vs Indonesia Average"}
-              </span>
-              <span
-                className={`font-medium ${totalEmissions > 2.3 ? "text-red-400" : "text-emerald-400"}`}
-              >
-                {totalEmissions > 2.3 ? "+" : ""}
-                {(totalEmissions - 2.3).toFixed(1)} ton
-              </span>
-            </div>
-            <div className="flex justify-between p-2 bg-[#0d1411] rounded-lg">
-              <span className="text-gray-400 text-sm">
-                {language === "id"
-                  ? "vs Rata-rata Global"
-                  : "vs Global Average"}
-              </span>
-              <span
-                className={`font-medium ${totalEmissions > 4.7 ? "text-red-400" : "text-emerald-400"}`}
-              >
-                {totalEmissions > 4.7 ? "+" : ""}
-                {(totalEmissions - 4.7).toFixed(1)} ton
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[#1a2420] rounded-xl border border-emerald-900/30 p-4">
-          <h4 className="font-medium text-white text-sm mb-3 flex items-center gap-2">
-            <Target className="w-4 h-4 text-emerald-400" />
-            {language === "id" ? "Kebutuhan Offset" : "Offset Needs"}
-          </h4>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="p-3 bg-[#0d1411] rounded-lg text-center">
-              <TreeDeciduous className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
-              <p className="text-lg font-bold text-white">
-                {treesNeeded.toLocaleString()}
-              </p>
-              <p className="text-xs text-gray-500">
-                {language === "id" ? "Pohon/tahun" : "Trees/year"}
-              </p>
-            </div>
-            <div className="p-3 bg-[#0d1411] rounded-lg text-center">
-              <Award className="w-5 h-5 text-yellow-400 mx-auto mb-1" />
-              <p className="text-lg font-bold text-white">
-                {totalEmissions.toFixed(2)}
-              </p>
-              <p className="text-xs text-gray-500">Carbon Credit</p>
-            </div>
-          </div>
-        </div>
-
-        <Link
-          to="/marketplace"
-          className="block w-full py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-semibold text-center hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
-        >
-          {language === "id" ? "Beli Carbon Credit" : "Buy Carbon Credit"} →
-        </Link>
-      </div>
-    </motion.div>
+      <input
+        type="number"
+        min={0}
+        value={value || ""}
+        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        placeholder="0"
+        style={{
+          width: "100%",
+          background: C.surface,
+          color: C.text,
+          border: `1px solid ${C.border}`,
+          borderRadius: 10,
+          padding: "11px 14px",
+          fontSize: 15,
+          outline: "none",
+          boxSizing: "border-box",
+          transition: "border-color 0.2s",
+        }}
+        onFocus={(e) => (e.target.style.borderColor = C.ocean)}
+        onBlur={(e) => (e.target.style.borderColor = C.border)}
+      />
+      {hint && (
+        <div style={{ color: C.muted, fontSize: 11, marginTop: 5 }}>{hint}</div>
+      )}
+    </div>
   );
 };
 
-// =============================================
-// CARBON STOCK CALCULATOR WITH MAP
-// =============================================
-
-const CarbonStockCalculator: React.FC = () => {
-  const { language } = useLanguage();
-  const [selectedLandType, setSelectedLandType] = useState<string>(
-    "tropical_rainforest",
+const SelectField: React.FC<{
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}> = ({ label, value, onChange, options }) => {
+  const { theme: colorTheme } = useTheme();
+  const C = colorTheme === "dark" ? darkC : lightC;
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <label
+        style={{
+          display: "block",
+          color: C.text,
+          fontSize: 13,
+          fontWeight: 600,
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: "100%",
+          background: C.surface,
+          color: C.text,
+          border: `1px solid ${C.border}`,
+          borderRadius: 10,
+          padding: "11px 14px",
+          fontSize: 14,
+          outline: "none",
+          cursor: "pointer",
+          appearance: "none",
+          boxSizing: "border-box",
+        }}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
-  const [area, setArea] = useState<number>(100);
-  const [drawnPolygons, setDrawnPolygons] = useState<
-    Array<{ points: [number, number][]; area: number }>
-  >([]);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const [mapInstance, setMapInstance] = useState<any>(null);
-  const [drawnItems, setDrawnItems] = useState<any>(null);
-  const [isMapReady, setIsMapReady] = useState(false);
+};
 
-  const landType = CARBON_STOCK_FACTORS[selectedLandType];
-  const totalDrawnArea = drawnPolygons.reduce((sum, p) => sum + p.area, 0);
-  const actualArea = totalDrawnArea > 0 ? totalDrawnArea : area;
+const ResultCard: React.FC<{
+  label: string;
+  value: string;
+  color?: string;
+  sub?: string;
+}> = ({ label, value, color, sub }) => {
+  const { theme: colorTheme } = useTheme();
+  const C = colorTheme === "dark" ? darkC : lightC;
+  const _color = color ?? C.text;
+  return (
+    <div
+      style={{
+        background: C.card,
+        border: `1px solid ${C.border}`,
+        borderRadius: 12,
+        padding: "16px 18px",
+      }}
+    >
+      <div
+        style={{
+          color: C.muted,
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: 1.2,
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ color: _color, fontSize: 20, fontWeight: 800, lineHeight: 1.1 }}>
+        {value}
+      </div>
+      {sub && (
+        <div style={{ color: C.muted, fontSize: 11, marginTop: 5 }}>{sub}</div>
+      )}
+    </div>
+  );
+};
 
-  const carbonStock = {
-    aboveground: landType.aboveground * actualArea,
-    belowground: landType.belowground * actualArea,
-    deadwood: landType.deadwood * actualArea,
-    litter: landType.litter * actualArea,
-    soil: landType.soil * actualArea,
-    total: landType.total * actualArea,
+const CalcButton: React.FC<{
+  onClick: () => void;
+  label: string;
+  color?: string;
+}> = ({ onClick, label, color }) => {
+  const { theme: colorTheme } = useTheme();
+  const C = colorTheme === "dark" ? darkC : lightC;
+  const _color = color ?? C.ocean;
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1,
+        background: `linear-gradient(135deg, ${_color}, ${_color}cc)`,
+        color: "#fff",
+        border: "none",
+        borderRadius: 10,
+        padding: "13px 20px",
+        fontSize: 14,
+        fontWeight: 700,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        boxShadow: `0 4px 20px ${_color}40`,
+        transition: "transform 0.15s",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
+      onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+    >
+      <Calculator size={16} />
+      {label}
+    </button>
+  );
+};
+
+const ResetButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
+  const { theme: colorTheme } = useTheme();
+  const C = colorTheme === "dark" ? darkC : lightC;
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: "transparent",
+        color: C.muted,
+        border: `1px solid ${C.border}`,
+        borderRadius: 10,
+        padding: "13px 18px",
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        transition: "color 0.2s, border-color 0.2s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = C.text;
+        e.currentTarget.style.borderColor = C.ocean;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = C.muted;
+        e.currentTarget.style.borderColor = C.border;
+      }}
+    >
+      <RefreshCw size={16} />
+      Reset
+    </button>
+  );
+};
+
+const DownloadButton: React.FC<{
+  onClick: () => void;
+  label: string;
+  loading: boolean;
+  color?: string;
+  variant?: "solid" | "outline";
+}> = ({ onClick, label, loading, color, variant = "outline" }) => {
+  const { theme: colorTheme } = useTheme();
+  const C = colorTheme === "dark" ? darkC : lightC;
+  const _color = color ?? C.ocean;
+  return (
+    <button
+      onClick={onClick}
+      disabled={loading}
+      style={{
+        background:
+          variant === "solid"
+            ? `linear-gradient(135deg, ${_color}, ${_color}cc)`
+            : "transparent",
+        color: variant === "solid" ? "#fff" : _color,
+        border: `1px solid ${_color}`,
+        borderRadius: 10,
+        padding: "10px 16px",
+        fontSize: 13,
+        fontWeight: 600,
+        cursor: loading ? "not-allowed" : "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        opacity: loading ? 0.6 : 1,
+        transition: "all 0.2s",
+      }}
+      onMouseEnter={(e) =>
+        !loading && (e.currentTarget.style.transform = "translateY(-1px)")
+      }
+      onMouseLeave={(e) =>
+        !loading && (e.currentTarget.style.transform = "translateY(0)")
+      }
+    >
+      {loading ? (
+        <RefreshCw size={14} className="spinning" />
+      ) : (
+        <Download size={14} />
+      )}
+      {loading ? "Membuat PDF..." : label}
+    </button>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════
+
+const HydrologicalCalculator: React.FC = () => {
+  const { t, language } = useLanguage();
+  const { theme: colorTheme } = useTheme();
+  const C = colorTheme === "dark" ? darkC : lightC;
+  const [activeTab, setActiveTab] = useState<
+    "footprint" | "stock" | "credit" | "vwba" | "nreca"
+  >("footprint");
+
+  // ── NRECA State ──
+  const [nrecaParams, setNrecaParams] =
+    useState<NRECAParams>(NRECA_DEFAULT_PARAMS);
+  const [nrecaData, setNrecaData] =
+    useState<NRECAMonthlyInput[]>(NRECA_DEFAULT_DATA);
+  const [nrecaResults, setNrecaResults] = useState<NRECAResult[] | null>(null);
+  const [nrecaStats, setNrecaStats] = useState<ReturnType<
+    typeof calcNRECAStats
+  > | null>(null);
+  const [nrecaSubTab, setNrecaSubTab] = useState<
+    "params" | "data" | "results" | "charts"
+  >("params");
+  const [nrecaShowTable, setNrecaShowTable] = useState(false);
+
+  const handleNRECACalc = () => {
+    const res = runNRECA(nrecaData, nrecaParams);
+    const st = calcNRECAStats(res);
+    setNrecaResults(res);
+    setNrecaStats(st);
+    setNrecaSubTab("results");
   };
 
-  const co2Stock = carbonStock.total * 3.67;
-  const creditValue = {
-    min: co2Stock * 5,
-    max: co2Stock * 20,
-    avg: co2Stock * 12,
+  const handleNRECAReset = () => {
+    setNrecaParams(NRECA_DEFAULT_PARAMS);
+    setNrecaData(NRECA_DEFAULT_DATA);
+    setNrecaResults(null);
+    setNrecaStats(null);
+    setNrecaSubTab("params");
   };
 
-  // Initialize Leaflet
-  useEffect(() => {
-    if (!mapContainerRef.current || mapInstance) return;
+  const setNrecaMonthField = (
+    idx: number,
+    field: keyof NRECAMonthlyInput,
+    val: number,
+  ) => {
+    setNrecaData((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: val };
+      return next;
+    });
+  };
 
-    const initMap = async () => {
-      // Load Leaflet CSS
-      if (!document.getElementById("leaflet-css")) {
-        const css = document.createElement("link");
-        css.id = "leaflet-css";
-        css.rel = "stylesheet";
-        css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-        css.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";
-        css.crossOrigin = "";
-        document.head.appendChild(css);
-      }
-
-      // Load Leaflet Draw CSS
-      if (!document.getElementById("leaflet-draw-css")) {
-        const css = document.createElement("link");
-        css.id = "leaflet-draw-css";
-        css.rel = "stylesheet";
-        css.href =
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css";
-        document.head.appendChild(css);
-      }
-
-      // Load Leaflet JS
-      if (!(window as any).L) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-          script.integrity =
-            "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
-          script.crossOrigin = "";
-          script.onload = () => resolve();
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
-      }
-
-      // Load Leaflet Draw
-      if (!(window as any).L.Draw) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src =
-            "https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js";
-          script.onload = () => resolve();
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
-      }
-
-      // Wait a bit for styles to load
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const L = (window as any).L;
-
-      // Create map
-      const map = L.map(mapContainerRef.current, {
-        center: [-2.5, 118],
-        zoom: 5,
-        zoomControl: false,
+  const addNrecaYear = () => {
+    const last = nrecaData[nrecaData.length - 1];
+    const nextYear = last.month === 12 ? last.year + 1 : last.year;
+    const nextMonth = last.month === 12 ? 1 : last.month + 1;
+    const dpm = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    const rows: NRECAMonthlyInput[] = [];
+    let yr = nextYear;
+    let mo = nextMonth;
+    for (let i = 0; i < 12; i++) {
+      rows.push({
+        year: yr,
+        month: mo,
+        days: dpm[mo - 1],
+        rainfall: 0,
+        pet: 0,
       });
+      mo++;
+      if (mo > 12) {
+        mo = 1;
+        yr++;
+      }
+    }
+    setNrecaData((prev) => [...prev, ...rows]);
+  };
 
-      // Add OpenStreetMap tiles
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution:
-          '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(map);
+  // State for inputs
+  const [footprintInput, setFootprintInput] = useState<WaterFootprintInput>({
+    withdrawal: 0,
+    returnFlow: 0,
+    sector: "industrial",
+  });
 
-      // Add zoom control
-      L.control.zoom({ position: "bottomright" }).addTo(map);
+  const [stockInput, setStockInput] = useState<WaterStockInput>({
+    precipitation: 0,
+    evapotranspiration: 0,
+    surfaceRunoff: 0,
+    totalWithdrawal: 0,
+    watershedArea: 0,
+  });
 
-      // Create feature group for drawings
-      const drawnItemsGroup = new L.FeatureGroup();
-      map.addLayer(drawnItemsGroup);
+  const [creditInput, setCreditInput] = useState<WaterCreditInput>({
+    volumeWithProject: 0,
+    volumeWithoutProject: 0,
+    projectType: "groundwater_recharge",
+    fundingContribution: 50,
+  });
 
-      // Add draw control
-      const drawControl = new L.Control.Draw({
-        position: "topleft",
-        draw: {
-          polyline: false,
-          circle: false,
-          circlemarker: false,
-          marker: false,
-          rectangle: {
-            shapeOptions: { color: "#10b981", weight: 3, fillOpacity: 0.3 },
+  const [vwbaInput, setVwbaInput] = useState<VWBAMethodInput>({
+    method: "D-1",
+    cnPrecipitation: 0,
+    cnCurveNumber: 60,
+    cnArea: 0,
+    cnDays: 365,
+    d2Withdrawal: 0,
+    d2ReturnFlow: 20,
+    d3Option: "metered",
+    d3Value1: 0,
+    d3Value2: 0,
+    d3Value3: 365,
+    d4CatchmentArea: 0,
+    d4RunoffCoef: 0.85,
+    d4Precipitation: 0,
+    d4StorageCapacity: 0,
+    d4TimesFilled: 1,
+    d4Evaporation: 0,
+    d4Withdrawal: 0,
+    d5Precipitation: 0,
+    d5Area: 0,
+    d5RunoffCoef: 0.85,
+    d5ReductionFactor: 80,
+    d6AnnualVolume: 0,
+    d6NumChallenges: 1,
+    d6Influent: 200,
+    d6Effluent: 100,
+    d6Target: 50,
+  });
+
+  // State for results
+  const [results, setResults] = useState<CalculationResults>({});
+  const [hasFootprint, setHasFootprint] = useState(false);
+  const [hasStock, setHasStock] = useState(false);
+  const [hasCredit, setHasCredit] = useState(false);
+  const [hasVWBA, setHasVWBA] = useState(false);
+
+  // PDF loading states
+  const [pdfLoading, setPdfLoading] = useState({
+    footprint: false,
+    stock: false,
+    credit: false,
+    complete: false,
+  });
+
+  const allDone = hasFootprint && hasStock && hasCredit;
+
+  // Calculation handlers
+  const handleFootprintCalc = () => {
+    const result = calculateWaterFootprint(
+      footprintInput.withdrawal,
+      footprintInput.returnFlow,
+      footprintInput.sector,
+    );
+    setResults((prev) => ({ ...prev, waterFootprint: result }));
+    setHasFootprint(true);
+  };
+
+  const handleStockCalc = () => {
+    const result = calculateWaterStock(
+      stockInput.precipitation,
+      stockInput.evapotranspiration,
+      stockInput.surfaceRunoff,
+      stockInput.totalWithdrawal,
+      stockInput.watershedArea,
+    );
+    setResults((prev) => ({ ...prev, waterStock: result }));
+    setHasStock(true);
+  };
+
+  const handleCreditCalc = () => {
+    const result = calculateWaterCredit(
+      creditInput.volumeWithProject,
+      creditInput.volumeWithoutProject,
+      creditInput.fundingContribution,
+      creditInput.projectType,
+    );
+    setResults((prev) => ({ ...prev, waterCredit: result }));
+    setHasCredit(true);
+  };
+
+  const handleVWBACalc = () => {
+    let result = 0;
+    let unit = "m³/tahun";
+    let description = "";
+
+    switch (vwbaInput.method) {
+      case "D-1":
+        if (
+          vwbaInput.cnPrecipitation &&
+          vwbaInput.cnCurveNumber &&
+          vwbaInput.cnArea &&
+          vwbaInput.cnDays
+        ) {
+          const dailyRunoff = calculateCurveNumberRunoff(
+            vwbaInput.cnPrecipitation,
+            vwbaInput.cnCurveNumber,
+          );
+          result = (dailyRunoff / 1000) * vwbaInput.cnArea * vwbaInput.cnDays;
+          description = "Reduced Runoff (Pengurangan Limpasan)";
+        }
+        break;
+
+      case "D-2":
+        if (vwbaInput.d2Withdrawal && vwbaInput.d2ReturnFlow !== undefined) {
+          result =
+            vwbaInput.d2Withdrawal -
+            calculateConsumption(
+              vwbaInput.d2Withdrawal,
+              vwbaInput.d2ReturnFlow,
+            );
+          description = "Reduced Consumption (Pengurangan Konsumsi)";
+        }
+        break;
+
+      case "D-3":
+        result = calculateVolumeProvided(
+          vwbaInput.d3Option || "metered",
+          vwbaInput.d3Value1 || 0,
+          vwbaInput.d3Value2 || 0,
+          vwbaInput.d3Value3 || 0,
+        );
+        description = "Volume Provided (Volume Air Tersedia)";
+        break;
+
+      case "D-4":
+        result = calculateRecharge(
+          vwbaInput.d4CatchmentArea || 0,
+          vwbaInput.d4RunoffCoef || 0,
+          vwbaInput.d4Precipitation || 0,
+          vwbaInput.d4StorageCapacity || 0,
+          vwbaInput.d4TimesFilled || 1,
+          vwbaInput.d4Evaporation || 0,
+          vwbaInput.d4Withdrawal || 0,
+        );
+        description = "Increased Recharge (Peningkatan Imbuhan)";
+        break;
+
+      case "D-5":
+        result = calculateVolumeCaptured(
+          vwbaInput.d5Precipitation || 0,
+          vwbaInput.d5Area || 0,
+          vwbaInput.d5RunoffCoef || 0,
+          vwbaInput.d5ReductionFactor || 0,
+        );
+        description = "Volume Captured (Volume Tertangkap)";
+        break;
+
+      case "D-6":
+        result = calculateVolumeTreated(
+          vwbaInput.d6AnnualVolume || 0,
+          vwbaInput.d6NumChallenges || 1,
+          vwbaInput.d6Influent || 0,
+          vwbaInput.d6Effluent || 0,
+          vwbaInput.d6Target || 0,
+        );
+        description = "Volume Treated (Volume Terolah)";
+        break;
+    }
+
+    setResults((prev) => ({
+      ...prev,
+      vwbaMethod: {
+        method: vwbaInput.method,
+        result,
+        unit,
+        description,
+      },
+    }));
+    setHasVWBA(true);
+  };
+
+  const handleReset = () => {
+    setFootprintInput({ withdrawal: 0, returnFlow: 0, sector: "industrial" });
+    setStockInput({
+      precipitation: 0,
+      evapotranspiration: 0,
+      surfaceRunoff: 0,
+      totalWithdrawal: 0,
+      watershedArea: 0,
+    });
+    setCreditInput({
+      volumeWithProject: 0,
+      volumeWithoutProject: 0,
+      projectType: "groundwater_recharge",
+      fundingContribution: 50,
+    });
+    setVwbaInput({
+      method: "D-1",
+      cnPrecipitation: 0,
+      cnCurveNumber: 60,
+      cnArea: 0,
+      cnDays: 365,
+      d2Withdrawal: 0,
+      d2ReturnFlow: 20,
+      d3Option: "metered",
+      d3Value1: 0,
+      d3Value2: 0,
+      d3Value3: 365,
+      d4CatchmentArea: 0,
+      d4RunoffCoef: 0.85,
+      d4Precipitation: 0,
+      d4StorageCapacity: 0,
+      d4TimesFilled: 1,
+      d4Evaporation: 0,
+      d4Withdrawal: 0,
+      d5Precipitation: 0,
+      d5Area: 0,
+      d5RunoffCoef: 0.85,
+      d5ReductionFactor: 80,
+      d6AnnualVolume: 0,
+      d6NumChallenges: 1,
+      d6Influent: 200,
+      d6Effluent: 100,
+      d6Target: 50,
+    });
+    setResults({});
+    setHasFootprint(false);
+    setHasStock(false);
+    setHasCredit(false);
+    setHasVWBA(false);
+  };
+
+  // PDF generation handlers
+  const handleDownload = async (
+    type: "footprint" | "stock" | "credit" | "complete",
+  ) => {
+    setPdfLoading((prev) => ({ ...prev, [type]: true }));
+
+    try {
+      if (type === "footprint" && results.waterFootprint) {
+        const data: WaterFootprintData = {
+          sector: footprintInput.sector,
+          withdrawal: footprintInput.withdrawal,
+          returnFlow: footprintInput.returnFlow,
+          netConsumption: results.waterFootprint.netConsumption,
+          blueWater: results.waterFootprint.blueWater,
+          status: results.waterFootprint.status,
+          category: results.waterFootprint.category,
+        };
+        await generateWaterFootprintPDF(data, "id");
+      } else if (type === "stock" && results.waterStock) {
+        const data: WaterStockData = {
+          watershedArea: stockInput.watershedArea,
+          precipitation: stockInput.precipitation,
+          evapotranspiration: stockInput.evapotranspiration,
+          surfaceRunoff: stockInput.surfaceRunoff,
+          totalWithdrawal: stockInput.totalWithdrawal,
+          deltaS: results.waterStock.deltaS,
+          status: results.waterStock.status,
+          pressureLevel: results.waterStock.pressureLevel,
+          recommendation: results.waterStock.recommendation,
+          P_vol: results.waterStock.P_vol,
+          ET_vol: results.waterStock.ET_vol,
+          Q_vol: results.waterStock.Q_vol,
+        };
+        await generateWaterStockPDF(data, "id");
+      } else if (type === "credit" && results.waterCredit) {
+        const data: WaterCreditData = {
+          projectType: creditInput.projectType,
+          volumeWithProject: creditInput.volumeWithProject,
+          volumeWithoutProject: creditInput.volumeWithoutProject,
+          fundingContribution: creditInput.fundingContribution,
+          vwb: results.waterCredit.vwb,
+          eligibleCredit: results.waterCredit.eligibleCredit,
+          projectImpact: results.waterCredit.projectImpact,
+        };
+        await generateWaterCreditPDF(data, "id");
+      } else if (
+        type === "complete" &&
+        results.waterFootprint &&
+        results.waterStock &&
+        results.waterCredit
+      ) {
+        const data: HydrexReportData = {
+          waterFootprint: {
+            sector: footprintInput.sector,
+            withdrawal: footprintInput.withdrawal,
+            returnFlow: footprintInput.returnFlow,
+            netConsumption: results.waterFootprint.netConsumption,
+            blueWater: results.waterFootprint.blueWater,
+            status: results.waterFootprint.status,
+            category: results.waterFootprint.category,
           },
-          polygon: {
-            allowIntersection: false,
-            shapeOptions: { color: "#10b981", weight: 3, fillOpacity: 0.3 },
+          waterStock: {
+            watershedArea: stockInput.watershedArea,
+            precipitation: stockInput.precipitation,
+            evapotranspiration: stockInput.evapotranspiration,
+            surfaceRunoff: stockInput.surfaceRunoff,
+            totalWithdrawal: stockInput.totalWithdrawal,
+            deltaS: results.waterStock.deltaS,
+            status: results.waterStock.status,
+            pressureLevel: results.waterStock.pressureLevel,
+            recommendation: results.waterStock.recommendation,
+            P_vol: results.waterStock.P_vol,
+            ET_vol: results.waterStock.ET_vol,
+            Q_vol: results.waterStock.Q_vol,
           },
-        },
-        edit: {
-          featureGroup: drawnItemsGroup,
-          remove: true,
-        },
-      });
-      map.addControl(drawControl);
-
-      // Handle draw events
-      map.on(L.Draw.Event.CREATED, (e: any) => {
-        const layer = e.layer;
-        drawnItemsGroup.addLayer(layer);
-
-        // Calculate area
-        const latlngs = layer.getLatLngs()[0];
-        const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
-        const areaHa = areaM2 / 10000;
-
-        setDrawnPolygons((prev) => [
-          ...prev,
-          { points: latlngs.map((ll: any) => [ll.lat, ll.lng]), area: areaHa },
-        ]);
-      });
-
-      map.on(L.Draw.Event.DELETED, () => {
-        const newPolygons: Array<{ points: [number, number][]; area: number }> =
-          [];
-        drawnItemsGroup.eachLayer((layer: any) => {
-          if (layer.getLatLngs) {
-            const latlngs = layer.getLatLngs()[0];
-            const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
-            const areaHa = areaM2 / 10000;
-            newPolygons.push({
-              points: latlngs.map((ll: any) => [ll.lat, ll.lng]),
-              area: areaHa,
-            });
-          }
-        });
-        setDrawnPolygons(newPolygons);
-      });
-
-      setMapInstance(map);
-      setDrawnItems(drawnItemsGroup);
-      setIsMapReady(true);
-    };
-
-    initMap();
-
-    return () => {
-      if (mapInstance) {
-        mapInstance.remove();
+          waterCredit: {
+            projectType: creditInput.projectType,
+            volumeWithProject: creditInput.volumeWithProject,
+            volumeWithoutProject: creditInput.volumeWithoutProject,
+            fundingContribution: creditInput.fundingContribution,
+            vwb: results.waterCredit.vwb,
+            eligibleCredit: results.waterCredit.eligibleCredit,
+            projectImpact: results.waterCredit.projectImpact,
+          },
+          language: "id",
+          reportDate: new Date().toLocaleDateString("id-ID"),
+        };
+        await generateCompleteWaterReportPDF(data);
       }
-    };
-  }, []);
-
-  // Update map size on fullscreen toggle
-  useEffect(() => {
-    if (mapInstance) {
-      setTimeout(() => mapInstance.invalidateSize(), 100);
-    }
-  }, [isFullscreen, mapInstance]);
-
-  const goToLocation = (lat: number, lng: number, zoom: number) => {
-    if (mapInstance) {
-      mapInstance.setView([lat, lng], zoom);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Gagal membuat PDF. Silakan coba lagi.");
+    } finally {
+      setPdfLoading((prev) => ({ ...prev, [type]: false }));
     }
   };
 
-  const clearDrawings = () => {
-    if (drawnItems) {
-      drawnItems.clearLayers();
-      setDrawnPolygons([]);
-    }
+  // Card style
+  const cardStyle: React.CSSProperties = {
+    background: `linear-gradient(135deg, ${C.card}, ${C.surface})`,
+    border: `1px solid ${C.border}`,
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 24,
   };
-
-  const carbonPools = [
-    {
-      nameId: "Biomassa Atas Tanah",
-      nameEn: "Aboveground Biomass",
-      value: carbonStock.aboveground,
-      color: "bg-emerald-500",
-    },
-    {
-      nameId: "Biomassa Bawah Tanah",
-      nameEn: "Belowground Biomass",
-      value: carbonStock.belowground,
-      color: "bg-green-500",
-    },
-    {
-      nameId: "Kayu Mati",
-      nameEn: "Dead Wood",
-      value: carbonStock.deadwood,
-      color: "bg-amber-500",
-    },
-    {
-      nameId: "Serasah",
-      nameEn: "Litter",
-      value: carbonStock.litter,
-      color: "bg-yellow-500",
-    },
-    {
-      nameId: "Karbon Organik Tanah",
-      nameEn: "Soil Organic Carbon",
-      value: carbonStock.soil,
-      color: "bg-orange-500",
-    },
-  ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="space-y-6"
+    <div
+      style={{
+        minHeight: "100vh",
+        background: `linear-gradient(135deg, ${C.ink}, ${C.card})`,
+        padding: "40px 20px",
+      }}
     >
-      {/* Info Banner */}
-      <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-start gap-3">
-        <Info className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-gray-300">
-          {language === "id"
-            ? "Carbon Stock Calculator - Gambar area di peta untuk menghitung stok karbon berdasarkan metodologi IPCC 2019. Gunakan tools di kiri peta untuk menggambar polygon atau rectangle."
-            : "Carbon Stock Calculator - Draw an area on the map to calculate carbon stock based on IPCC 2019 methodology. Use the tools on the left of the map to draw polygon or rectangle."}
-        </p>
-      </div>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
+            <Droplets size={40} color={C.ocean} />
+            <h1
+              style={{
+                fontSize: 36,
+                fontWeight: 900,
+                color: C.text,
+                margin: 0,
+              }}
+            >
+              HYDREX VWBA 2.0
+            </h1>
+          </div>
+          <p style={{ color: C.muted, fontSize: 15, margin: 0 }}>
+            Volumetric Water Benefit Accounting Calculator
+          </p>
+          <p style={{ color: C.muted, fontSize: 13, marginTop: 8 }}>
+            {language === "id" ? "WRI · LimnoTech · BlueRisk · BEF — Appendix D (D-1 s/d D-9)" : "WRI · LimnoTech · BlueRisk · BEF — Appendix D (D-1 to D-9)"}
+          </p>
+        </div>
 
-      <div className={`grid ${isFullscreen ? "" : "lg:grid-cols-2"} gap-6`}>
-        {/* Map Section */}
-        <div className={`space-y-4 ${isFullscreen ? "col-span-full" : ""}`}>
-          <div className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-white flex items-center gap-2">
-                <Map className="w-5 h-5 text-emerald-400" />
-                {language === "id" ? "Peta Interaktif" : "Interactive Map"}
-              </h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={clearDrawings}
-                  className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg"
-                  title={language === "id" ? "Hapus semua" : "Clear all"}
+        {/* Tabs */}
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            marginBottom: 28,
+            justifyContent: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          {(
+            [
+              {
+                id: "footprint",
+                label: "Water Footprint",
+                icon: Factory,
+                color: C.ocean,
+              },
+              {
+                id: "stock",
+                label: "Water Stock",
+                icon: Activity,
+                color: C.teal,
+              },
+              {
+                id: "credit",
+                label: "Water Credit",
+                icon: CheckCircle,
+                color: C.emerald,
+              },
+              {
+                id: "vwba",
+                label: "VWBA Methods",
+                icon: CloudRain,
+                color: C.purple,
+              },
+              {
+                id: "nreca",
+                label: "Model NRECA",
+                icon: BarChart3,
+                color: C.amber,
+              },
+            ] as const
+          ).map((tab) => {
+            const active = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "11px 22px",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  border: active
+                    ? `1px solid ${tab.color}60`
+                    : `1px solid ${C.border}`,
+                  background: active
+                    ? `linear-gradient(135deg, ${tab.color}22, ${tab.color}0a)`
+                    : "transparent",
+                  color: active ? tab.color : C.muted,
+                  fontSize: 14,
+                  fontWeight: active ? 700 : 500,
+                  transition: "all 0.2s",
+                  boxShadow: active ? `0 0 20px ${tab.color}20` : "none",
+                }}
+              >
+                <Icon size={16} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Reset Button */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: 20,
+          }}
+        >
+          <ResetButton onClick={handleReset} />
+        </div>
+
+        <AnimatePresence mode="wait">
+          {/* TAB 1: WATER FOOTPRINT */}
+          {activeTab === "footprint" && (
+            <motion.div
+              key="footprint"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div style={cardStyle}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    marginBottom: 24,
+                  }}
                 >
-                  <Trash2 className="w-4 h-4 text-red-400" />
-                </button>
-                <button
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="p-2 bg-[#0d1411] hover:bg-emerald-500/20 rounded-lg"
+                  <div
+                    style={{
+                      padding: 10,
+                      borderRadius: 12,
+                      background: "rgba(14,165,233,0.2)",
+                    }}
+                  >
+                    <Factory size={24} color={C.ocean} />
+                  </div>
+                  <div>
+                    <div
+                      style={{ fontSize: 20, fontWeight: 800, color: C.ocean }}
+                    >
+                      Water Footprint
+                    </div>
+                    <div style={{ fontSize: 13, color: C.muted }}>
+                      {language === "id" ? "D-2 Withdrawal & Consumption — Jejak konsumsi air" : "D-2 Withdrawal & Consumption — Water consumption footprint"}
+                    </div>
+                  </div>
+                </div>
+
+                <FormulaBox
+                  formula="Net Consumption = Withdrawal - Return Flow"
+                  vars={[
+                    [
+                      "Withdrawal",
+                      language === "id" ? "Total air yang ditarik dari sumber (m³/tahun)" : "Total water withdrawn from source (m³/year)",
+                    ],
+                    [
+                      "Return Flow",
+                      language === "id" ? "Air yang dikembalikan ke sumber (m³/tahun)" : "Water returned to source (m³/year)",
+                    ],
+                    [
+                      "Net Consumption",
+                      language === "id" ? "Konsumsi bersih/tidak kembali (m³/tahun)" : "Net consumption/non-returned (m³/year)",
+                    ],
+                    ["Blue Water", language === "id" ? "Air hilang dari sistem hidrologis" : "Water lost from hydrological system"],
+                  ]}
+                />
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 16,
+                    marginBottom: 20,
+                  }}
                 >
-                  <Maximize2 className="w-4 h-4 text-gray-400" />
+                  <InputField
+                    label="Total Withdrawal"
+                    unit={language === "id" ? "m³/tahun" : "m³/year"}
+                    value={footprintInput.withdrawal}
+                    onChange={(v) =>
+                      setFootprintInput((prev) => ({ ...prev, withdrawal: v }))
+                    }
+                    hint={language === "id" ? "Total air yang ditarik dari sumber air" : "Total water withdrawn from source"}
+                  />
+                  <InputField
+                    label="Return Flow"
+                    unit={language === "id" ? "m³/tahun" : "m³/year"}
+                    value={footprintInput.returnFlow}
+                    onChange={(v) =>
+                      setFootprintInput((prev) => ({ ...prev, returnFlow: v }))
+                    }
+                    hint={language === "id" ? "Air yang dikembalikan ke ekosistem" : "Water returned to ecosystem"}
+                  />
+                </div>
+
+                <SelectField
+                  label={language === "id" ? "Sektor Industri" : "Industry Sector"}
+                  value={footprintInput.sector}
+                  onChange={(v) =>
+                    setFootprintInput((prev) => ({ ...prev, sector: v }))
+                  }
+                  options={[
+                    { value: "industrial", label: language === "id" ? "Industri Manufaktur" : "Manufacturing Industry" },
+                    { value: "agriculture", label: language === "id" ? "Pertanian & Irigasi" : "Agriculture & Irrigation" },
+                    { value: "mining", label: language === "id" ? "Pertambangan" : "Mining" },
+                    { value: "energy", label: language === "id" ? "Energi & Pembangkit" : "Energy & Power" },
+                    { value: "commercial", label: language === "id" ? "Komersial & Jasa" : "Commercial & Services" },
+                  ]}
+                />
+
+                <div style={{ display: "flex", gap: 12 }}>
+                  <CalcButton
+                    onClick={handleFootprintCalc}
+                    label={language === "id" ? "Hitung Water Footprint" : "Calculate Water Footprint"}
+                    color={C.ocean}
+                  />
+                </div>
+
+                <AnimatePresence>
+                  {hasFootprint && results.waterFootprint && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      style={{ marginTop: 24 }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(3, 1fr)",
+                          gap: 12,
+                          marginBottom: 16,
+                        }}
+                      >
+                        <ResultCard
+                          label="Net Consumption"
+                          value={`${fmt(results.waterFootprint.netConsumption)} m³`}
+                          color={C.ocean}
+                        />
+                        <ResultCard
+                          label="Blue Water"
+                          value={`${fmt(results.waterFootprint.blueWater)} m³`}
+                          color={C.teal}
+                        />
+                        <ResultCard
+                          label={language === "id" ? "Kategori" : "Category"}
+                          value={results.waterFootprint.category}
+                          color={statusColor(results.waterFootprint.category, C)}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          background: "rgba(14,165,233,0.06)",
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 10,
+                          padding: "14px 16px",
+                        }}
+                      >
+                        <div
+                          style={{ display: "flex", gap: 8, marginBottom: 8 }}
+                        >
+                          <Info
+                            size={15}
+                            color={C.ocean}
+                            style={{ flexShrink: 0 }}
+                          />
+                          <strong style={{ fontSize: 13, color: C.ocean }}>
+                            Status
+                          </strong>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: C.muted,
+                            lineHeight: 1.8,
+                          }}
+                        >
+                          {results.waterFootprint.status}
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 16 }}>
+                        <DownloadButton
+                          onClick={() => handleDownload("footprint")}
+                          label={language === "id" ? "Unduh Water Footprint PDF" : "Download Water Footprint PDF"}
+                          loading={pdfLoading.footprint}
+                          color={C.ocean}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 2: WATER STOCK */}
+          {activeTab === "stock" && (
+            <motion.div
+              key="stock"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div style={cardStyle}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    marginBottom: 24,
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: 10,
+                      borderRadius: 12,
+                      background: "rgba(20,184,166,0.2)",
+                    }}
+                  >
+                    <Activity size={24} color={C.teal} />
+                  </div>
+                  <div>
+                    <div
+                      style={{ fontSize: 20, fontWeight: 800, color: C.teal }}
+                    >
+                      Water Stock (DAS)
+                    </div>
+                    <div style={{ fontSize: 13, color: C.muted }}>
+                      {language === "id" ? "Simplified Water Balance — Keseimbangan hidrologi DAS" : "Simplified Water Balance — Watershed hydrological balance"}
+                    </div>
+                  </div>
+                </div>
+
+                <FormulaBox
+                  formula="ΔS = P - ET - Q - W"
+                  vars={[
+                    ["ΔS", language === "id" ? "Perubahan stok air DAS (m³/tahun)" : "Watershed water stock change (m³/year)"],
+                    ["P", language === "id" ? "Presipitasi total (mm/tahun)" : "Total precipitation (mm/year)"],
+                    ["ET", language === "id" ? "Evapotranspirasi (mm/tahun)" : "Evapotranspiration (mm/year)"],
+                    ["Q", language === "id" ? "Surface runoff (mm/tahun)" : "Surface runoff (mm/year)"],
+                    ["W", language === "id" ? "Total withdrawal dari DAS (m³/tahun)" : "Total withdrawal from watershed (m³/year)"],
+                  ]}
+                />
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: 16,
+                    marginBottom: 20,
+                  }}
+                >
+                  <InputField
+                    label="Presipitasi (P)"
+                    unit={language === "id" ? "mm/tahun" : "mm/year"}
+                    value={stockInput.precipitation}
+                    onChange={(v) =>
+                      setStockInput((prev) => ({ ...prev, precipitation: v }))
+                    }
+                    hint={language === "id" ? "Curah hujan tahunan di DAS" : "Annual rainfall in watershed"}
+                  />
+                  <InputField
+                    label="Evapotranspirasi (ET)"
+                    unit={language === "id" ? "mm/tahun" : "mm/year"}
+                    value={stockInput.evapotranspiration}
+                    onChange={(v) =>
+                      setStockInput((prev) => ({
+                        ...prev,
+                        evapotranspiration: v,
+                      }))
+                    }
+                    hint={language === "id" ? "Penguapan dari tanah + transpirasi tanaman" : "Evaporation from soil + plant transpiration"}
+                  />
+                  <InputField
+                    label="Surface Runoff (Q)"
+                    unit={language === "id" ? "mm/tahun" : "mm/year"}
+                    value={stockInput.surfaceRunoff}
+                    onChange={(v) =>
+                      setStockInput((prev) => ({ ...prev, surfaceRunoff: v }))
+                    }
+                    hint={language === "id" ? "Limpasan permukaan tahunan" : "Annual surface runoff"}
+                  />
+                  <InputField
+                    label="Total Withdrawal (W)"
+                    unit={language === "id" ? "m³/tahun" : "m³/year"}
+                    value={stockInput.totalWithdrawal}
+                    onChange={(v) =>
+                      setStockInput((prev) => ({ ...prev, totalWithdrawal: v }))
+                    }
+                    hint={language === "id" ? "Total pengambilan air dari DAS" : "Total water withdrawal from watershed"}
+                  />
+                  <InputField
+                    label="Watershed Area"
+                    unit="km²"
+                    value={stockInput.watershedArea}
+                    onChange={(v) =>
+                      setStockInput((prev) => ({ ...prev, watershedArea: v }))
+                    }
+                    hint={language === "id" ? "Luas DAS untuk konversi volume" : "Watershed area for volume conversion"}
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: 12 }}>
+                  <CalcButton
+                    onClick={handleStockCalc}
+                    label={language === "id" ? "Hitung Water Stock" : "Calculate Water Stock"}
+                    color={C.teal}
+                  />
+                </div>
+
+                <AnimatePresence>
+                  {hasStock && results.waterStock && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      style={{ marginTop: 24 }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(4, 1fr)",
+                          gap: 12,
+                          marginBottom: 16,
+                        }}
+                      >
+                        <ResultCard
+                          label={language === "id" ? "ΔS (Perubahan Stok)" : "ΔS (Stock Change)"}
+                          value={`${results.waterStock.deltaS >= 0 ? "+" : ""}${fmt(results.waterStock.deltaS)} m³`}
+                          color={
+                            results.waterStock.deltaS >= 0 ? C.emerald : C.rose
+                          }
+                        />
+                        <ResultCard
+                          label={language === "id" ? "Status DAS" : "Watershed Status"}
+                          value={results.waterStock.status}
+                          color={statusColor(results.waterStock.status, C)}
+                        />
+                        <ResultCard
+                          label={language === "id" ? "Tekanan" : "Pressure Level"}
+                          value={results.waterStock.pressureLevel}
+                          color={statusColor(results.waterStock.pressureLevel, C)}
+                        />
+                        <ResultCard
+                          label="P Volume"
+                          value={`${fmt(results.waterStock.P_vol)} m³`}
+                          color={C.teal}
+                          sub={language === "id" ? "Presipitasi total" : "Total Precipitation"}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          background: "rgba(20,184,166,0.06)",
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 10,
+                          padding: "14px 16px",
+                        }}
+                      >
+                        <div
+                          style={{ display: "flex", gap: 8, marginBottom: 8 }}
+                        >
+                          <Info
+                            size={15}
+                            color={C.teal}
+                            style={{ flexShrink: 0 }}
+                          />
+                          <strong style={{ fontSize: 13, color: C.teal }}>
+                            {language === "id" ? "Rekomendasi" : "Recommendation"}
+                          </strong>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: C.muted,
+                            lineHeight: 1.8,
+                          }}
+                        >
+                          {results.waterStock.recommendation}
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 16 }}>
+                        <DownloadButton
+                          onClick={() => handleDownload("stock")}
+                          label={language === "id" ? "Unduh Water Stock PDF" : "Download Water Stock PDF"}
+                          loading={pdfLoading.stock}
+                          color={C.teal}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 3: WATER CREDIT */}
+          {activeTab === "credit" && (
+            <motion.div
+              key="credit"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div style={cardStyle}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    marginBottom: 24,
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: 10,
+                      borderRadius: 12,
+                      background: "rgba(16,185,129,0.2)",
+                    }}
+                  >
+                    <CheckCircle size={24} color={C.emerald} />
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 20,
+                        fontWeight: 800,
+                        color: C.emerald,
+                      }}
+                    >
+                      Water Credit (VWB)
+                    </div>
+                    <div style={{ fontSize: 13, color: C.muted }}>
+                      {language === "id" ? "Volumetric Water Benefit dari proyek konservasi" : "Volumetric Water Benefit from conservation projects"}
+                    </div>
+                  </div>
+                </div>
+
+                <FormulaBox
+                  formula="VWB = V(with-project) - V(without-project)"
+                  vars={[
+                    ["VWB", language === "id" ? "Volumetric Water Benefit (m³/tahun)" : "Volumetric Water Benefit (m³/year)"],
+                    ["V(with)", language === "id" ? "Volume air dengan intervensi proyek" : "Water volume with project intervention"],
+                    ["V(without)", language === "id" ? "Volume baseline tanpa proyek" : "Baseline volume without project"],
+                    ["Eligible Credit", language === "id" ? "VWB × (% Kontribusi / 100)" : "VWB × (% Contribution / 100)"],
+                  ]}
+                />
+
+                <SelectField
+                  label={language === "id" ? "Tipe Proyek VWBA" : "VWBA Project Type"}
+                  value={creditInput.projectType}
+                  onChange={(v) =>
+                    setCreditInput((prev) => ({ ...prev, projectType: v }))
+                  }
+                  options={PROJECT_TYPES}
+                />
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: 16,
+                    marginBottom: 20,
+                  }}
+                >
+                  <InputField
+                    label="Volume With Project"
+                    unit={language === "id" ? "m³/tahun" : "m³/year"}
+                    value={creditInput.volumeWithProject}
+                    onChange={(v) =>
+                      setCreditInput((prev) => ({
+                        ...prev,
+                        volumeWithProject: v,
+                      }))
+                    }
+                    hint={language === "id" ? "Volume air dengan intervensi" : "Water volume with intervention"}
+                  />
+                  <InputField
+                    label="Volume Without Project (Baseline)"
+                    unit={language === "id" ? "m³/tahun" : "m³/year"}
+                    value={creditInput.volumeWithoutProject}
+                    onChange={(v) =>
+                      setCreditInput((prev) => ({
+                        ...prev,
+                        volumeWithoutProject: v,
+                      }))
+                    }
+                    hint={language === "id" ? "Volume tanpa proyek (baseline)" : "Volume without project (baseline)"}
+                  />
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <label
+                      style={{ color: C.text, fontSize: 13, fontWeight: 600 }}
+                    >
+                      Funding Contribution
+                    </label>
+                    <span
+                      style={{
+                        color: C.emerald,
+                        fontWeight: 700,
+                        fontSize: 15,
+                      }}
+                    >
+                      {creditInput.fundingContribution}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={creditInput.fundingContribution}
+                    onChange={(e) =>
+                      setCreditInput((prev) => ({
+                        ...prev,
+                        fundingContribution: parseFloat(e.target.value),
+                      }))
+                    }
+                    style={{
+                      width: "100%",
+                      accentColor: C.emerald,
+                      cursor: "pointer",
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      color: C.muted,
+                      fontSize: 11,
+                      marginTop: 4,
+                    }}
+                  >
+                    <span>0%</span>
+                    <span>50%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 12 }}>
+                  <CalcButton
+                    onClick={handleCreditCalc}
+                    label={language === "id" ? "Hitung Water Credit" : "Calculate Water Credit"}
+                    color={C.emerald}
+                  />
+                </div>
+
+                <AnimatePresence>
+                  {hasCredit && results.waterCredit && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      style={{ marginTop: 24 }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(3, 1fr)",
+                          gap: 12,
+                          marginBottom: 16,
+                        }}
+                      >
+                        <ResultCard
+                          label="VWB"
+                          value={`${results.waterCredit.vwb >= 0 ? "+" : ""}${fmt(results.waterCredit.vwb)} m³/thn`}
+                          color={
+                            results.waterCredit.vwb >= 0 ? C.emerald : C.rose
+                          }
+                          sub="Volumetric Water Benefit"
+                        />
+                        <ResultCard
+                          label="Eligible Water Credit"
+                          value={`${fmt(results.waterCredit.eligibleCredit)} m³/thn`}
+                          color={C.emerald}
+                          sub={language === "id" ? `${creditInput.fundingContribution}% kontribusi pendanaan` : `${creditInput.fundingContribution}% funding contribution`}
+                        />
+                        <ResultCard
+                          label={language === "id" ? "Dampak Proyek" : "Project Impact"}
+                          value={
+                            results.waterCredit.projectImpact.split("—")[0]
+                          }
+                          color={statusColor(results.waterCredit.projectImpact, C)}
+                          sub={results.waterCredit.projectImpact
+                            .split("—")[1]
+                            ?.trim()}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          background: "rgba(16,185,129,0.06)",
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 10,
+                          padding: "14px 16px",
+                        }}
+                      >
+                        <div
+                          style={{ display: "flex", gap: 8, marginBottom: 8 }}
+                        >
+                          <Info
+                            size={15}
+                            color={C.emerald}
+                            style={{ flexShrink: 0 }}
+                          />
+                          <strong style={{ fontSize: 13, color: C.emerald }}>
+                            {language === "id" ? "Persyaratan VWBA 2.0" : "VWBA 2.0 Requirements"}
+                          </strong>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: C.muted,
+                            lineHeight: 1.8,
+                          }}
+                        >
+                          ① Setiap kredit dicatat dalam registry dan hanya dapat
+                          digunakan sekali (retirement) &nbsp; ② Transaksi
+                          kredit hanya dalam DAS yang sama atau memiliki
+                          konektivitas hidrologis &nbsp; ③ Baseline
+                          terverifikasi dan metode kuantifikasi terdokumentasi
+                          &nbsp; ④ Verifikasi independen diperlukan untuk
+                          validasi kredit
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 16 }}>
+                        <DownloadButton
+                          onClick={() => handleDownload("credit")}
+                          label={language === "id" ? "Unduh Water Credit PDF" : "Download Water Credit PDF"}
+                          loading={pdfLoading.credit}
+                          color={C.emerald}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 4: VWBA METHODS */}
+          {activeTab === "vwba" && (
+            <motion.div
+              key="vwba"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div
+                style={{
+                  ...cardStyle,
+                  borderColor: "rgba(167,139,250,0.35)",
+                  background:
+                    "linear-gradient(135deg, rgba(167,139,250,0.08), rgba(14,165,233,0.05))",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    marginBottom: 24,
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: 10,
+                      borderRadius: 12,
+                      background: "rgba(167,139,250,0.2)",
+                    }}
+                  >
+                    <CloudRain size={24} color={C.purple} />
+                  </div>
+                  <div>
+                    <div
+                      style={{ fontSize: 20, fontWeight: 800, color: C.purple }}
+                    >
+                      VWBA Methods (Appendix D)
+                    </div>
+                    <div style={{ fontSize: 13, color: C.muted }}>
+                      {language === "id" ? "Metode perhitungan D-1 sampai D-6" : "Calculation methods D-1 to D-6"}
+                    </div>
+                  </div>
+                </div>
+
+                <SelectField
+                  label={language === "id" ? "Pilih Metode VWBA" : "Select VWBA Method"}
+                  value={vwbaInput.method}
+                  onChange={(v) =>
+                    setVwbaInput((prev) => ({ ...prev, method: v }))
+                  }
+                  options={[
+                    {
+                      value: "D-1",
+                      label: "D-1: Curve Number Method (Runoff Reduction)",
+                    },
+                    { value: "D-2", label: "D-2: Withdrawal & Consumption" },
+                    { value: "D-3", label: "D-3: Volume Provided (WASH)" },
+                    { value: "D-4", label: "D-4: Recharge Method" },
+                    {
+                      value: "D-5",
+                      label: "D-5: Volume Captured (Stormwater)",
+                    },
+                    { value: "D-6", label: "D-6: Volume Treated (Wastewater)" },
+                  ]}
+                />
+
+                {/* D-1: Curve Number */}
+                {vwbaInput.method === "D-1" && (
+                  <div style={{ marginTop: 20 }}>
+                    <FormulaBox
+                      formula="Q = (P - 0.2S)² / (P + 0.8S)    where S = (25400/CN) - 254"
+                      vars={[
+                        ["Q", "Runoff harian (mm)"],
+                        ["P", "Presipitasi harian (mm)"],
+                        ["CN", "Curve Number (30-98)"],
+                        ["S", "Potensi retensi maksimum (mm)"],
+                      ]}
+                    />
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, 1fr)",
+                        gap: 16,
+                      }}
+                    >
+                      <InputField
+                        label="Daily Precipitation"
+                        unit="mm/hari"
+                        value={vwbaInput.cnPrecipitation || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({
+                            ...prev,
+                            cnPrecipitation: v,
+                          }))
+                        }
+                      />
+                      <InputField
+                        label="Curve Number (CN)"
+                        unit="30-98"
+                        value={vwbaInput.cnCurveNumber || 60}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({
+                            ...prev,
+                            cnCurveNumber: v,
+                          }))
+                        }
+                        hint="Forest:36-60, Grassland:39-61, Agriculture:67-81, Urban:98"
+                      />
+                      <InputField
+                        label="Surface Area"
+                        unit="m²"
+                        value={vwbaInput.cnArea || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, cnArea: v }))
+                        }
+                      />
+                      <InputField
+                        label="Days per Year"
+                        unit={language === "id" ? "hari" : "days"}
+                        value={vwbaInput.cnDays || 365}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, cnDays: v }))
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* D-2: Consumption */}
+                {vwbaInput.method === "D-2" && (
+                  <div style={{ marginTop: 20 }}>
+                    <FormulaBox
+                      formula="Consumption = Withdrawal × (1 - Return Flow %)"
+                      vars={[
+                        ["Withdrawal", language === "id" ? "Total air yang ditarik (m³/tahun)" : "Total water withdrawn (m³/year)"],
+                        ["Return Flow", language === "id" ? "Persentase air kembali ke sumber" : "Percentage of water returned to source"],
+                        ["Consumption", language === "id" ? "Konsumsi bersih (m³/tahun)" : "Net consumption (m³/year)"],
+                      ]}
+                    />
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, 1fr)",
+                        gap: 16,
+                      }}
+                    >
+                      <InputField
+                        label="Withdrawal Volume"
+                        unit={language === "id" ? "m³/tahun" : "m³/year"}
+                        value={vwbaInput.d2Withdrawal || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, d2Withdrawal: v }))
+                        }
+                      />
+                      <InputField
+                        label="Return Flow Fraction"
+                        unit="%"
+                        value={vwbaInput.d2ReturnFlow || 20}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, d2ReturnFlow: v }))
+                        }
+                        hint="Flood:30%, Sprinkler:15%, Drip:5%"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* D-3: Volume Provided */}
+                {vwbaInput.method === "D-3" && (
+                  <div style={{ marginTop: 20 }}>
+                    <FormulaBox
+                      formula="Volume = Option based (Metered / Capacity / Beneficiaries)"
+                      vars={[
+                        ["Metered", language === "id" ? "Data terukur langsung (m³/tahun)" : "Directly measured data (m³/year)"],
+                        ["Capacity", language === "id" ? "Kapasitas × Operating Time × Days" : "Capacity × Operating Time × Days"],
+                        [
+                          "Beneficiaries",
+                          language === "id" ? "Jumlah × L/person/day × Days / 1000" : "Count × L/person/day × Days / 1000",
+                        ],
+                      ]}
+                    />
+                    <SelectField
+                      label="Calculation Option"
+                      value={vwbaInput.d3Option || "metered"}
+                      onChange={(v) =>
+                        setVwbaInput((prev) => ({ ...prev, d3Option: v }))
+                      }
+                      options={[
+                        { value: "metered", label: "Option 1: Metered Data" },
+                        {
+                          value: "capacity",
+                          label: "Option 2: System Capacity",
+                        },
+                        {
+                          value: "beneficiaries",
+                          label: "Option 3: Beneficiaries",
+                        },
+                      ]}
+                    />
+                    {vwbaInput.d3Option === "metered" && (
+                      <InputField
+                        label="Metered Volume"
+                        unit={language === "id" ? "m³/tahun" : "m³/year"}
+                        value={vwbaInput.d3Value1 || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, d3Value1: v }))
+                        }
+                      />
+                    )}
+                    {vwbaInput.d3Option === "capacity" && (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(3, 1fr)",
+                          gap: 16,
+                        }}
+                      >
+                        <InputField
+                          label="System Capacity"
+                          unit="m³/day"
+                          value={vwbaInput.d3Value1 || 0}
+                          onChange={(v) =>
+                            setVwbaInput((prev) => ({ ...prev, d3Value1: v }))
+                          }
+                        />
+                        <InputField
+                          label="Operating Time"
+                          unit="hours/day"
+                          value={vwbaInput.d3Value2 || 0}
+                          onChange={(v) =>
+                            setVwbaInput((prev) => ({ ...prev, d3Value2: v }))
+                          }
+                        />
+                        <InputField
+                          label="Days Active"
+                          unit="days/year"
+                          value={vwbaInput.d3Value3 || 365}
+                          onChange={(v) =>
+                            setVwbaInput((prev) => ({ ...prev, d3Value3: v }))
+                          }
+                        />
+                      </div>
+                    )}
+                    {vwbaInput.d3Option === "beneficiaries" && (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(3, 1fr)",
+                          gap: 16,
+                        }}
+                      >
+                        <InputField
+                          label="Number of Beneficiaries"
+                          unit={language === "id" ? "orang" : "people"}
+                          value={vwbaInput.d3Value1 || 0}
+                          onChange={(v) =>
+                            setVwbaInput((prev) => ({ ...prev, d3Value1: v }))
+                          }
+                        />
+                        <InputField
+                          label="Per Capita Volume"
+                          unit="L/person/day"
+                          value={vwbaInput.d3Value2 || 20}
+                          onChange={(v) =>
+                            setVwbaInput((prev) => ({ ...prev, d3Value2: v }))
+                          }
+                          hint="WHO standard: 20 L/person/day"
+                        />
+                        <InputField
+                          label="Days of Access"
+                          unit="days/year"
+                          value={vwbaInput.d3Value3 || 365}
+                          onChange={(v) =>
+                            setVwbaInput((prev) => ({ ...prev, d3Value3: v }))
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* D-4: Recharge */}
+                {vwbaInput.method === "D-4" && (
+                  <div style={{ marginTop: 20 }}>
+                    <FormulaBox
+                      formula="Recharge = min(Supply, Storage) - Evaporation - Withdrawal"
+                      vars={[
+                        ["Supply", "Catchment × Runoff Coef × Precipitation"],
+                        ["Storage", "Design Capacity × Times Filled"],
+                        ["Recharge", "Volume recharged to groundwater (m³)"],
+                      ]}
+                    />
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, 1fr)",
+                        gap: 16,
+                      }}
+                    >
+                      <InputField
+                        label="Catchment Area"
+                        unit="m²"
+                        value={vwbaInput.d4CatchmentArea || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({
+                            ...prev,
+                            d4CatchmentArea: v,
+                          }))
+                        }
+                      />
+                      <InputField
+                        label="Runoff Coefficient"
+                        unit="0-1"
+                        value={vwbaInput.d4RunoffCoef || 0.85}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, d4RunoffCoef: v }))
+                        }
+                        hint="Concrete:0.85, Metal roof:0.90, Lawn:0.20"
+                      />
+                      <InputField
+                        label="Annual Precipitation"
+                        unit="mm/year"
+                        value={vwbaInput.d4Precipitation || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({
+                            ...prev,
+                            d4Precipitation: v,
+                          }))
+                        }
+                      />
+                      <InputField
+                        label="Storage Capacity"
+                        unit="m³"
+                        value={vwbaInput.d4StorageCapacity || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({
+                            ...prev,
+                            d4StorageCapacity: v,
+                          }))
+                        }
+                      />
+                      <InputField
+                        label="Times Filled/Year"
+                        unit={language === "id" ? "kali" : "times"}
+                        value={vwbaInput.d4TimesFilled || 1}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({
+                            ...prev,
+                            d4TimesFilled: v,
+                          }))
+                        }
+                      />
+                      <InputField
+                        label="Evaporation Loss"
+                        unit="m³/year"
+                        value={vwbaInput.d4Evaporation || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({
+                            ...prev,
+                            d4Evaporation: v,
+                          }))
+                        }
+                      />
+                      <InputField
+                        label="Withdrawal Loss"
+                        unit="m³/year"
+                        value={vwbaInput.d4Withdrawal || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, d4Withdrawal: v }))
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* D-5: Volume Captured */}
+                {vwbaInput.method === "D-5" && (
+                  <div style={{ marginTop: 20 }}>
+                    <FormulaBox
+                      formula="Volume Captured = Supply × Reduction Factor"
+                      vars={[
+                        ["Supply", "(Precipitation/1000) × Area × Runoff Coef"],
+                        ["Reduction Factor", "BMP-specific percentage (%)"],
+                        ["Volume Captured", "Stormwater captured by BMP (m³)"],
+                      ]}
+                    />
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, 1fr)",
+                        gap: 16,
+                      }}
+                    >
+                      <InputField
+                        label="Annual Precipitation"
+                        unit="mm/year"
+                        value={vwbaInput.d5Precipitation || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({
+                            ...prev,
+                            d5Precipitation: v,
+                          }))
+                        }
+                      />
+                      <InputField
+                        label="Catchment Area"
+                        unit="m²"
+                        value={vwbaInput.d5Area || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, d5Area: v }))
+                        }
+                      />
+                      <InputField
+                        label="Runoff Coefficient"
+                        unit="0-1"
+                        value={vwbaInput.d5RunoffCoef || 0.85}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, d5RunoffCoef: v }))
+                        }
+                      />
+                      <InputField
+                        label="BMP Reduction Factor"
+                        unit="%"
+                        value={vwbaInput.d5ReductionFactor || 80}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({
+                            ...prev,
+                            d5ReductionFactor: v,
+                          }))
+                        }
+                        hint="Bioretention:80%, Rain garden:75%, Permeable:90%"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* D-6: Volume Treated */}
+                {vwbaInput.method === "D-6" && (
+                  <div style={{ marginTop: 20 }}>
+                    <FormulaBox
+                      formula="VWB = Annual Volume × (1/N) × Fraction Improved"
+                      vars={[
+                        ["Annual Volume", language === "id" ? "Volume air terolah per tahun (m³)" : "Water volume treated per year (m³)"],
+                        ["N", language === "id" ? "Jumlah tantangan kualitas air" : "Number of water quality challenges"],
+                        [
+                          "Fraction Improved",
+                          "(Influent - Effluent) / (Influent - Target)",
+                        ],
+                      ]}
+                    />
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, 1fr)",
+                        gap: 16,
+                      }}
+                    >
+                      <InputField
+                        label="Annual Volume Treated"
+                        unit="m³/year"
+                        value={vwbaInput.d6AnnualVolume || 0}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({
+                            ...prev,
+                            d6AnnualVolume: v,
+                          }))
+                        }
+                      />
+                      <InputField
+                        label="Number of Challenges"
+                        unit={language === "id" ? "jumlah" : "count"}
+                        value={vwbaInput.d6NumChallenges || 1}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({
+                            ...prev,
+                            d6NumChallenges: v,
+                          }))
+                        }
+                      />
+                      <InputField
+                        label="Influent Concentration"
+                        unit="mg/L"
+                        value={vwbaInput.d6Influent || 200}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, d6Influent: v }))
+                        }
+                        hint="TSS typical: 200 mg/L"
+                      />
+                      <InputField
+                        label="Effluent Concentration"
+                        unit="mg/L"
+                        value={vwbaInput.d6Effluent || 100}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, d6Effluent: v }))
+                        }
+                      />
+                      <InputField
+                        label="Target Concentration"
+                        unit="mg/L"
+                        value={vwbaInput.d6Target || 50}
+                        onChange={(v) =>
+                          setVwbaInput((prev) => ({ ...prev, d6Target: v }))
+                        }
+                        hint="TSS target: 50 mg/L"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+                  <CalcButton
+                    onClick={handleVWBACalc}
+                    label={language === "id" ? "Hitung VWB Method" : "Calculate VWB Method"}
+                    color={C.purple}
+                  />
+                </div>
+
+                <AnimatePresence>
+                  {hasVWBA && results.vwbaMethod && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      style={{ marginTop: 24 }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr 1fr",
+                          gap: 12,
+                        }}
+                      >
+                        <ResultCard
+                          label="Method"
+                          value={results.vwbaMethod.method}
+                          color={C.purple}
+                        />
+                        <ResultCard
+                          label="Result"
+                          value={`${fmt(results.vwbaMethod.result)} ${results.vwbaMethod.unit}`}
+                          color={C.emerald}
+                        />
+                        <ResultCard
+                          label="Indicator"
+                          value={results.vwbaMethod.description.split("(")[0]}
+                          color={C.ocean}
+                          sub={results.vwbaMethod.description
+                            .split("(")[1]
+                            ?.replace(")", "")}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+          {/* TAB 5: MODEL NRECA */}
+          {activeTab === "nreca" && (
+            <motion.div
+              key="nreca"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* Sub-tab bar */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  marginBottom: 20,
+                  flexWrap: "wrap",
+                }}
+              >
+                {(
+                  [
+                    { key: "params", label: t("nreca_tab_params") },
+                    { key: "data", label: t("nreca_tab_data") },
+                    { key: "results", label: t("nreca_tab_results") },
+                    { key: "charts", label: t("nreca_tab_charts") },
+                  ] as const
+                ).map((st) => (
+                  <button
+                    key={st.key}
+                    onClick={() => setNrecaSubTab(st.key)}
+                    style={{
+                      background:
+                        nrecaSubTab === st.key
+                          ? `linear-gradient(135deg, ${C.amber}, ${C.amber}cc)`
+                          : "rgba(245,158,11,0.08)",
+                      color: nrecaSubTab === st.key ? "#fff" : C.muted,
+                      border: `1px solid ${nrecaSubTab === st.key ? "transparent" : C.border}`,
+                      borderRadius: 9,
+                      padding: "9px 18px",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+                <button
+                  onClick={handleNRECAReset}
+                  style={{
+                    marginLeft: "auto",
+                    background: "transparent",
+                    color: C.muted,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 9,
+                    padding: "9px 14px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <RefreshCw size={13} /> {t("nreca_reset")}
                 </button>
               </div>
-            </div>
 
-            {/* Quick Locations */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className="text-xs text-gray-500 w-full">
-                {language === "id" ? "Lokasi Cepat:" : "Quick Locations:"}
-              </span>
-              {INDONESIA_LOCATIONS.map((loc) => (
-                <button
-                  key={loc.nameId}
-                  onClick={() => goToLocation(loc.lat, loc.lng, loc.zoom)}
-                  className="px-3 py-1.5 bg-[#0d1411] hover:bg-emerald-500/20 rounded-lg text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+              {/* ── SUB-TAB: PARAMETER ── */}
+              {nrecaSubTab === "params" && (
+                <div
+                  style={{ ...cardStyle, borderColor: "rgba(245,158,11,0.25)" }}
                 >
-                  <MapPin className="w-3 h-3" />
-                  {language === "id" ? loc.nameId : loc.nameEn}
-                </button>
-              ))}
-            </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      marginBottom: 24,
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: 10,
+                        borderRadius: 12,
+                        background: "rgba(245,158,11,0.15)",
+                      }}
+                    >
+                      <Activity size={22} color={C.amber} />
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 20,
+                          fontWeight: 800,
+                          color: C.amber,
+                        }}
+                      >
+                        {t("nreca_params_title")}
+                      </div>
+                      <div style={{ fontSize: 13, color: C.muted }}>
+                        {t("nreca_params_subtitle")}
+                      </div>
+                    </div>
+                  </div>
 
-            {/* Map Container */}
-            <div
-              ref={mapContainerRef}
-              className={`rounded-xl overflow-hidden border border-emerald-900/30 ${isFullscreen ? "h-[70vh]" : "h-[400px]"}`}
-              style={{ background: "#1a2420", minHeight: "400px" }}
-            >
-              {!isMapReady && (
-                <div className="w-full h-full flex items-center justify-center bg-[#0d1411]">
-                  <div className="text-center">
-                    <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                    <p className="text-gray-400 text-sm">
-                      {language === "id" ? "Memuat peta..." : "Loading map..."}
-                    </p>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 32,
+                    }}
+                  >
+                    {/* Left: sliders */}
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: C.muted,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: 1.2,
+                          marginBottom: 14,
+                        }}
+                      >
+                        {t("nreca_params_main")} / Main Parameters
+                      </div>
+
+                      {/* PSUB slider */}
+                      {[
+                        {
+                          key: "PSUB" as const,
+                          label: "PSUB — Percent Subsurface",
+                          min: 0.3,
+                          max: 0.9,
+                          hint: t("nreca_psub_hint"),
+                        },
+                        {
+                          key: "GWF" as const,
+                          label: "GWF — Groundwater Flow Factor",
+                          min: 0.2,
+                          max: 0.8,
+                          hint: t("nreca_gwf_hint"),
+                        },
+                        {
+                          key: "Cr" as const,
+                          label: t("nreca_cr_label"),
+                          min: 0.4,
+                          max: 0.9,
+                          hint: t("nreca_cr_hint"),
+                        },
+                      ].map((p) => (
+                        <div key={p.key} style={{ marginBottom: 18 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              marginBottom: 5,
+                            }}
+                          >
+                            <label
+                              style={{
+                                color: C.text,
+                                fontSize: 13,
+                                fontWeight: 600,
+                              }}
+                            >
+                              {p.label}
+                            </label>
+                            <span
+                              style={{
+                                color: C.amber,
+                                fontWeight: 700,
+                                fontFamily: "monospace",
+                                fontSize: 14,
+                              }}
+                            >
+                              {nrecaParams[p.key].toFixed(2)}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={p.min}
+                            max={p.max}
+                            step={0.01}
+                            value={nrecaParams[p.key]}
+                            onChange={(e) =>
+                              setNrecaParams((prev) => ({
+                                ...prev,
+                                [p.key]: parseFloat(e.target.value),
+                              }))
+                            }
+                            style={{
+                              width: "100%",
+                              accentColor: C.amber,
+                              cursor: "pointer",
+                            }}
+                          />
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              marginTop: 3,
+                            }}
+                          >
+                            <span style={{ color: C.muted, fontSize: 10 }}>
+                              {p.min}
+                            </span>
+                            <span style={{ color: C.muted, fontSize: 10 }}>
+                              {p.hint}
+                            </span>
+                            <span style={{ color: C.muted, fontSize: 10 }}>
+                              {p.max}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: 12,
+                        }}
+                      >
+                        {[
+                          {
+                            key: "Wo_i" as const,
+                            label: "Wo-i (Initial Moisture)",
+                            unit: "mm",
+                            hint: "Initial Moisture Storage",
+                          },
+                          {
+                            key: "Gw_i" as const,
+                            label: "Gw-i (Initial GW Storage)",
+                            unit: "mm",
+                            hint: "Initial Groundwater Storage",
+                          },
+                          {
+                            key: "Ra" as const,
+                            label: "Ra — Rata² Hujan Tahunan",
+                            unit: "mm/thn",
+                            hint: `Nom = ${(100 + 0.2 * nrecaParams.Ra).toFixed(0)} mm`,
+                          },
+                          {
+                            key: "A" as const,
+                            label: "A — Luas DAS (Catchment)",
+                            unit: "km²",
+                            hint: "",
+                          },
+                        ].map((f) => (
+                          <div key={f.key} style={{ marginBottom: 16 }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                marginBottom: 5,
+                              }}
+                            >
+                              <label
+                                style={{
+                                  color: C.text,
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {f.label}
+                              </label>
+                              <span style={{ color: C.muted, fontSize: 11 }}>
+                                {f.unit}
+                              </span>
+                            </div>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={nrecaParams[f.key] || ""}
+                              onChange={(e) =>
+                                setNrecaParams((prev) => ({
+                                  ...prev,
+                                  [f.key]: parseFloat(e.target.value) || 0,
+                                }))
+                              }
+                              style={{
+                                width: "100%",
+                                background: C.surface,
+                                color: C.text,
+                                border: `1px solid ${C.border}`,
+                                borderRadius: 9,
+                                padding: "10px 12px",
+                                fontSize: 13,
+                                outline: "none",
+                                boxSizing: "border-box",
+                              }}
+                              onFocus={(e) =>
+                                (e.target.style.borderColor = C.amber)
+                              }
+                              onBlur={(e) =>
+                                (e.target.style.borderColor = C.border)
+                              }
+                            />
+                            {f.hint && (
+                              <div
+                                style={{
+                                  color: C.muted,
+                                  fontSize: 10,
+                                  marginTop: 3,
+                                }}
+                              >
+                                {f.hint}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Right: reference tables */}
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: C.muted,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: 1.2,
+                          marginBottom: 14,
+                        }}
+                      >
+                        Tabel Kemiringan → Cr
+                      </div>
+                      <table
+                        style={{
+                          width: "100%",
+                          borderCollapse: "collapse",
+                          fontSize: 13,
+                          marginBottom: 22,
+                        }}
+                      >
+                        <thead>
+                          <tr style={{ background: "rgba(245,158,11,0.1)" }}>
+                            <th
+                              style={{
+                                padding: "9px 14px",
+                                textAlign: "left",
+                                color: C.muted,
+                                fontWeight: 600,
+                                borderBottom: `1px solid ${C.border}`,
+                              }}
+                            >
+                              Kemiringan (m/Km)
+                            </th>
+                            <th
+                              style={{
+                                padding: "9px 14px",
+                                textAlign: "center",
+                                color: C.muted,
+                                fontWeight: 600,
+                                borderBottom: `1px solid ${C.border}`,
+                              }}
+                            >
+                              Cr
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[
+                            ["0 – 50", "0.9"],
+                            ["51 – 100", "0.8"],
+                            ["101 – 200", "0.6"],
+                            ["> 200", "0.4"],
+                          ].map(([r, v]) => (
+                            <tr
+                              key={r}
+                              style={{
+                                borderBottom: `1px solid ${C.border}30`,
+                              }}
+                            >
+                              <td
+                                style={{ padding: "8px 14px", color: C.text }}
+                              >
+                                {r}
+                              </td>
+                              <td
+                                style={{
+                                  padding: "8px 14px",
+                                  textAlign: "center",
+                                  color: C.amber,
+                                  fontWeight: 700,
+                                  fontFamily: "monospace",
+                                }}
+                              >
+                                {v}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: C.muted,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: 1.2,
+                          marginBottom: 12,
+                        }}
+                      >
+                        {t("nreca_nse_formula_title")} / NSE Formula
+                      </div>
+                      <div
+                        style={{
+                          background: "rgba(245,158,11,0.06)",
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 10,
+                          padding: "14px 16px",
+                          marginBottom: 18,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontFamily: "monospace",
+                            color: C.amber,
+                            fontSize: 13,
+                            marginBottom: 8,
+                          }}
+                        >
+                          E = 1 − [Σ(Qm − Qo)²] / [Σ(Qo − Q̄o)²]
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: C.muted,
+                            lineHeight: 1.7,
+                          }}
+                        >
+                          <span style={{ color: C.teal }}>Qm</span> = Debit
+                          model (m³/s) &nbsp;·&nbsp;
+                          <span style={{ color: C.teal }}>Qo</span> = Debit
+                          observasi &nbsp;·&nbsp;
+                          <span style={{ color: C.teal }}>Q̄o</span> = Rata-rata
+                          observasi
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: C.muted,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: 1.2,
+                          marginBottom: 10,
+                        }}
+                      >
+                        {t("nreca_nse_class_title")}
+                      </div>
+                      {[
+                        {
+                          range: "NSE > 0.75",
+                          label: "Very Good",
+                          color: C.emerald,
+                        },
+                        { range: "0.65 – 0.75", label: "Good", color: C.teal },
+                        {
+                          range: "0.50 – 0.65",
+                          label: "Satisfactory",
+                          color: C.amber,
+                        },
+                        {
+                          range: "NSE ≤ 0.50",
+                          label: "Unsatisfactory",
+                          color: C.rose,
+                        },
+                      ].map((r) => (
+                        <div
+                          key={r.label}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            padding: "6px 10px",
+                            borderRadius: 7,
+                            marginBottom: 4,
+                            background: r.color + "11",
+                            border: `1px solid ${r.color}33`,
+                          }}
+                        >
+                          <span style={{ color: C.text, fontSize: 12 }}>
+                            {r.range}
+                          </span>
+                          <span
+                            style={{
+                              color: r.color,
+                              fontSize: 12,
+                              fontWeight: 700,
+                            }}
+                          >
+                            {r.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
+                    <CalcButton
+                      onClick={handleNRECACalc}
+                      label={t("nreca_run_btn")}
+                      color={C.amber}
+                    />
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Instructions */}
-            <div className="mt-4 p-3 bg-[#0d1411] rounded-xl">
-              <p className="text-xs text-gray-400 flex items-start gap-2">
-                <Info className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>
-                  <strong>
-                    {language === "id" ? "Cara Menggunakan:" : "How to Use:"}
-                  </strong>{" "}
-                  {language === "id"
-                    ? "Klik tombol polygon (⬠) atau rectangle (▢) di pojok kiri atas peta, lalu gambar area. Klik 2x untuk menyelesaikan."
-                    : "Click the polygon (⬠) or rectangle (▢) button at the top left of the map, then draw the area. Double-click to finish."}
-                </span>
-              </p>
-            </div>
-
-            {/* Drawn Areas */}
-            {drawnPolygons.length > 0 && (
-              <div className="mt-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                <h4 className="font-medium text-emerald-400 text-sm mb-2 flex items-center gap-2">
-                  <Ruler className="w-4 h-4" />
-                  {language === "id"
-                    ? `Area Tergambar (${drawnPolygons.length} polygon)`
-                    : `Drawn Area (${drawnPolygons.length} polygons)`}
-                </h4>
-                <div className="space-y-1">
-                  {drawnPolygons.map((p, idx) => (
-                    <div key={idx} className="flex justify-between text-sm">
-                      <span className="text-gray-400">Polygon {idx + 1}</span>
-                      <span className="text-white font-medium">
-                        {p.area.toFixed(2)} ha
-                      </span>
+              {/* ── SUB-TAB: DATA ── */}
+              {nrecaSubTab === "data" && (
+                <div
+                  style={{ ...cardStyle, borderColor: "rgba(245,158,11,0.25)" }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      marginBottom: 20,
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: 10,
+                        borderRadius: 12,
+                        background: "rgba(245,158,11,0.15)",
+                      }}
+                    >
+                      <BarChart3 size={22} color={C.amber} />
                     </div>
-                  ))}
-                  <div className="pt-2 mt-2 border-t border-emerald-500/30 flex justify-between">
-                    <span className="text-emerald-400 font-medium">
-                      {language === "id" ? "Total Area" : "Total Area"}
-                    </span>
-                    <span className="text-emerald-400 font-bold">
-                      {totalDrawnArea.toFixed(2)} ha
-                    </span>
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 20,
+                          fontWeight: 800,
+                          color: C.amber,
+                        }}
+                      >
+                        Data Input Bulanan / Monthly Input Data
+                      </div>
+                      <div style={{ fontSize: 13, color: C.muted }}>
+                        Hujan (R) · PET · Debit Observasi (opsional) — Rainfall
+                        · PET · Observed Flow (optional for calibration)
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ overflowX: "auto" }}>
+                    <table
+                      style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        fontSize: 12,
+                      }}
+                    >
+                      <thead>
+                        <tr style={{ background: "rgba(245,158,11,0.1)" }}>
+                          {[
+                            "#",
+                            "Tahun / Year",
+                            "Bulan / Month",
+                            "#Hari / Days",
+                            "Hujan R (mm) / Rainfall",
+                            "PET (mm)",
+                            "Q Obs (m³/s)",
+                          ].map((h, i) => (
+                            <th
+                              key={i}
+                              style={{
+                                padding: "10px 10px",
+                                textAlign: i < 4 ? "center" : "right",
+                                color: C.muted,
+                                fontWeight: 600,
+                                borderBottom: `1px solid ${C.border}`,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {nrecaData.map((row, idx) => (
+                          <tr
+                            key={idx}
+                            style={{
+                              borderBottom: `1px solid ${C.border}22`,
+                              background:
+                                idx % 2 === 0
+                                  ? "transparent"
+                                  : "rgba(245,158,11,0.02)",
+                            }}
+                          >
+                            <td
+                              style={{
+                                padding: "6px 10px",
+                                textAlign: "center",
+                                color: C.muted,
+                                fontSize: 11,
+                              }}
+                            >
+                              {idx + 1}
+                            </td>
+                            <td
+                              style={{
+                                padding: "6px 10px",
+                                textAlign: "center",
+                                color: C.muted,
+                              }}
+                            >
+                              {row.year}
+                            </td>
+                            <td
+                              style={{
+                                padding: "6px 10px",
+                                textAlign: "center",
+                                color: C.text,
+                                fontWeight: 600,
+                              }}
+                            >
+                              {NRECA_MONTHS[row.month - 1]}
+                            </td>
+                            <td
+                              style={{
+                                padding: "4px 6px",
+                                textAlign: "center",
+                              }}
+                            >
+                              <input
+                                type="number"
+                                value={row.days}
+                                min={28}
+                                max={31}
+                                onChange={(e) =>
+                                  setNrecaMonthField(
+                                    idx,
+                                    "days",
+                                    parseInt(e.target.value) || 30,
+                                  )
+                                }
+                                style={{
+                                  width: 50,
+                                  background: C.surface,
+                                  color: C.text,
+                                  border: `1px solid ${C.border}`,
+                                  borderRadius: 6,
+                                  padding: "4px 6px",
+                                  fontSize: 12,
+                                  textAlign: "center",
+                                  outline: "none",
+                                }}
+                              />
+                            </td>
+                            {(["rainfall", "pet", "qObs"] as const).map(
+                              (field) => (
+                                <td key={field} style={{ padding: "4px 6px" }}>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    min={0}
+                                    value={
+                                      row[field] !== undefined ? row[field] : ""
+                                    }
+                                    placeholder="-"
+                                    onChange={(e) =>
+                                      setNrecaMonthField(
+                                        idx,
+                                        field,
+                                        parseFloat(e.target.value) || 0,
+                                      )
+                                    }
+                                    style={{
+                                      width: "100%",
+                                      minWidth: 80,
+                                      background: C.surface,
+                                      color:
+                                        field === "qObs" ? C.ocean : C.text,
+                                      border: `1px solid ${C.border}`,
+                                      borderRadius: 6,
+                                      padding: "5px 8px",
+                                      fontSize: 12,
+                                      outline: "none",
+                                      textAlign: "right",
+                                      boxSizing: "border-box" as const,
+                                    }}
+                                    onFocus={(e) =>
+                                      (e.target.style.borderColor = C.amber)
+                                    }
+                                    onBlur={(e) =>
+                                      (e.target.style.borderColor = C.border)
+                                    }
+                                  />
+                                </td>
+                              ),
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ display: "flex", gap: 12, marginTop: 18 }}>
+                    <button
+                      onClick={addNrecaYear}
+                      style={{
+                        background: "rgba(245,158,11,0.12)",
+                        color: C.amber,
+                        border: `1px solid ${C.amber}44`,
+                        borderRadius: 9,
+                        padding: "10px 18px",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      + Tambah 12 Baris (1 Tahun)
+                    </button>
+                    <CalcButton
+                      onClick={handleNRECACalc}
+                      label="Hitung Sekarang"
+                      color={C.amber}
+                    />
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
 
-          {/* Land Type Selection */}
-          <div className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-4">
-            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-              <Layers className="w-5 h-5 text-emerald-400" />
-              {language === "id" ? "Pilih Tipe Lahan" : "Select Land Type"}
-            </h3>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-              {Object.entries(CARBON_STOCK_FACTORS).map(([key, land]) => (
-                <button
-                  key={key}
-                  onClick={() => setSelectedLandType(key)}
-                  className={`p-2 rounded-xl border-2 text-center transition-all ${
-                    selectedLandType === key
-                      ? "border-emerald-500 bg-emerald-500/10"
-                      : "border-emerald-900/30 hover:border-emerald-500/50"
-                  }`}
-                >
-                  <span className="text-xl block mb-1">{land.icon}</span>
-                  <p className="text-xs font-medium text-white truncate">
-                    {language === "id" ? land.nameId : land.nameEn}
-                  </p>
-                  <p className="text-[10px] text-gray-500">
-                    {land.total} tC/ha
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Manual Input */}
-          {drawnPolygons.length === 0 && (
-            <div className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-4">
-              <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-                <Ruler className="w-5 h-5 text-emerald-400" />
-                {language === "id"
-                  ? "Input Manual (jika tidak menggambar)"
-                  : "Manual Input (if not drawing)"}
-              </h3>
-              <div className="flex items-center gap-4">
-                <input
-                  type="number"
-                  value={area}
-                  onChange={(e) => setArea(Number(e.target.value))}
-                  className="flex-1 px-4 py-2 bg-[#0d1411] border border-emerald-900/30 rounded-xl text-white text-center"
-                />
-                <span className="text-gray-400">
-                  {language === "id" ? "hektar" : "hectares"}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Results */}
-        {!isFullscreen && (
-          <div className="space-y-4">
-            {/* Land Type Info */}
-            <div
-              className={`bg-gradient-to-br ${landType.color} rounded-2xl p-5 text-white`}
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-4xl">{landType.icon}</span>
+              {/* ── SUB-TAB: RESULTS ── */}
+              {nrecaSubTab === "results" && (
                 <div>
-                  <h3 className="text-xl font-bold">
-                    {language === "id" ? landType.nameId : landType.nameEn}
-                  </h3>
-                </div>
-              </div>
-              <p className="text-sm opacity-80 mb-4">
-                {language === "id" ? landType.descId : landType.descEn}
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/20 rounded-lg p-3">
-                  <p className="text-2xl font-bold">{landType.total}</p>
-                  <p className="text-xs opacity-80">tC/ha (total)</p>
-                </div>
-                <div className="bg-white/20 rounded-lg p-3">
-                  <p className="text-2xl font-bold">
-                    {(landType.total * 3.67).toFixed(0)}
-                  </p>
-                  <p className="text-xs opacity-80">tCO₂eq/ha</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Carbon Stock Breakdown */}
-            <div className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-5">
-              <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                <Layers className="w-5 h-5 text-emerald-400" />
-                {language === "id" ? "Stok Karbon" : "Carbon Stock"} (
-                {actualArea.toLocaleString()} ha)
-              </h3>
-
-              <div className="space-y-3">
-                {carbonPools.map((pool) => (
-                  <div key={pool.nameId}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-400">
-                        {language === "id" ? pool.nameId : pool.nameEn}
-                      </span>
-                      <span className="text-white font-medium">
-                        {pool.value.toLocaleString()} tC
-                      </span>
-                    </div>
-                    <div className="h-2 bg-[#0d1411] rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${pool.color} rounded-full`}
-                        style={{
-                          width: `${Math.min((pool.value / carbonStock.total) * 100, 100)}%`,
-                        }}
+                  {!nrecaResults ? (
+                    <div
+                      style={{
+                        ...cardStyle,
+                        textAlign: "center",
+                        padding: "60px 32px",
+                      }}
+                    >
+                      <AlertCircle
+                        size={36}
+                        color={C.muted}
+                        style={{ marginBottom: 12 }}
                       />
+                      <div style={{ color: C.muted, fontSize: 15 }}>
+                        {t("nreca_run_first")}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Stats Cards */}
+                      <div
+                        style={{
+                          ...cardStyle,
+                          borderColor: "rgba(245,158,11,0.25)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 12,
+                            marginBottom: 20,
+                          }}
+                        >
+                          <div
+                            style={{
+                              padding: 10,
+                              borderRadius: 12,
+                              background: "rgba(16,185,129,0.15)",
+                            }}
+                          >
+                            <CheckCircle size={22} color={C.emerald} />
+                          </div>
+                          <div>
+                            <div
+                              style={{
+                                fontSize: 20,
+                                fontWeight: 800,
+                                color: C.emerald,
+                              }}
+                            >
+                              {t("nreca_results_title")}
+                            </div>
+                            <div style={{ fontSize: 13, color: C.muted }}>
+                              {t("nreca_results_subtitle")}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* NSE Badge */}
+                        {nrecaStats && (
+                          <div
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 8,
+                              marginBottom: 20,
+                              background:
+                                (nrecaStats.NSE > 0.65
+                                  ? C.emerald
+                                  : nrecaStats.NSE > 0.5
+                                    ? C.amber
+                                    : C.rose) + "22",
+                              border: `1px solid ${nrecaStats.NSE > 0.65 ? C.emerald : nrecaStats.NSE > 0.5 ? C.amber : C.rose}55`,
+                              borderRadius: 20,
+                              padding: "8px 16px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: "50%",
+                                background:
+                                  nrecaStats.NSE > 0.65
+                                    ? C.emerald
+                                    : nrecaStats.NSE > 0.5
+                                      ? C.amber
+                                      : C.rose,
+                              }}
+                            />
+                            <span
+                              style={{
+                                color:
+                                  nrecaStats.NSE > 0.65
+                                    ? C.emerald
+                                    : nrecaStats.NSE > 0.5
+                                      ? C.amber
+                                      : C.rose,
+                                fontWeight: 700,
+                                fontSize: 14,
+                              }}
+                            >
+                              NSE ={" "}
+                              {isNaN(nrecaStats.NSE)
+                                ? "N/A"
+                                : nrecaStats.NSE.toFixed(3)}
+                              &nbsp;—&nbsp;
+                              {isNaN(nrecaStats.NSE)
+                                ? t("nreca_no_obs")
+                                : nrecaStats.NSE > 0.75
+                                  ? "Very Good"
+                                  : nrecaStats.NSE > 0.65
+                                    ? "Good"
+                                    : nrecaStats.NSE > 0.5
+                                      ? "Satisfactory"
+                                      : "Unsatisfactory"}
+                            </span>
+                          </div>
+                        )}
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(3, 1fr)",
+                            gap: 12,
+                            marginBottom: 16,
+                          }}
+                        >
+                          {nrecaStats &&
+                            [
+                              {
+                                label: t("nreca_mean_obs"),
+                                value: `${nrecaStats.meanObs.toFixed(2)} m³/s`,
+                                color: C.ocean,
+                              },
+                              {
+                                label: t("nreca_mean_model"),
+                                value: `${nrecaStats.meanComp.toFixed(2)} m³/s`,
+                                color: C.amber,
+                              },
+                              {
+                                label: t("nreca_corr_coef"),
+                                value: nrecaStats.r.toFixed(3),
+                                color: nrecaStats.r > 0.7 ? C.emerald : C.rose,
+                              },
+                              {
+                                label: t("nreca_min_data_model"),
+                                value: `${nrecaStats.minObs.toFixed(1)} / ${nrecaStats.minComp.toFixed(1)}`,
+                                color: C.teal,
+                              },
+                              {
+                                label: t("nreca_max_data_model"),
+                                value: `${nrecaStats.maxObs.toFixed(1)} / ${nrecaStats.maxComp.toFixed(1)}`,
+                                color: C.teal,
+                              },
+                              {
+                                label: t("nreca_nom_formula"),
+                                value: `${(100 + 0.2 * nrecaParams.Ra).toFixed(1)} mm`,
+                                color: C.purple,
+                              },
+                            ].map((c) => (
+                              <ResultCard
+                                key={c.label}
+                                label={c.label}
+                                value={c.value}
+                                color={c.color}
+                              />
+                            ))}
+                        </div>
+                      </div>
+
+                      {/* ── Metric Legend / Panduan Metrik ── */}
+                      <div
+                        style={{
+                          ...cardStyle,
+                          borderColor: "rgba(245,158,11,0.22)",
+                          marginBottom: 16,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: C.amber,
+                            textTransform: "uppercase",
+                            letterSpacing: 1.2,
+                            marginBottom: 14,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <Info size={14} color={C.amber} />
+                          {t("nreca_metric_guide_title")}
+                        </div>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(auto-fill, minmax(240px, 1fr))",
+                            gap: 10,
+                          }}
+                        >
+                          {[
+                            {
+                              abbr: "NSE",
+                              full: "Nash-Sutcliffe Efficiency",
+                              desc: t("nreca_metric_nse_desc"),
+                              range: t("nreca_metric_nse_range"),
+                              color: C.amber,
+                            },
+                            {
+                              abbr: "r",
+                              full: "Pearson Correlation Coefficient",
+                              desc: t("nreca_metric_r_desc"),
+                              range: t("nreca_metric_r_range"),
+                              color: C.ocean,
+                            },
+                            {
+                              abbr: "Qcomp",
+                              full: "Computed / Model Streamflow (m³/s)",
+                              desc: t("nreca_metric_qcomp_desc"),
+                              range: t("nreca_metric_qcomp_range"),
+                              color: C.amber,
+                            },
+                            {
+                              abbr: "Qobs",
+                              full: "Observed Streamflow (m³/s)",
+                              desc: t("nreca_metric_qobs_desc"),
+                              range: t("nreca_metric_qobs_range"),
+                              color: C.ocean,
+                            },
+                            {
+                              abbr: "PET",
+                              full: "Potential Evapotranspiration",
+                              desc: t("nreca_metric_pet_desc"),
+                              range: t("nreca_metric_pet_range"),
+                              color: C.teal,
+                            },
+                            {
+                              abbr: "AET",
+                              full: "Actual Evapotranspiration",
+                              desc: t("nreca_metric_aet_desc"),
+                              range: t("nreca_metric_aet_range"),
+                              color: C.teal,
+                            },
+                            {
+                              abbr: "PSUB",
+                              full: "Percent Subsurface",
+                              desc: t("nreca_metric_psub_desc"),
+                              range: t("nreca_metric_psub_range"),
+                              color: C.purple,
+                            },
+                            {
+                              abbr: "GWF",
+                              full: "Groundwater Flow Factor",
+                              desc: t("nreca_metric_gwf_desc"),
+                              range: t("nreca_metric_gwf_range"),
+                              color: C.purple,
+                            },
+                            {
+                              abbr: "Nom / Ra",
+                              full: "Nominal Storage / Mean Annual Rainfall",
+                              desc: t("nreca_metric_nom_desc"),
+                              range: t("nreca_metric_nom_range"),
+                              color: C.emerald,
+                            },
+                            {
+                              abbr: "Cr",
+                              full: "ET Reduction Coefficient",
+                              desc: t("nreca_metric_cr_desc"),
+                              range: t("nreca_metric_cr_range"),
+                              color: C.emerald,
+                            },
+                          ].map((m) => (
+                            <div
+                              key={m.abbr}
+                              style={{
+                                background: m.color + "0d",
+                                border: `1px solid ${m.color}33`,
+                                borderRadius: 10,
+                                padding: "12px 14px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "baseline",
+                                  gap: 8,
+                                  marginBottom: 4,
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontFamily: "monospace",
+                                    fontWeight: 800,
+                                    fontSize: 15,
+                                    color: m.color,
+                                  }}
+                                >
+                                  {m.abbr}
+                                </span>
+                                <span style={{ fontSize: 11, color: C.muted }}>
+                                  {m.full}
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: 11,
+                                  color: "#c0d8ef",
+                                  lineHeight: 1.6,
+                                  marginBottom: 6,
+                                }}
+                              >
+                                {m.desc}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: 10,
+                                  color: m.color,
+                                  fontWeight: 600,
+                                  background: m.color + "15",
+                                  borderRadius: 5,
+                                  padding: "3px 8px",
+                                  display: "inline-block",
+                                }}
+                              >
+                                ✦ {m.range}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Detail Table */}
+                      <div
+                        style={{
+                          ...cardStyle,
+                          borderColor: "rgba(167,139,250,0.25)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: 16,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                            }}
+                          >
+                            <div
+                              style={{
+                                padding: 9,
+                                borderRadius: 10,
+                                background: C.purple + "22",
+                              }}
+                            >
+                              <TrendingUp size={18} color={C.purple} />
+                            </div>
+                            <div>
+                              <div
+                                style={{
+                                  fontSize: 16,
+                                  fontWeight: 800,
+                                  color: C.purple,
+                                }}
+                              >
+                                {t("nreca_table_title")}
+                              </div>
+                              <div style={{ fontSize: 12, color: C.muted }}>
+                                {t("nreca_table_subtitle")}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setNrecaShowTable((prev) => !prev)}
+                            style={{
+                              background: C.purple + "18",
+                              border: `1px solid ${C.purple}44`,
+                              color: C.purple,
+                              borderRadius: 8,
+                              padding: "8px 14px",
+                              fontSize: 13,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            {nrecaShowTable
+                              ? t("nreca_table_hide")
+                              : t("nreca_table_show")}
+                            <ChevronDown
+                              size={14}
+                              style={{
+                                transform: nrecaShowTable
+                                  ? "rotate(180deg)"
+                                  : "none",
+                                transition: "0.2s",
+                              }}
+                            />
+                          </button>
+                        </div>
+
+                        <AnimatePresence>
+                          {nrecaShowTable && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              style={{ overflow: "hidden" }}
+                            >
+                              <div style={{ overflowX: "auto" }}>
+                                <table
+                                  style={{
+                                    width: "100%",
+                                    borderCollapse: "collapse",
+                                    fontSize: 10.5,
+                                    minWidth: 1500,
+                                  }}
+                                >
+                                  <thead>
+                                    <tr
+                                      style={{
+                                        background: "rgba(167,139,250,0.1)",
+                                      }}
+                                    >
+                                      {[
+                                        "Thn",
+                                        "Bln",
+                                        "#Hari",
+                                        "R (mm)",
+                                        "PET (mm)",
+                                        "Wo",
+                                        "Wi",
+                                        "Stor Ratio",
+                                        "R/PET",
+                                        "AET/PET",
+                                        "AET",
+                                        "Water Bal",
+                                        "Exc Moist R",
+                                        "Exc Moist (mm)",
+                                        "ΔStorage",
+                                        "Rechg GW",
+                                        "Begin GW",
+                                        "End GW",
+                                        "GW Flow",
+                                        "Direct Flow",
+                                        "Total (mm)",
+                                        "Qcomp",
+                                        "Qobs",
+                                        "(Qm-Qo)²",
+                                      ].map((h, i) => (
+                                        <th
+                                          key={i}
+                                          style={{
+                                            padding: "8px 7px",
+                                            textAlign: "center",
+                                            color: C.muted,
+                                            fontWeight: 600,
+                                            borderBottom: `1px solid ${C.border}`,
+                                            whiteSpace: "nowrap",
+                                            fontSize: 10,
+                                          }}
+                                        >
+                                          {h}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {nrecaResults.map((r, idx) => (
+                                      <tr
+                                        key={idx}
+                                        style={{
+                                          borderBottom: `1px solid ${C.border}22`,
+                                          background:
+                                            idx % 2 === 0
+                                              ? "transparent"
+                                              : "rgba(167,139,250,0.02)",
+                                        }}
+                                      >
+                                        {[
+                                          r.year,
+                                          NRECA_MONTHS[r.month - 1],
+                                          r.days,
+                                          r.R.toFixed(1),
+                                          r.PET.toFixed(1),
+                                          r.Wo.toFixed(1),
+                                          r.Wi.toFixed(1),
+                                          r.STOR_RATIO.toFixed(2),
+                                          r.PRECIP_PET.toFixed(2),
+                                          r.AET_PET.toFixed(2),
+                                          r.AET.toFixed(2),
+                                          r.WATER_BALANCE.toFixed(2),
+                                          r.EXCESS_MOIST_RATIO.toFixed(2),
+                                          r.EXCESS_MOIST.toFixed(2),
+                                          r.DELTA_STORAGE.toFixed(2),
+                                          r.RECHG_GW.toFixed(2),
+                                          r.BEGIN_GW.toFixed(2),
+                                          r.END_GW.toFixed(2),
+                                          r.GW_FLOW.toFixed(2),
+                                          r.DIRECT_FLOW.toFixed(2),
+                                          r.TOTAL_DISCH_mm.toFixed(2),
+                                          r.Qcomp.toFixed(2),
+                                          r.Qobs !== undefined
+                                            ? r.Qobs.toFixed(2)
+                                            : "-",
+                                          r.sqError !== undefined
+                                            ? r.sqError.toFixed(2)
+                                            : "-",
+                                        ].map((cell, ci) => (
+                                          <td
+                                            key={ci}
+                                            style={{
+                                              padding: "6px 7px",
+                                              textAlign: "center",
+                                              color:
+                                                ci === 21
+                                                  ? C.amber
+                                                  : ci === 22
+                                                    ? C.ocean
+                                                    : C.text,
+                                              fontWeight: ci >= 21 ? 700 : 400,
+                                              fontFamily:
+                                                ci >= 3
+                                                  ? "monospace"
+                                                  : "inherit",
+                                            }}
+                                          >
+                                            {String(cell)}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* ── SUB-TAB: CHARTS ── */}
+              {nrecaSubTab === "charts" && (
+                <div
+                  style={{ ...cardStyle, borderColor: "rgba(245,158,11,0.25)" }}
+                >
+                  {!nrecaResults ? (
+                    <div style={{ textAlign: "center", padding: "60px 0" }}>
+                      <AlertCircle
+                        size={36}
+                        color={C.muted}
+                        style={{ marginBottom: 12 }}
+                      />
+                      <div style={{ color: C.muted }}>
+                        Belum ada hasil. Hitung terlebih dahulu di tab
+                        Parameter.
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          marginBottom: 24,
+                        }}
+                      >
+                        <div
+                          style={{
+                            padding: 10,
+                            borderRadius: 12,
+                            background: "rgba(245,158,11,0.15)",
+                          }}
+                        >
+                          <TrendingUp size={22} color={C.amber} />
+                        </div>
+                        <div>
+                          <div
+                            style={{
+                              fontSize: 20,
+                              fontWeight: 800,
+                              color: C.amber,
+                            }}
+                          >
+                            Grafik Kalibrasi
+                          </div>
+                          <div style={{ fontSize: 13, color: C.muted }}>
+                            {t("nreca_charts_subtitle")}
+                            Storage
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Time Series SVG */}
+                      {(() => {
+                        const data = nrecaResults;
+                        const allV = [
+                          ...data.map((d) => d.Qcomp),
+                          ...data
+                            .filter((d) => d.Qobs != null)
+                            .map((d) => d.Qobs!),
+                        ];
+                        const maxV = Math.max(...allV, 0.01);
+                        const n = data.length;
+                        const W = 700,
+                          H = 180,
+                          pl = 44,
+                          pb = 30,
+                          pt = 14,
+                          pr = 14;
+                        const cw = W - pl - pr,
+                          ch = H - pt - pb;
+                        const xf = (i: number) =>
+                          pl + (i / Math.max(n - 1, 1)) * cw;
+                        const yf = (v: number) => pt + ch - (v / maxV) * ch;
+                        const compPath = data
+                          .map(
+                            (d, i) =>
+                              `${i === 0 ? "M" : "L"} ${xf(i)} ${yf(d.Qcomp)}`,
+                          )
+                          .join(" ");
+                        const obsPath = data
+                          .filter((d) => d.Qobs != null)
+                          .map((d, _, arr) => {
+                            const i = data.indexOf(d);
+                            return `${i === data.indexOf(arr[0]) ? "M" : "L"} ${xf(i)} ${yf(d.Qobs!)}`;
+                          })
+                          .join(" ");
+                        return (
+                          <div
+                            style={{
+                              background: "rgba(245,158,11,0.04)",
+                              borderRadius: 12,
+                              padding: "14px 16px",
+                              border: `1px solid ${C.border}`,
+                              marginBottom: 16,
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: C.muted,
+                                textTransform: "uppercase",
+                                letterSpacing: 1,
+                                marginBottom: 10,
+                              }}
+                            >
+                              {t("nreca_chart_timeseries_title")}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 11,
+                                color: C.muted,
+                                marginBottom: 8,
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 16,
+                              }}
+                            >
+                              <span>
+                                📏{" "}
+                                <strong style={{ color: C.ocean }}>
+                                  {t("nreca_axis_xaxis")}
+                                </strong>
+                                :{" "}
+                                {t("nreca_chart_timeseries_xaxis")
+                                  .replace("Sumbu X: ", "")
+                                  .replace("X-axis: ", "")}
+                              </span>
+                              <span>
+                                📐{" "}
+                                <strong style={{ color: C.ocean }}>
+                                  {t("nreca_axis_yaxis")}
+                                </strong>
+                                :{" "}
+                                {t("nreca_chart_timeseries_yaxis")
+                                  .replace("Sumbu Y: ", "")
+                                  .replace("Y-axis: ", "")}
+                              </span>
+                            </div>
+                            <svg
+                              viewBox={`0 0 ${W} ${H}`}
+                              style={{ width: "100%", height: "auto" }}
+                            >
+                              <text
+                                x={10}
+                                y={pt + ch / 2}
+                                textAnchor="middle"
+                                transform={`rotate(-90, 10, ${pt + ch / 2})`}
+                                style={{
+                                  fontSize: 8,
+                                  fill: C.muted,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                Q (m³/s)
+                              </text>
+                              {[0, 0.25, 0.5, 0.75, 1].map((t, i) => (
+                                <g key={i}>
+                                  <line
+                                    x1={pl}
+                                    y1={pt + ch - t * ch}
+                                    x2={pl + cw}
+                                    y2={pt + ch - t * ch}
+                                    stroke="rgba(14,165,233,0.08)"
+                                    strokeWidth={1}
+                                    strokeDasharray="3,3"
+                                  />
+                                  <text
+                                    x={pl - 4}
+                                    y={pt + ch - t * ch + 4}
+                                    textAnchor="end"
+                                    style={{ fontSize: 9, fill: C.muted }}
+                                  >
+                                    {(t * maxV).toFixed(1)}
+                                  </text>
+                                </g>
+                              ))}
+                              {data
+                                .filter((_, i) => i % 3 === 0)
+                                .map((d, i) => (
+                                  <text
+                                    key={i}
+                                    x={xf(i * 3)}
+                                    y={H - 4}
+                                    textAnchor="middle"
+                                    style={{ fontSize: 8, fill: C.muted }}
+                                  >
+                                    {NRECA_MONTHS[d.month - 1]}'
+                                    {String(d.year).slice(-2)}
+                                  </text>
+                                ))}
+                              {obsPath && (
+                                <path
+                                  d={obsPath}
+                                  fill="none"
+                                  stroke={C.ocean}
+                                  strokeWidth={2}
+                                  strokeLinejoin="round"
+                                />
+                              )}
+                              <path
+                                d={compPath}
+                                fill="none"
+                                stroke={C.amber}
+                                strokeWidth={2}
+                                strokeDasharray="5,2"
+                                strokeLinejoin="round"
+                              />
+                              {data.map((d, i) => (
+                                <g key={i}>
+                                  {d.Qobs != null && (
+                                    <circle
+                                      cx={xf(i)}
+                                      cy={yf(d.Qobs)}
+                                      r={3}
+                                      fill={C.ocean}
+                                    />
+                                  )}
+                                  <circle
+                                    cx={xf(i)}
+                                    cy={yf(d.Qcomp)}
+                                    r={2.5}
+                                    fill={C.amber}
+                                  />
+                                </g>
+                              ))}
+                            </svg>
+                            <div
+                              style={{ display: "flex", gap: 20, marginTop: 6 }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: 20,
+                                    height: 2,
+                                    background: C.ocean,
+                                    borderRadius: 1,
+                                  }}
+                                />
+                                <span style={{ fontSize: 11, color: C.muted }}>
+                                  Data Observasi
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: 20,
+                                    height: 2,
+                                    background: C.amber,
+                                    borderRadius: 1,
+                                  }}
+                                />
+                                <span style={{ fontSize: 11, color: C.muted }}>
+                                  Model (dashed)
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Duration Curve SVG */}
+                      {(() => {
+                        const sorted = (a: number[]) =>
+                          [...a].sort((x, y) => y - x);
+                        const obsArr = nrecaResults
+                          .filter((r) => r.Qobs != null)
+                          .map((r) => r.Qobs!);
+                        const compArr = nrecaResults.map((r) => r.Qcomp);
+                        const obsS = sorted(obsArr);
+                        const compS = sorted(compArr);
+                        const n = Math.max(obsS.length, compS.length);
+                        const probOf = (i: number, len: number) =>
+                          (i + 1) / (len + 1);
+                        const allV = [...obsS, ...compS];
+                        const maxV = Math.max(...allV, 0.01);
+                        const W = 700,
+                          H = 170,
+                          pl = 44,
+                          pb = 28,
+                          pt = 12,
+                          pr = 12;
+                        const cw = W - pl - pr,
+                          ch = H - pt - pb;
+                        const xf = (p: number) => pl + p * cw;
+                        const yf = (v: number) => pt + ch - (v / maxV) * ch;
+                        const obsPath = obsS
+                          .map(
+                            (v, i) =>
+                              `${i === 0 ? "M" : "L"} ${xf(probOf(i, obsS.length))} ${yf(v)}`,
+                          )
+                          .join(" ");
+                        const compPath = compS
+                          .map(
+                            (v, i) =>
+                              `${i === 0 ? "M" : "L"} ${xf(probOf(i, compS.length))} ${yf(v)}`,
+                          )
+                          .join(" ");
+                        return (
+                          <div
+                            style={{
+                              background: "rgba(245,158,11,0.04)",
+                              borderRadius: 12,
+                              padding: "14px 16px",
+                              border: `1px solid ${C.border}`,
+                              marginBottom: 16,
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: C.muted,
+                                textTransform: "uppercase",
+                                letterSpacing: 1,
+                                marginBottom: 10,
+                              }}
+                            >
+                              {t("nreca_chart_duration_title")}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 11,
+                                color: C.muted,
+                                marginBottom: 8,
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 16,
+                              }}
+                            >
+                              <span>
+                                📏{" "}
+                                <strong style={{ color: C.ocean }}>
+                                  {t("nreca_axis_xaxis")}
+                                </strong>
+                                :{" "}
+                                {t("nreca_chart_duration_xaxis")
+                                  .replace("Sumbu X: ", "")
+                                  .replace("X-axis: ", "")}
+                              </span>
+                              <span>
+                                📐{" "}
+                                <strong style={{ color: C.ocean }}>
+                                  {t("nreca_axis_yaxis")}
+                                </strong>
+                                :{" "}
+                                {t("nreca_chart_duration_yaxis")
+                                  .replace("Sumbu Y: ", "")
+                                  .replace("Y-axis: ", "")}
+                              </span>
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 10,
+                                color: "#8ba4c0",
+                                marginBottom: 8,
+                              }}
+                            >
+                              {t("nreca_chart_duration_tip")}
+                            </div>
+                            <svg
+                              viewBox={`0 0 ${W} ${H}`}
+                              style={{ width: "100%", height: "auto" }}
+                            >
+                              <text
+                                x={10}
+                                y={pt + ch / 2}
+                                textAnchor="middle"
+                                transform={`rotate(-90, 10, ${pt + ch / 2})`}
+                                style={{
+                                  fontSize: 8,
+                                  fill: C.muted,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                Q (m³/s)
+                              </text>
+                              {[0, 0.25, 0.5, 0.75, 1].map((t, i) => (
+                                <g key={i}>
+                                  <line
+                                    x1={pl}
+                                    y1={pt + ch - t * ch}
+                                    x2={pl + cw}
+                                    y2={pt + ch - t * ch}
+                                    stroke="rgba(14,165,233,0.08)"
+                                    strokeWidth={1}
+                                    strokeDasharray="3,3"
+                                  />
+                                  <text
+                                    x={pl - 4}
+                                    y={pt + ch - t * ch + 4}
+                                    textAnchor="end"
+                                    style={{ fontSize: 9, fill: C.muted }}
+                                  >
+                                    {(t * maxV).toFixed(1)}
+                                  </text>
+                                </g>
+                              ))}
+                              {[0, 0.2, 0.4, 0.6, 0.8, 1].map((t, i) => (
+                                <g key={i}>
+                                  <line
+                                    x1={xf(t)}
+                                    y1={pt}
+                                    x2={xf(t)}
+                                    y2={pt + ch}
+                                    stroke="rgba(14,165,233,0.06)"
+                                    strokeWidth={1}
+                                  />
+                                  <text
+                                    x={xf(t)}
+                                    y={H - 4}
+                                    textAnchor="middle"
+                                    style={{ fontSize: 9, fill: C.muted }}
+                                  >
+                                    {t.toFixed(1)}
+                                  </text>
+                                </g>
+                              ))}
+                              {obsArr.length > 0 && (
+                                <path
+                                  d={obsPath}
+                                  fill="none"
+                                  stroke={C.ocean}
+                                  strokeWidth={2}
+                                />
+                              )}
+                              <path
+                                d={compPath}
+                                fill="none"
+                                stroke={C.amber}
+                                strokeWidth={2}
+                                strokeDasharray="5,2"
+                              />
+                            </svg>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Moisture & GW Storage */}
+                      {(["moisture", "gw"] as const).map((type) => {
+                        const vals = nrecaResults.map((r) =>
+                          type === "moisture" ? r.Wo : r.BEGIN_GW,
+                        );
+                        const maxV = Math.max(...vals, 0.01);
+                        const color = type === "moisture" ? C.ocean : C.teal;
+                        const label =
+                          type === "moisture"
+                            ? "Moisture Storage"
+                            : "GW Storage";
+                        const W = 700,
+                          H = 130,
+                          pl = 44,
+                          pb = 24,
+                          pt = 10,
+                          pr = 10;
+                        const cw = W - pl - pr,
+                          ch = H - pt - pb;
+                        const xf = (i: number) =>
+                          pl + (i / Math.max(vals.length - 1, 1)) * cw;
+                        const yf = (v: number) => pt + ch - (v / maxV) * ch;
+                        const path = vals
+                          .map(
+                            (v, i) =>
+                              `${i === 0 ? "M" : "L"} ${xf(i)} ${yf(v)}`,
+                          )
+                          .join(" ");
+                        return (
+                          <div
+                            key={type}
+                            style={{
+                              background: `rgba(14,165,233,0.04)`,
+                              borderRadius: 12,
+                              padding: "14px 16px",
+                              border: `1px solid ${C.border}`,
+                              marginBottom: 14,
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: C.muted,
+                                textTransform: "uppercase",
+                                letterSpacing: 1,
+                                marginBottom: 10,
+                              }}
+                            >
+                              Kalibrasi {label} (mm)
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 11,
+                                color: C.muted,
+                                marginBottom: 8,
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 16,
+                              }}
+                            >
+                              <span>
+                                📏{" "}
+                                <strong style={{ color }}>
+                                  Sumbu X / X-axis
+                                </strong>
+                                : Waktu — Time (Month/Year)
+                              </span>
+                              <span>
+                                📐{" "}
+                                <strong style={{ color }}>
+                                  Sumbu Y / Y-axis
+                                </strong>
+                                :{" "}
+                                {type === "moisture"
+                                  ? "Kelembaban Tanah / Soil Moisture Storage (mm)"
+                                  : "Simpanan Air Tanah / Groundwater Storage (mm)"}
+                              </span>
+                            </div>
+                            <svg
+                              viewBox={`0 0 ${W} ${H}`}
+                              style={{ width: "100%", height: "auto" }}
+                            >
+                              {[0, 0.5, 1].map((t, i) => (
+                                <g key={i}>
+                                  <line
+                                    x1={pl}
+                                    y1={pt + ch - t * ch}
+                                    x2={pl + cw}
+                                    y2={pt + ch - t * ch}
+                                    stroke="rgba(14,165,233,0.07)"
+                                    strokeWidth={1}
+                                    strokeDasharray="3,3"
+                                  />
+                                  <text
+                                    x={pl - 4}
+                                    y={pt + ch - t * ch + 4}
+                                    textAnchor="end"
+                                    style={{ fontSize: 9, fill: C.muted }}
+                                  >
+                                    {(t * maxV).toFixed(0)}
+                                  </text>
+                                </g>
+                              ))}
+                              <path
+                                d={path}
+                                fill="none"
+                                stroke={color}
+                                strokeWidth={2.5}
+                                strokeLinejoin="round"
+                              />
+                              {nrecaResults
+                                .filter((_, i) => i % 3 === 0)
+                                .map((r, i) => (
+                                  <text
+                                    key={i}
+                                    x={xf(i * 3)}
+                                    y={H - 4}
+                                    textAnchor="middle"
+                                    style={{ fontSize: 8, fill: C.muted }}
+                                  >
+                                    {NRECA_MONTHS[r.month - 1]}'
+                                    {String(r.year).slice(-2)}
+                                  </text>
+                                ))}
+                            </svg>
+                          </div>
+                        );
+                      })}
+
+                      {/* Performance Summary */}
+                      {nrecaStats && (
+                        <div
+                          style={{
+                            padding: "16px 20px",
+                            borderRadius: 12,
+                            background:
+                              nrecaStats.NSE > 0.65
+                                ? "rgba(16,185,129,0.08)"
+                                : "rgba(244,63,94,0.08)",
+                            border: `1px solid ${nrecaStats.NSE > 0.65 ? C.emerald : C.rose}40`,
+                            display: "flex",
+                            gap: 12,
+                            alignItems: "flex-start",
+                          }}
+                        >
+                          {nrecaStats.NSE > 0.65 ? (
+                            <CheckCircle
+                              size={20}
+                              color={C.emerald}
+                              style={{ flexShrink: 0, marginTop: 2 }}
+                            />
+                          ) : (
+                            <AlertCircle
+                              size={20}
+                              color={C.rose}
+                              style={{ flexShrink: 0, marginTop: 2 }}
+                            />
+                          )}
+                          <div>
+                            <div
+                              style={{
+                                fontWeight: 800,
+                                fontSize: 15,
+                                marginBottom: 5,
+                                color:
+                                  nrecaStats.NSE > 0.65 ? C.emerald : C.rose,
+                              }}
+                            >
+                              {isNaN(nrecaStats.NSE)
+                                ? t("nreca_no_obs")
+                                : nrecaStats.NSE > 0.75
+                                  ? t("nreca_calib_very_good")
+                                  : nrecaStats.NSE > 0.65
+                                    ? t("nreca_calib_good")
+                                    : nrecaStats.NSE > 0.5
+                                      ? t("nreca_calib_satisfactory")
+                                      : t("nreca_calib_unsatisfactory")}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 13,
+                                color: "#c0d8ef",
+                                lineHeight: 1.6,
+                              }}
+                            >
+                              NSE ={" "}
+                              <strong style={{ color: C.amber }}>
+                                {isNaN(nrecaStats.NSE)
+                                  ? "N/A"
+                                  : nrecaStats.NSE.toFixed(3)}
+                              </strong>
+                              &nbsp;|&nbsp; r ={" "}
+                              <strong style={{ color: C.teal }}>
+                                {nrecaStats.r.toFixed(3)}
+                              </strong>
+                              &nbsp;|&nbsp; Rerata Model ={" "}
+                              <strong style={{ color: C.amber }}>
+                                {nrecaStats.meanComp.toFixed(2)} m³/s
+                              </strong>
+                              &nbsp;|&nbsp; Rerata Data ={" "}
+                              <strong style={{ color: C.ocean }}>
+                                {nrecaStats.meanObs.toFixed(2)} m³/s
+                              </strong>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ── Rekap Probabilitas Debit ── */}
+                      {nrecaResults &&
+                        nrecaResults.length > 0 &&
+                        (() => {
+                          // compute exceedance probability from sorted obs and comp
+                          const obsArr = nrecaResults
+                            .filter((r) => r.Qobs != null)
+                            .map((r) => r.Qobs!);
+                          const compArr = nrecaResults.map((r) => r.Qcomp);
+                          const sorted = (a: number[]) =>
+                            [...a].sort((x, y) => y - x);
+                          const obsS = sorted(obsArr);
+                          const compS = sorted(compArr);
+                          const qAtProb = (arr: number[], p: number) => {
+                            if (arr.length === 0) return null;
+                            const idx = Math.round(p * (arr.length - 1));
+                            return arr[Math.min(idx, arr.length - 1)];
+                          };
+                          const rows = [
+                            {
+                              key: "Q95",
+                              p: 0.95,
+                              label: "Q95",
+                              use: t("nreca_rekap_q95_use"),
+                              color: C.teal,
+                            },
+                            {
+                              key: "Q90",
+                              p: 0.9,
+                              label: "Q90",
+                              use: t("nreca_rekap_q90_use"),
+                              color: C.ocean,
+                            },
+                            {
+                              key: "Q80",
+                              p: 0.8,
+                              label: "Q80",
+                              use: t("nreca_rekap_q80_use"),
+                              color: C.emerald,
+                            },
+                            {
+                              key: "Q60",
+                              p: 0.6,
+                              label: "Q60",
+                              use: t("nreca_rekap_q60_use"),
+                              color: C.purple,
+                            },
+                            {
+                              key: "Q50",
+                              p: 0.5,
+                              label: "Q50",
+                              use: t("nreca_rekap_q50_use"),
+                              color: C.amber,
+                            },
+                            {
+                              key: "Q40",
+                              p: 0.4,
+                              label: "Q40",
+                              use: t("nreca_rekap_q40_use"),
+                              color: C.rose,
+                            },
+                            {
+                              key: "Q20",
+                              p: 0.2,
+                              label: "Q20",
+                              use: t("nreca_rekap_q20_use"),
+                              color: C.rose,
+                            },
+                          ];
+                          return (
+                            <div
+                              style={{
+                                background: "rgba(14,165,233,0.04)",
+                                borderRadius: 14,
+                                padding: "18px 20px",
+                                border: `1px solid rgba(14,165,233,0.25)`,
+                                marginTop: 8,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 10,
+                                  marginBottom: 4,
+                                }}
+                              >
+                                <BarChart3 size={16} color={C.ocean} />
+                                <span
+                                  style={{
+                                    fontWeight: 800,
+                                    fontSize: 15,
+                                    color: C.ocean,
+                                  }}
+                                >
+                                  {t("nreca_rekap_title")}
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: 11,
+                                  color: C.muted,
+                                  marginBottom: 8,
+                                }}
+                              >
+                                {t("nreca_rekap_subtitle")}
+                              </div>
+                              {/* Q range note */}
+                              <div
+                                style={{
+                                  background: "rgba(245,158,11,0.08)",
+                                  border: `1px solid rgba(245,158,11,0.25)`,
+                                  borderRadius: 8,
+                                  padding: "8px 14px",
+                                  marginBottom: 14,
+                                  fontSize: 11,
+                                  color: "#c0d8ef",
+                                  lineHeight: 1.7,
+                                }}
+                              >
+                                <strong style={{ color: C.amber }}>
+                                  💡{" "}
+                                  {t("nreca_axis_xaxis")
+                                    .replace("Sumbu X", "")
+                                    .replace("X-axis", "")
+                                    .trim()}
+                                  :
+                                </strong>
+                                &nbsp;{t("nreca_chart_duration_tip")}
+                              </div>
+                              <div style={{ overflowX: "auto" }}>
+                                <table
+                                  style={{
+                                    width: "100%",
+                                    borderCollapse: "collapse",
+                                    fontSize: 12,
+                                    minWidth: 560,
+                                  }}
+                                >
+                                  <thead>
+                                    <tr
+                                      style={{
+                                        background: "rgba(14,165,233,0.1)",
+                                      }}
+                                    >
+                                      {[
+                                        t("nreca_rekap_col_prob"),
+                                        t("nreca_rekap_col_qobs"),
+                                        t("nreca_rekap_col_qmodel"),
+                                        t("nreca_rekap_col_use"),
+                                      ].map((h) => (
+                                        <th
+                                          key={h}
+                                          style={{
+                                            padding: "8px 12px",
+                                            textAlign: "left",
+                                            color: C.ocean,
+                                            fontWeight: 700,
+                                            fontSize: 11,
+                                            borderBottom: `1px solid rgba(14,165,233,0.2)`,
+                                          }}
+                                        >
+                                          {h}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {rows.map((row, i) => {
+                                      const qO = qAtProb(obsS, row.p);
+                                      const qC = qAtProb(compS, row.p);
+                                      return (
+                                        <tr
+                                          key={row.key}
+                                          style={{
+                                            background:
+                                              i % 2 === 0
+                                                ? "rgba(255,255,255,0.02)"
+                                                : "transparent",
+                                          }}
+                                        >
+                                          <td
+                                            style={{
+                                              padding: "8px 12px",
+                                              borderBottom: `1px solid rgba(14,165,233,0.08)`,
+                                            }}
+                                          >
+                                            <span
+                                              style={{
+                                                fontFamily: "monospace",
+                                                fontWeight: 800,
+                                                fontSize: 13,
+                                                color: row.color,
+                                              }}
+                                            >
+                                              {row.label}
+                                            </span>
+                                            <span
+                                              style={{
+                                                fontSize: 10,
+                                                color: C.muted,
+                                                marginLeft: 8,
+                                              }}
+                                            >
+                                              P = {(row.p * 100).toFixed(0)}%
+                                            </span>
+                                          </td>
+                                          <td
+                                            style={{
+                                              padding: "8px 12px",
+                                              borderBottom: `1px solid rgba(14,165,233,0.08)`,
+                                              color: C.ocean,
+                                              fontWeight: 700,
+                                            }}
+                                          >
+                                            {qO != null ? qO.toFixed(2) : "—"}
+                                          </td>
+                                          <td
+                                            style={{
+                                              padding: "8px 12px",
+                                              borderBottom: `1px solid rgba(14,165,233,0.08)`,
+                                              color: C.amber,
+                                              fontWeight: 700,
+                                            }}
+                                          >
+                                            {qC != null ? qC.toFixed(2) : "—"}
+                                          </td>
+                                          <td
+                                            style={{
+                                              padding: "8px 12px",
+                                              borderBottom: `1px solid rgba(14,165,233,0.08)`,
+                                              color: C.text,
+                                              fontSize: 12,
+                                            }}
+                                          >
+                                            {row.use}
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+                              <div
+                                style={{
+                                  marginTop: 10,
+                                  fontSize: 10,
+                                  color: C.muted,
+                                  lineHeight: 1.7,
+                                }}
+                              >
+                                {t("nreca_rekap_method_note")}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                    </>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {allDone && (
+            <motion.div
+              key="integrated"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              style={{
+                ...cardStyle,
+                borderColor: "rgba(139,92,246,0.35)",
+                background:
+                  "linear-gradient(135deg, rgba(139,92,246,0.08), rgba(14,165,233,0.05))",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  marginBottom: 24,
+                  flexWrap: "wrap",
+                  gap: 16,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div
+                    style={{
+                      padding: 8,
+                      borderRadius: 10,
+                      background: "rgba(139,92,246,0.2)",
+                    }}
+                  >
+                    <FileText size={20} color="#a78bfa" />
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 18,
+                        fontWeight: 800,
+                        color: "#a78bfa",
+                      }}
+                    >
+                      Analisis Terintegrasi
+                    </div>
+                    <div style={{ fontSize: 12, color: C.muted }}>
+                      Penilaian keberlanjutan komprehensif berbasis tiga pilar
+                      VWBA
+                    </div>
+                  </div>
+                </div>
+                <DownloadButton
+                  onClick={() => handleDownload("complete")}
+                  label={language === "id" ? "Unduh Laporan Lengkap" : "Download Complete Report"}
+                  loading={pdfLoading.complete}
+                  color="#a78bfa"
+                  variant="solid"
+                />
+              </div>
+
+              {(() => {
+                const excess =
+                  results.waterFootprint!.netConsumption -
+                  Math.abs(results.waterStock!.deltaS);
+                const balanced = excess <= 0;
+                return (
+                  <div
+                    style={{
+                      padding: "16px 20px",
+                      borderRadius: 12,
+                      marginBottom: 20,
+                      background: balanced
+                        ? "rgba(16,185,129,0.1)"
+                        : "rgba(244,63,94,0.1)",
+                      border: `1px solid ${balanced ? C.emerald : C.rose}40`,
+                      display: "flex",
+                      gap: 12,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    {balanced ? (
+                      <CheckCircle
+                        size={20}
+                        color={C.emerald}
+                        style={{ flexShrink: 0, marginTop: 2 }}
+                      />
+                    ) : (
+                      <Info
+                        size={20}
+                        color={C.rose}
+                        style={{ flexShrink: 0, marginTop: 2 }}
+                      />
+                    )}
+                    <div>
+                      <div
+                        style={{
+                          fontWeight: 800,
+                          fontSize: 15,
+                          color: balanced ? C.emerald : C.rose,
+                          marginBottom: 6,
+                        }}
+                      >
+                        Status: {balanced ? "SEIMBANG ✓" : "TIDAK SEIMBANG ✗"}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          color: "#c0d8ef",
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        {balanced
+                          ? "Konsumsi bersih perusahaan masih dalam batas keberlanjutan DAS. Monitoring berkala tetap diperlukan."
+                          : `Konsumsi bersih (${fmt(results.waterFootprint!.netConsumption)} m³/thn) melebihi kapasitas DAS. Wajib memperoleh water credit minimal `}
+                        {!balanced && (
+                          <strong style={{ color: C.rose }}>
+                            {fmt(excess)} m³/tahun
+                          </strong>
+                        )}
+                        {!balanced && " untuk keseimbangan hidrologis."}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: 12,
+                  marginBottom: 20,
+                }}
+              >
+                {[
+                  {
+                    label: "Net Consumption",
+                    value: `${fmt(results.waterFootprint!.netConsumption)} m³`,
+                    color: C.ocean,
+                  },
+                  {
+                    label: "ΔS Stok Air",
+                    value: `${results.waterStock!.deltaS >= 0 ? "+" : ""}${fmt(results.waterStock!.deltaS)} m³`,
+                    color: results.waterStock!.deltaS >= 0 ? C.emerald : C.rose,
+                  },
+                  {
+                    label: "Eligible VWB Credit",
+                    value: `${fmt(results.waterCredit!.eligibleCredit)} m³`,
+                    color: C.emerald,
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    style={{
+                      background: "rgba(10,22,40,0.8)",
+                      borderRadius: 10,
+                      padding: "12px 14px",
+                      textAlign: "center",
+                      border: `1px solid ${C.border}`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: C.muted,
+                        textTransform: "uppercase",
+                        letterSpacing: 1,
+                        marginBottom: 6,
+                      }}
+                    >
+                      {item.label}
+                    </div>
+                    <div
+                      style={{
+                        color: item.color,
+                        fontWeight: 800,
+                        fontSize: 16,
+                      }}
+                    >
+                      {item.value}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-emerald-900/30">
-                <div className="flex justify-between items-center">
-                  <span className="text-white font-semibold">
-                    {language === "id"
-                      ? "Total Stok Karbon"
-                      : "Total Carbon Stock"}
-                  </span>
-                  <span className="text-2xl font-bold text-emerald-400">
-                    {carbonStock.total.toLocaleString()} tC
-                  </span>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-gray-400">
-                    {language === "id" ? "Ekuivalen CO₂" : "CO₂ Equivalent"}
-                  </span>
-                  <span className="text-xl font-bold text-white">
-                    {co2Stock.toLocaleString()} tCO₂eq
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Credit Value */}
-            <div className="bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/20 rounded-2xl p-5">
-              <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-yellow-400" />
-                {language === "id"
-                  ? "Estimasi Nilai Kredit Karbon"
-                  : "Estimated Carbon Credit Value"}
-              </h3>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center">
-                  <p className="text-xs text-gray-500">
-                    {language === "id" ? "Minimum" : "Minimum"}
-                  </p>
-                  <p className="text-lg font-bold text-white">
-                    ${creditValue.min.toLocaleString()}
-                  </p>
-                </div>
-                <div className="text-center bg-yellow-500/20 rounded-lg py-2">
-                  <p className="text-xs text-yellow-400">
-                    {language === "id" ? "Rata-rata" : "Average"}
-                  </p>
-                  <p className="text-xl font-bold text-yellow-400">
-                    ${creditValue.avg.toLocaleString()}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-gray-500">
-                    {language === "id" ? "Maksimum" : "Maximum"}
-                  </p>
-                  <p className="text-lg font-bold text-white">
-                    ${creditValue.max.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <button className="w-full py-3 bg-[#1a2420] border border-emerald-900/30 hover:border-emerald-500/50 rounded-xl font-medium text-gray-300 flex items-center justify-center gap-2">
-              <Download className="w-5 h-5" />
-              {language === "id" ? "Unduh Laporan" : "Download Report"}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* IPCC Reference Table */}
-      <div className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-5">
-        <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-emerald-400" />
-          {language === "id"
-            ? "Tabel Referensi IPCC 2019 - Stok Karbon per Tipe Lahan"
-            : "IPCC 2019 Reference Table - Carbon Stock by Land Type"}
-        </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-emerald-900/30">
-                <th className="text-left py-3 px-2 text-gray-400 font-medium">
-                  {language === "id" ? "Tipe Lahan" : "Land Type"}
-                </th>
-                <th className="text-right py-3 px-2 text-gray-400 font-medium">
-                  AGB
-                </th>
-                <th className="text-right py-3 px-2 text-gray-400 font-medium">
-                  BGB
-                </th>
-                <th className="text-right py-3 px-2 text-gray-400 font-medium">
-                  {language === "id" ? "Kayu Mati" : "Dead Wood"}
-                </th>
-                <th className="text-right py-3 px-2 text-gray-400 font-medium">
-                  {language === "id" ? "Serasah" : "Litter"}
-                </th>
-                <th className="text-right py-3 px-2 text-gray-400 font-medium">
-                  SOC
-                </th>
-                <th className="text-right py-3 px-2 text-emerald-400 font-medium">
-                  Total (tC/ha)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(CARBON_STOCK_FACTORS).map(([key, land]) => (
-                <tr
-                  key={key}
-                  className={`border-b border-emerald-900/20 hover:bg-emerald-500/5 ${selectedLandType === key ? "bg-emerald-500/10" : ""}`}
+              <div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: C.muted,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: 1.5,
+                    marginBottom: 12,
+                  }}
                 >
-                  <td className="py-2 px-2 text-white">
-                    {land.icon} {language === "id" ? land.nameId : land.nameEn}
-                  </td>
-                  <td className="text-right py-2 px-2 text-gray-300">
-                    {land.aboveground}
-                  </td>
-                  <td className="text-right py-2 px-2 text-gray-300">
-                    {land.belowground}
-                  </td>
-                  <td className="text-right py-2 px-2 text-gray-300">
-                    {land.deadwood}
-                  </td>
-                  <td className="text-right py-2 px-2 text-gray-300">
-                    {land.litter}
-                  </td>
-                  <td className="text-right py-2 px-2 text-gray-300">
-                    {land.soil}
-                  </td>
-                  <td className="text-right py-2 px-2 text-emerald-400 font-bold">
-                    {land.total}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-xs text-gray-500 mt-3">
-          {language === "id"
-            ? "Sumber: IPCC 2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories"
-            : "Source: IPCC 2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories"}
-        </p>
-      </div>
-    </motion.div>
-  );
-};
-
-// =============================================
-// CARBON CREDIT CALCULATOR
-// =============================================
-type PriceStd = { name: string; min: number; max: number; avg: number };
-const CarbonCreditCalculator: React.FC = () => {
-  const { language } = useLanguage();
-  const [creditAmount, setCreditAmount] = useState<number>(100);
-  const [selectedMarket, setSelectedMarket] = useState<
-    "voluntary" | "compliance" | "indonesia"
-  >("voluntary");
-  const [selectedStandard, setSelectedStandard] = useState<string>("vcs");
-
-  const markets = CARBON_CREDIT_PRICES[selectedMarket] as Record<
-    string,
-    PriceStd
-  >;
-  const standard = markets[selectedStandard] ?? Object.values(markets)[0];
-
-  const calculations = {
-    min: creditAmount * standard.min,
-    max: creditAmount * standard.max,
-    avg: creditAmount * standard.avg,
-  };
-  const exchangeRate = 15500;
-  const calculationsIDR = {
-    min: calculations.min * exchangeRate,
-    max: calculations.max * exchangeRate,
-    avg: calculations.avg * exchangeRate,
-  };
-
-  const marketLabels = {
-    voluntary: language === "id" ? "Sukarela" : "Voluntary",
-    compliance: language === "id" ? "Kepatuhan" : "Compliance",
-    indonesia: "Indonesia",
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="space-y-6"
-    >
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <div className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-5">
-            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-              <Award className="w-5 h-5 text-emerald-400" />
-              {language === "id"
-                ? "Jumlah Kredit Karbon"
-                : "Carbon Credit Amount"}
-            </h3>
-            <div className="flex items-center gap-4">
-              <input
-                type="number"
-                value={creditAmount}
-                onChange={(e) => setCreditAmount(Number(e.target.value))}
-                className="flex-1 px-4 py-3 bg-[#0d1411] border border-emerald-900/30 rounded-xl text-white text-lg font-bold text-center"
-              />
-              <span className="text-gray-400">tCO₂eq</span>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="10000"
-              value={creditAmount}
-              onChange={(e) => setCreditAmount(Number(e.target.value))}
-              className="w-full h-2 bg-[#0d1411] rounded-lg appearance-none cursor-pointer mt-4"
-              style={{
-                background: `linear-gradient(to right, rgb(16, 185, 129) 0%, rgb(16, 185, 129) ${(creditAmount / 10000) * 100}%, rgb(13, 20, 17) ${(creditAmount / 10000) * 100}%, rgb(13, 20, 17) 100%)`,
-              }}
-            />
-          </div>
-
-          <div className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-5">
-            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-              <Globe className="w-5 h-5 text-emerald-400" />
-              {language === "id"
-                ? "Pilih Pasar Karbon"
-                : "Select Carbon Market"}
-            </h3>
-            <div className="flex gap-2 mb-4">
-              {(["voluntary", "compliance", "indonesia"] as const).map(
-                (market) => (
-                  <button
-                    key={market}
-                    onClick={() => {
-                      setSelectedMarket(market);
-                      setSelectedStandard(
-                        Object.keys(CARBON_CREDIT_PRICES[market])[0],
-                      );
-                    }}
-                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                      selectedMarket === market
-                        ? "bg-emerald-500 text-white"
-                        : "bg-[#0d1411] text-gray-400 hover:text-white"
-                    }`}
-                  >
-                    {marketLabels[market]}
-                  </button>
-                ),
-              )}
-            </div>
-
-            <div className="space-y-2">
-              {Object.entries(markets).map(([key, std]) => (
-                <button
-                  key={key}
-                  onClick={() => setSelectedStandard(key)}
-                  className={`w-full p-3 rounded-xl border text-left transition-all ${
-                    selectedStandard === key
-                      ? "border-emerald-500 bg-emerald-500/10"
-                      : "border-emerald-900/30 hover:border-emerald-500/50"
-                  }`}
+                  Rekomendasi Aksi
+                </div>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
                 >
-                  <div className="flex justify-between items-center">
-                    <span className="text-white font-medium">{std.name}</span>
-                    <span className="text-emerald-400 font-bold">
-                      ${std.avg}/tCO₂
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Range: ${std.min} - ${std.max} per tCO₂
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 text-white">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <DollarSign className="w-5 h-5" />
-              {language === "id" ? "Estimasi Nilai" : "Estimated Value"}
-            </h3>
-
-            <div className="space-y-4">
-              <div className="bg-white/20 rounded-xl p-4">
-                <p className="text-sm opacity-80 mb-1">
-                  {language === "id"
-                    ? "Nilai Rata-rata (USD)"
-                    : "Average Value (USD)"}
-                </p>
-                <p className="text-3xl font-bold">
-                  ${calculations.avg.toLocaleString()}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/10 rounded-lg p-3">
-                  <p className="text-xs opacity-70">
-                    {language === "id" ? "Minimum" : "Minimum"}
-                  </p>
-                  <p className="text-lg font-bold">
-                    ${calculations.min.toLocaleString()}
-                  </p>
-                </div>
-                <div className="bg-white/10 rounded-lg p-3">
-                  <p className="text-xs opacity-70">
-                    {language === "id" ? "Maksimum" : "Maximum"}
-                  </p>
-                  <p className="text-lg font-bold">
-                    ${calculations.max.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-white/20">
-                <p className="text-sm opacity-80 mb-1">
-                  {language === "id" ? "Dalam Rupiah (Rp)" : "In Rupiah (IDR)"}
-                </p>
-                <p className="text-2xl font-bold">
-                  Rp {calculationsIDR.avg.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-5">
-            <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-              <Info className="w-5 h-5 text-emerald-400" />
-              {language === "id"
-                ? "Informasi Penting"
-                : "Important Information"}
-            </h3>
-            <ul className="space-y-2">
-              <li className="flex items-start gap-2 text-sm text-gray-400">
-                <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                {language === "id"
-                  ? "1 Kredit Karbon = 1 ton CO₂ ekuivalen"
-                  : "1 Carbon Credit = 1 tonne CO₂ equivalent"}
-              </li>
-              <li className="flex items-start gap-2 text-sm text-gray-400">
-                <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                {language === "id"
-                  ? "Harga bervariasi tergantung standar sertifikasi"
-                  : "Prices vary depending on certification standard"}
-              </li>
-              <li className="flex items-start gap-2 text-sm text-gray-400">
-                <AlertCircle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
-                {language === "id"
-                  ? "Harga bersifat estimasi dan dapat berubah"
-                  : "Prices are estimates and subject to change"}
-              </li>
-            </ul>
-          </div>
-
-          <Link
-            to="/marketplace"
-            className="block w-full py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-semibold text-center hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
-          >
-            {language === "id" ? "Jelajahi Marketplace" : "Explore Marketplace"}{" "}
-            →
-          </Link>
-        </div>
-      </div>
-
-      {/* Price Reference */}
-      <div className="bg-[#1a2420] rounded-2xl border border-emerald-900/30 p-5">
-        <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-emerald-400" />
-          {language === "id"
-            ? "Referensi Harga Kredit Karbon Global"
-            : "Global Carbon Credit Price Reference"}
-        </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-emerald-900/30">
-                <th className="text-left py-3 px-2 text-gray-400">
-                  {language === "id" ? "Pasar" : "Market"}
-                </th>
-                <th className="text-left py-3 px-2 text-gray-400">Standard</th>
-                <th className="text-right py-3 px-2 text-gray-400">
-                  Min (USD)
-                </th>
-                <th className="text-right py-3 px-2 text-gray-400">
-                  Max (USD)
-                </th>
-                <th className="text-right py-3 px-2 text-emerald-400">
-                  Avg (USD)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(CARBON_CREDIT_PRICES).map(([marketKey, market]) =>
-                Object.entries(market).map(([stdKey, std], idx) => (
-                  <tr
-                    key={`${marketKey}-${stdKey}`}
-                    className="border-b border-emerald-900/20"
-                  >
-                    {idx === 0 && (
-                      <td
-                        rowSpan={Object.keys(market).length}
-                        className="py-2 px-2 text-white font-medium capitalize"
+                  {[
+                    ...(results.waterStock!.deltaS < 0
+                      ? [
+                          {
+                            color: C.rose,
+                            text: "DAS mengalami defisit — prioritaskan proyek konservasi segera",
+                          },
+                        ]
+                      : []),
+                    ...(results.waterFootprint!.category.includes("Kritis")
+                      ? [
+                          {
+                            color: C.rose,
+                            text: "Water footprint kritis — wajib kurangi konsumsi dan peroleh water credit",
+                          },
+                        ]
+                      : []),
+                    ...(results.waterCredit!.vwb > 0
+                      ? [
+                          {
+                            color: C.emerald,
+                            text: `Proyek menghasilkan ${fmt(results.waterCredit!.eligibleCredit)} m³/thn VWB credit yang eligible`,
+                          },
+                        ]
+                      : []),
+                    {
+                      color: C.ocean,
+                      text: "Pastikan semua transaksi kredit tercatat dalam registry HYDREX",
+                    },
+                    {
+                      color: C.ocean,
+                      text: "Verifikasi independen diperlukan untuk validasi kredit (VWBA 2.0 Step 5)",
+                    },
+                  ].map((item, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: item.color,
+                          flexShrink: 0,
+                          marginTop: 7,
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: 13,
+                          color: "#c0d8ef",
+                          lineHeight: 1.6,
+                        }}
                       >
-                        {marketKey.replace("_", " ")}
-                      </td>
-                    )}
-                    <td className="py-2 px-2 text-gray-300">{std.name}</td>
-                    <td className="text-right py-2 px-2 text-gray-300">
-                      ${std.min}
-                    </td>
-                    <td className="text-right py-2 px-2 text-gray-300">
-                      ${std.max}
-                    </td>
-                    <td className="text-right py-2 px-2 text-emerald-400 font-bold">
-                      ${std.avg}
-                    </td>
-                  </tr>
-                )),
-              )}
-            </tbody>
-          </table>
+                        {item.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  marginTop: 24,
+                  paddingTop: 20,
+                  borderTop: `1px solid ${C.border}`,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: C.muted,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: 1.5,
+                    marginBottom: 14,
+                  }}
+                >
+                  <FileDown
+                    size={14}
+                    style={{
+                      display: "inline",
+                      marginRight: 6,
+                      verticalAlign: "middle",
+                    }}
+                  />
+                  Unduh Laporan Individual
+                </div>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <DownloadButton
+                    onClick={() => handleDownload("footprint")}
+                    label="Water Footprint PDF"
+                    loading={pdfLoading.footprint}
+                    color={C.ocean}
+                  />
+                  <DownloadButton
+                    onClick={() => handleDownload("stock")}
+                    label="Water Stock PDF"
+                    loading={pdfLoading.stock}
+                    color={C.teal}
+                  />
+                  <DownloadButton
+                    onClick={() => handleDownload("credit")}
+                    label="Water Credit PDF"
+                    loading={pdfLoading.credit}
+                    color={C.emerald}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Footer */}
+        <div
+          style={{
+            textAlign: "center",
+            color: C.muted,
+            fontSize: 11,
+            marginTop: 40,
+            letterSpacing: 0.3,
+          }}
+        >
+          Berdasarkan <strong style={{ color: C.ocean }}>VWBA 2.0</strong> — WRI
+          · LimnoTech · BlueRisk · BEF &nbsp;|&nbsp; Appendix D: D-1 s/d D-9
         </div>
       </div>
-    </motion.div>
+
+      {/* Spinning animation */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+      `}</style>
+    </div>
   );
 };
 
-export default CalculatorPage;
+export default HydrologicalCalculator;

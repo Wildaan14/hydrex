@@ -1,422 +1,578 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-  Leaf,
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  AlertCircle, 
+  Loader2, 
+  ArrowLeft, 
+  CheckCircle, 
   Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  AlertCircle,
-  Loader2,
-  User,
-  Building2,
-  UserCircle,
-  CheckCircle,
-  ArrowLeft,
-  ArrowRight,
+  Shield,
+  Clock
 } from "lucide-react";
 import { useAuth, UserRole } from "../context/AuthContext";
+import { useTheme } from "../components/ThemeProvider";
+import { lightPageTheme, darkPageTheme } from "../utils/appTheme";
+
+// Logo path
+const logoPath = "/logo.png";
+
+type Step = "select-type" | "fill-data" | "verify-email";
+type AccountType = "user" | "company";
+
+// Fungsi untuk generate random 6-digit code
+const generateVerificationCode = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { register, isLoading } = useAuth();
+  const { theme: colorTheme } = useTheme();
+  const theme = colorTheme === "dark" ? darkPageTheme : lightPageTheme;
 
-  const [step, setStep] = useState(1);
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    company: "",
-    agreeTerms: false,
-  });
-  const [showPassword, setShowPassword] = useState(false);
+  const [step, setStep] = useState<Step>("select-type");
+  const [accountType, setAccountType] = useState<AccountType>("user");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState("");
+  
+  // Email verification states
+  const [verificationCode, setVerificationCode] = useState("");
+  const [sentCode, setSentCode] = useState("");
+  const [verificationInput, setVerificationInput] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [canResend, setCanResend] = useState(false);
 
-  const roles = [
-    {
-      id: "user" as UserRole,
-      icon: <UserCircle className="w-8 h-8" />,
-      title: "Individual",
-      description: "Untuk pengguna pribadi yang ingin menghitung dan mengoffset jejak karbon",
-      features: ["Kalkulator karbon personal", "Beli kredit karbon", "Sertifikat kontribusi"],
-    },
-    {
-      id: "company" as UserRole,
-      icon: <Building2 className="w-8 h-8" />,
-      title: "Perusahaan",
-      description: "Untuk bisnis yang ingin mengelola emisi dan menjual kredit karbon",
-      features: ["Dashboard emisi lengkap", "Jual & beli kredit karbon", "Laporan ESG & compliance"],
-    },
-  ];
+  const handleSelectType = (type: AccountType) => {
+    setAccountType(type);
+    setStep("fill-data");
+  };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleBack = () => {
+    if (step === "verify-email") {
+      setStep("fill-data");
+    } else {
+      setStep("select-type");
+    }
     setError("");
+    setVerificationInput("");
   };
 
-  const handleRoleSelect = (role: UserRole) => {
-    setSelectedRole(role);
-    setError("");
+  // Fungsi untuk mengirim kode verifikasi
+  const sendVerificationCode = () => {
+    const code = generateVerificationCode();
+    setSentCode(code);
+    
+    // Simulasi kirim email (dalam production, gunakan email service seperti SendGrid, AWS SES, etc.)
+    console.log(`📧 Kode verifikasi dikirim ke ${email}: ${code}`);
+    
+    // Set countdown 60 detik
+    setCountdown(60);
+    setCanResend(false);
+    
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setCanResend(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Tampilkan alert untuk development (hapus di production)
+    alert(`Development Mode: Kode verifikasi Anda adalah: ${code}\n\nDalam production, kode ini akan dikirim ke email ${email}`);
   };
 
-  const handleNextStep = () => {
-    if (step === 1 && !selectedRole) {
-      setError("Pilih tipe akun terlebih dahulu");
-      return;
-    }
-    setStep(2);
-    setError("");
-  };
-
-  const handlePrevStep = () => {
-    setStep(1);
-    setError("");
-  };
-
-  const validateForm = () => {
-    if (!formData.name.trim()) {
-      setError("Nama tidak boleh kosong");
-      return false;
-    }
-    if (!formData.email.trim()) {
-      setError("Email tidak boleh kosong");
-      return false;
-    }
-    if (!formData.email.includes("@")) {
-      setError("Format email tidak valid");
-      return false;
-    }
-    if (formData.password.length < 6) {
-      setError("Password minimal 6 karakter");
-      return false;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError("Password tidak cocok");
-      return false;
-    }
-    if (selectedRole === "company" && !formData.company.trim()) {
-      setError("Nama perusahaan tidak boleh kosong");
-      return false;
-    }
-    if (!formData.agreeTerms) {
-      setError("Anda harus menyetujui syarat dan ketentuan");
-      return false;
-    }
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleContinueToVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!validateForm()) return;
+    // Validasi input
+    if (!name.trim()) {
+      setError("Silakan masukkan nama lengkap Anda");
+      return;
+    }
+    if (!email.trim()) {
+      setError("Silakan masukkan alamat email Anda");
+      return;
+    }
+    if (!email.includes("@")) {
+      setError("Silakan masukkan alamat email yang valid");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password harus minimal 6 karakter");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Password tidak cocok");
+      return;
+    }
+    if (!agreeTerms) {
+      setError("Silakan setujui syarat dan ketentuan");
+      return;
+    }
 
-    const result = await register({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      role: selectedRole!,
-      company: selectedRole === "company" ? formData.company : undefined,
-    });
+    // Lanjut ke step verifikasi email
+    setStep("verify-email");
+    sendVerificationCode();
+  };
 
-    if (result.success) {
-      navigate("/home");
-    } else {
-      setError(result.error || "Registrasi gagal");
+  const handleVerifyAndRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!verificationInput.trim()) {
+      setError("Silakan masukkan kode verifikasi");
+      return;
+    }
+
+    if (verificationInput !== sentCode) {
+      setError("Kode verifikasi tidak valid. Silakan periksa kembali.");
+      return;
+    }
+
+    // Kode verifikasi benar, lanjut registrasi
+    setIsVerifying(true);
+
+    try {
+      const role: UserRole = accountType === "company" ? "company" : "user";
+      const success = await register(name, email, password, role);
+
+      if (success) {
+        // Berhasil registrasi, redirect ke home
+        navigate("/home");
+      } else {
+        setError("Email sudah terdaftar. Silakan gunakan email lain.");
+        setStep("fill-data");
+      }
+    } catch (err) {
+      setError("Terjadi kesalahan. Silakan coba lagi.");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left Side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="w-full max-w-lg py-8"
-        >
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-              <Leaf className="w-7 h-7 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-primary">C-NEX</h1>
-              <p className="text-xs text-muted-foreground">Carbon Network Exchange</p>
-            </div>
-          </Link>
+  const handleResendCode = () => {
+    if (!canResend) return;
+    sendVerificationCode();
+  };
 
-          {/* Progress Steps */}
-          <div className="flex items-center gap-4 mb-8">
+  return (
+    <div
+      className="min-h-screen flex"
+      style={{ backgroundColor: theme.bgDark }}
+    >
+      {/* Kiri - Formulir Pendaftaran */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          {/* Langkah Proses */}
+          <div className="flex items-center gap-2 mb-8">
+            {/* Step 1 */}
             <div className="flex items-center gap-2">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step >= 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                }`}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white flex-shrink-0"
+                style={{ 
+                  backgroundColor: step !== "select-type" ? theme.primary : theme.primary 
+                }}
               >
-                {step > 1 ? <CheckCircle className="w-5 h-5" /> : "1"}
+                {step !== "select-type" ? (
+                  <CheckCircle className="w-5 h-5" />
+                ) : (
+                  "1"
+                )}
               </div>
-              <span className={`text-sm ${step >= 1 ? "text-foreground" : "text-muted-foreground"}`}>
+              <span
+                className="text-xs md:text-sm font-medium whitespace-nowrap"
+                style={{
+                  color: step === "select-type" ? theme.textPrimary : theme.primary,
+                }}
+              >
                 Pilih Tipe
               </span>
             </div>
-            <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+
+            {/* Divider 1 */}
+            <div
+              className="flex-1 h-0.5 min-w-[20px]"
+              style={{ backgroundColor: theme.border }}
+            >
               <div
-                className={`h-full bg-primary transition-all duration-300 ${
-                  step >= 2 ? "w-full" : "w-0"
-                }`}
+                className="h-full transition-all"
+                style={{
+                  backgroundColor: theme.primary,
+                  width: step !== "select-type" ? "100%" : "0%",
+                }}
               />
             </div>
+
+            {/* Step 2 */}
             <div className="flex items-center gap-2">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step >= 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                }`}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
+                style={{
+                  backgroundColor: step === "verify-email" ? theme.primary : 
+                                  step === "fill-data" ? theme.primary : theme.bgCard,
+                  color: step === "fill-data" || step === "verify-email" ? "white" : theme.textMuted,
+                  border: step === "fill-data" || step === "verify-email" ? "none" : `1px solid ${theme.border}`,
+                }}
               >
-                2
+                {step === "verify-email" ? <CheckCircle className="w-5 h-5" /> : "2"}
               </div>
-              <span className={`text-sm ${step >= 2 ? "text-foreground" : "text-muted-foreground"}`}>
-                Data Diri
+              <span
+                className="text-xs md:text-sm font-medium whitespace-nowrap"
+                style={{
+                  color: step === "fill-data" || step === "verify-email" ? theme.textPrimary : theme.textMuted,
+                }}
+              >
+                Data Anda
+              </span>
+            </div>
+
+            {/* Divider 2 */}
+            <div
+              className="flex-1 h-0.5 min-w-[20px]"
+              style={{ backgroundColor: theme.border }}
+            >
+              <div
+                className="h-full transition-all"
+                style={{
+                  backgroundColor: theme.primary,
+                  width: step === "verify-email" ? "100%" : "0%",
+                }}
+              />
+            </div>
+
+            {/* Step 3 - Email Verification */}
+            <div className="flex items-center gap-2">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
+                style={{
+                  backgroundColor: step === "verify-email" ? theme.primary : theme.bgCard,
+                  color: step === "verify-email" ? "white" : theme.textMuted,
+                  border: step === "verify-email" ? "none" : `1px solid ${theme.border}`,
+                }}
+              >
+                3
+              </div>
+              <span
+                className="text-xs md:text-sm font-medium whitespace-nowrap"
+                style={{
+                  color: step === "verify-email" ? theme.textPrimary : theme.textMuted,
+                }}
+              >
+                Verifikasi
               </span>
             </div>
           </div>
 
-          {/* Error Alert */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3"
-            >
-              <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-              <p className="text-sm text-destructive">{error}</p>
-            </motion.div>
-          )}
-
-          {/* Step 1: Choose Role */}
-          {step === 1 && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold text-foreground mb-2">Buat Akun Baru</h2>
-                <p className="text-muted-foreground">Pilih tipe akun yang sesuai dengan kebutuhan Anda</p>
-              </div>
-
-              <div className="space-y-4 mb-8">
-                {roles.map((role) => (
-                  <button
-                    key={role.id}
-                    type="button"
-                    onClick={() => handleRoleSelect(role.id)}
-                    className={`w-full p-6 rounded-2xl border-2 text-left transition-all ${
-                      selectedRole === role.id
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`p-3 rounded-xl transition-colors ${
-                          selectedRole === role.id
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {role.icon}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-semibold text-foreground">{role.title}</h3>
-                          {selectedRole === role.id && (
-                            <CheckCircle className="w-6 h-6 text-primary" />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-3">{role.description}</p>
-                        <ul className="space-y-1">
-                          {role.features.map((feature, index) => (
-                            <li
-                              key={index}
-                              className="text-sm text-muted-foreground flex items-center gap-2"
-                            >
-                              <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={handleNextStep}
-                className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+          {/* Pesan Error */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mb-6 p-4 rounded-xl flex items-center gap-3"
+                style={{
+                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                  border: "1px solid rgba(239, 68, 68, 0.2)",
+                }}
               >
-                Lanjutkan
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </motion.div>
-          )}
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <p className="text-red-400 text-sm">{error}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* Step 2: Fill Details */}
-          {step === 2 && (
+          {/* Langkah 1: Pilih Tipe Akun */}
+          {step === "select-type" && (
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              exit={{ opacity: 0, x: 20 }}
             >
-              <div className="mb-8">
-                <button
-                  type="button"
-                  onClick={handlePrevStep}
-                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
+              {/* Logo */}
+              <div className="flex justify-center mb-8">
+                <img src={logoPath} alt="Logo HYDREX" className="h-16 w-auto" />
+              </div>
+
+              <div className="text-center mb-8">
+                <h2
+                  className="text-3xl font-bold mb-2"
+                  style={{ color: theme.textPrimary }}
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  Kembali
-                </button>
-                <h2 className="text-3xl font-bold text-foreground mb-2">Lengkapi Data</h2>
-                <p className="text-muted-foreground">
-                  Isi data diri Anda untuk membuat akun{" "}
-                  <span className="text-primary font-medium">
-                    {selectedRole === "user" ? "Individual" : "Perusahaan"}
-                  </span>
+                  Buat Akun
+                </h2>
+                <p style={{ color: theme.textSecondary }}>
+                  Pilih tipe akun untuk memulai
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Name Field */}
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    {selectedRole === "company" ? "Nama PIC" : "Nama Lengkap"}
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Masukkan nama lengkap"
-                      className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                    />
-                  </div>
-                </div>
-
-                {/* Company Field (only for company role) */}
-                {selectedRole === "company" && (
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Nama Perusahaan
-                    </label>
-                    <div className="relative">
-                      <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <input
-                        type="text"
-                        name="company"
-                        value={formData.company}
-                        onChange={handleChange}
-                        placeholder="PT Nama Perusahaan"
-                        className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                      />
+              <div className="space-y-4">
+                <button
+                  onClick={() => handleSelectType("user")}
+                  className="w-full p-6 rounded-2xl text-left group transition-all hover:scale-[1.02]"
+                  style={{
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = theme.secondary;
+                    e.currentTarget.style.backgroundColor = `${theme.secondary}10`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = theme.border;
+                    e.currentTarget.style.backgroundColor = theme.bgCard;
+                  }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div
+                      className="p-3 rounded-xl transition-colors"
+                      style={{
+                        backgroundColor: `${theme.secondary}20`,
+                        color: theme.secondary,
+                      }}
+                    >
+                      <CheckCircle className="w-8 h-8" />
+                    </div>
+                    <div className="flex-1">
+                      <h3
+                        className="text-lg font-semibold mb-1"
+                        style={{ color: theme.textPrimary }}
+                      >
+                        Individu
+                      </h3>
+                      <p
+                        className="text-sm"
+                        style={{ color: theme.textSecondary }}
+                      >
+                        Untuk penggunaan pribadi, melacak jejak air Anda dan
+                        mengimbangi konsumsi
+                      </p>
                     </div>
                   </div>
-                )}
+                </button>
 
-                {/* Email Field */}
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="nama@email.com"
-                      className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                    />
-                  </div>
-                </div>
-
-                {/* Password Field */}
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      placeholder="Minimal 6 karakter"
-                      className="w-full pl-12 pr-12 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                <button
+                  onClick={() => handleSelectType("company")}
+                  className="w-full p-6 rounded-2xl text-left group transition-all hover:scale-[1.02]"
+                  style={{
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = theme.primary;
+                    e.currentTarget.style.backgroundColor = `${theme.primary}10`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = theme.border;
+                    e.currentTarget.style.backgroundColor = theme.bgCard;
+                  }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div
+                      className="p-3 rounded-xl transition-colors"
+                      style={{
+                        backgroundColor: `${theme.primary}20`,
+                        color: theme.primary,
+                      }}
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
+                      <CheckCircle className="w-8 h-8" />
+                    </div>
+                    <div className="flex-1">
+                      <h3
+                        className="text-lg font-semibold mb-1"
+                        style={{ color: theme.textPrimary }}
+                      >
+                        Perusahaan
+                      </h3>
+                      <p
+                        className="text-sm"
+                        style={{ color: theme.textSecondary }}
+                      >
+                        Untuk bisnis, kelola kredit air perusahaan dan
+                        laporan ESG
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </button>
+              </div>
 
-                {/* Confirm Password Field */}
+              <p
+                className="text-center mt-8"
+                style={{ color: theme.textSecondary }}
+              >
+                Sudah punya akun?{" "}
+                <Link
+                  to="/login"
+                  className="font-medium hover:opacity-80"
+                  style={{ color: theme.primary }}
+                >
+                  Masuk
+                </Link>
+              </p>
+            </motion.div>
+          )}
+
+          {/* Langkah 2: Isi Data */}
+          {step === "fill-data" && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              <button
+                onClick={handleBack}
+                className="flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity"
+                style={{ color: theme.textSecondary }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm">Kembali</span>
+              </button>
+
+              <div className="mb-6">
+                <h2
+                  className="text-2xl font-bold mb-2"
+                  style={{ color: theme.textPrimary }}
+                >
+                  Lengkapi Profil Anda
+                </h2>
+                <p style={{ color: theme.textSecondary }}>
+                  Isi data Anda untuk membuat akun{" "}
+                  <span style={{ color: accountType === "company" ? theme.primary : theme.secondary }}>
+                    {accountType === "company" ? "Perusahaan" : "Individu"}
+                  </span>{" "}
+                  Anda
+                </p>
+              </div>
+
+              <form onSubmit={handleContinueToVerification} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Konfirmasi Password
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    Nama Lengkap
                   </label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      placeholder="Ulangi password"
-                      className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
+                    }}
+                    placeholder="Masukkan nama lengkap"
+                  />
                 </div>
 
-                {/* Terms Checkbox */}
-                <label className="flex items-start gap-3 cursor-pointer">
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    Alamat Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
+                    }}
+                    placeholder="email@contoh.com"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    Kata Sandi
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
+                    }}
+                    placeholder="Minimal 6 karakter"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    Konfirmasi Kata Sandi
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
+                    }}
+                    placeholder="Konfirmasi kata sandi"
+                  />
+                </div>
+
+                <label className="flex items-start gap-3 cursor-pointer group">
                   <input
                     type="checkbox"
-                    checked={formData.agreeTerms}
-                    onChange={(e) => setFormData({ ...formData, agreeTerms: e.target.checked })}
-                    className="w-5 h-5 mt-0.5 rounded border-border text-primary focus:ring-primary accent-primary"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="mt-1 w-4 h-4 rounded accent-blue-500"
                   />
-                  <span className="text-sm text-muted-foreground">
-                    Saya menyetujui{" "}
-                    <span className="text-primary hover:underline cursor-pointer">
+                  <span className="text-sm" style={{ color: theme.textSecondary }}>
+                    Saya setuju dengan{" "}
+                    <Link
+                      to="/terms"
+                      className="font-medium group-hover:opacity-80"
+                      style={{ color: theme.primary }}
+                    >
                       Syarat dan Ketentuan
-                    </span>{" "}
-                    serta{" "}
-                    <span className="text-primary hover:underline cursor-pointer">
+                    </Link>{" "}
+                    dan{" "}
+                    <Link
+                      to="/privacy"
+                      className="font-medium group-hover:opacity-80"
+                      style={{ color: theme.primary }}
+                    >
                       Kebijakan Privasi
-                    </span>{" "}
-                    C-NEX
+                    </Link>
                   </span>
                 </label>
 
-                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                  }}
                 >
                   {isLoading ? (
                     <>
@@ -424,53 +580,227 @@ export const RegisterPage: React.FC = () => {
                       Memproses...
                     </>
                   ) : (
-                    "Daftar Sekarang"
+                    <>
+                      Lanjutkan ke Verifikasi
+                      <Mail className="w-5 h-5" />
+                    </>
                   )}
                 </button>
               </form>
+
+              <p
+                className="text-center mt-6"
+                style={{ color: theme.textSecondary }}
+              >
+                Sudah punya akun?{" "}
+                <Link
+                  to="/login"
+                  className="font-medium hover:opacity-80"
+                  style={{ color: theme.primary }}
+                >
+                  Masuk
+                </Link>
+              </p>
             </motion.div>
           )}
 
-          {/* Login Link */}
-          <p className="mt-8 text-center text-muted-foreground">
-            Sudah punya akun?{" "}
-            <Link to="/login" className="text-primary font-medium hover:underline">
-              Masuk di sini
-            </Link>
-          </p>
+          {/* Langkah 3: Verifikasi Email */}
+          {step === "verify-email" && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              <button
+                onClick={handleBack}
+                className="flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity"
+                style={{ color: theme.textSecondary }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm">Kembali</span>
+              </button>
+
+              <div className="text-center mb-8">
+                <div
+                  className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primary}20, ${theme.secondary}20)`,
+                  }}
+                >
+                  <Mail className="w-10 h-10" style={{ color: theme.primary }} />
+                </div>
+                <h2
+                  className="text-2xl font-bold mb-2"
+                  style={{ color: theme.textPrimary }}
+                >
+                  Verifikasi Email
+                </h2>
+                <p className="mb-1" style={{ color: theme.textSecondary }}>
+                  Kami telah mengirim kode verifikasi ke
+                </p>
+                <p className="font-medium" style={{ color: theme.primary }}>
+                  {email}
+                </p>
+              </div>
+
+              <form onSubmit={handleVerifyAndRegister} className="space-y-6">
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-2 text-center"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    Masukkan Kode Verifikasi (6 digit)
+                  </label>
+                  <input
+                    type="text"
+                    value={verificationInput}
+                    onChange={(e) => {
+                      // Only allow numbers and max 6 digits
+                      const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                      setVerificationInput(value);
+                    }}
+                    maxLength={6}
+                    className="w-full px-4 py-4 rounded-xl text-white text-center text-2xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
+                      letterSpacing: "0.5em",
+                    }}
+                    placeholder="• • • • • •"
+                  />
+                </div>
+
+                {/* Countdown & Resend */}
+                <div className="text-center">
+                  {countdown > 0 ? (
+                    <div className="flex items-center justify-center gap-2" style={{ color: theme.textMuted }}>
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm">
+                        Kirim ulang kode dalam {countdown} detik
+                      </span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResendCode}
+                      disabled={!canResend}
+                      className="text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
+                      style={{ color: theme.primary }}
+                    >
+                      Kirim Ulang Kode
+                    </button>
+                  )}
+                </div>
+
+                {/* Info Box */}
+                <div
+                  className="p-4 rounded-xl flex items-start gap-3"
+                  style={{
+                    backgroundColor: `${theme.primary}10`,
+                    border: `1px solid ${theme.primary}30`,
+                  }}
+                >
+                  <Shield className="w-5 h-5 flex-shrink-0" style={{ color: theme.primary }} />
+                  <div>
+                    <p className="text-sm font-medium mb-1" style={{ color: theme.textPrimary }}>
+                      Mengapa perlu verifikasi?
+                    </p>
+                    <p className="text-xs" style={{ color: theme.textSecondary }}>
+                      Verifikasi email memastikan keamanan akun Anda dan mencegah penyalahgunaan.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isVerifying || verificationInput.length !== 6}
+                  className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                  }}
+                >
+                  {isVerifying ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Memverifikasi...
+                    </>
+                  ) : (
+                    <>
+                      Verifikasi & Buat Akun
+                      <CheckCircle className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <p className="text-center mt-6 text-xs" style={{ color: theme.textMuted }}>
+                Tidak menerima email?{" "}
+                <button
+                  onClick={handleResendCode}
+                  disabled={!canResend}
+                  className="font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
+                  style={{ color: theme.primary }}
+                >
+                  Periksa folder spam
+                </button>
+              </p>
+            </motion.div>
+          )}
         </motion.div>
       </div>
 
-      {/* Right Side - Decoration */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-emerald-600 to-primary items-center justify-center p-12">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-center text-white"
-        >
-          <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-8">
-            <Leaf className="w-16 h-16" />
+      {/* Kanan - Ilustrasi */}
+      <div
+        className="hidden lg:flex flex-1 items-center justify-center p-8"
+        style={{
+          background: `linear-gradient(135deg, ${theme.primary}15, ${theme.secondary}15)`,
+        }}
+      >
+        <div className="max-w-lg text-center">
+          <div className="mb-8">
+            <img src={logoPath} alt="Logo HYDREX" className="h-24 w-auto mx-auto" />
           </div>
-          <h2 className="text-4xl font-bold mb-4">Bergabung Bersama Kami</h2>
-          <p className="text-lg text-white/80 max-w-md">
-            Jadilah bagian dari gerakan Indonesia menuju Net Zero Emission 2060
+          <h3
+            className="text-3xl font-bold mb-4"
+            style={{ color: theme.textPrimary }}
+          >
+            Bergabunglah dengan HYDREX
+          </h3>
+          <p className="text-lg mb-8" style={{ color: theme.textSecondary }}>
+            Platform perdagangan kredit air terpercaya untuk masa depan yang
+            lebih hijau
           </p>
-          <div className="mt-12 space-y-4">
-            <div className="flex items-center gap-3 justify-center">
-              <CheckCircle className="w-6 h-6" />
-              <span>Gratis untuk memulai</span>
+          <div className="grid grid-cols-2 gap-6">
+            <div
+              className="p-6 rounded-2xl"
+              style={{ backgroundColor: theme.bgCard }}
+            >
+              <h4
+                className="text-3xl font-bold mb-2"
+                style={{ color: theme.primary }}
+              >
+                10K+
+              </h4>
+              <p className="text-sm" style={{ color: theme.textSecondary }}>
+                Pengguna Aktif
+              </p>
             </div>
-            <div className="flex items-center gap-3 justify-center">
-              <CheckCircle className="w-6 h-6" />
-              <span>Dashboard komprehensif</span>
-            </div>
-            <div className="flex items-center gap-3 justify-center">
-              <CheckCircle className="w-6 h-6" />
-              <span>Dukungan 24/7</span>
+            <div
+              className="p-6 rounded-2xl"
+              style={{ backgroundColor: theme.bgCard }}
+            >
+              <h4
+                className="text-3xl font-bold mb-2"
+                style={{ color: theme.secondary }}
+              >
+                500+
+              </h4>
+              <p className="text-sm" style={{ color: theme.textSecondary }}>
+                Proyek Air
+              </p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
