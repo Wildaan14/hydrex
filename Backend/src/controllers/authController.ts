@@ -42,7 +42,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     await user.save({ validateBeforeSave: false });
 
     // Send email
-    const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${verificationToken}`;
+    const verifyUrl = `${process.env.FRONTEND_URL || 'https://hydrex.vercel.app'}/verify-email?token=${verificationToken}`;
     const message = `Halo ${user.name},\n\nTerima kasih telah mendaftar di HydrEx! Silakan klik link berikut untuk memverifikasi akun Anda:\n\n${verifyUrl}\n\nLink ini akan kadaluarsa dalam 24 jam.`;
 
     try {
