@@ -37,13 +37,13 @@ interface NavItem {
   nameEn: string;
   path: string;
   icon: React.ReactNode;
-  roles?: ("admin" | "user" | "company")[];
+  roles?: ("admin" | "user" | "company" | "individual" | "vvb")[];
 }
 
 const navItems: NavItem[] = [
   { name: "Beranda", nameEn: "Home", path: "/home", icon: <Home size={17} /> },
   { name: "Marketplace", nameEn: "Marketplace", path: "/marketplace", icon: <ShoppingCart size={17} /> },
-  { name: "Proyek", nameEn: "Projects", path: "/projects", icon: <FolderKanban size={17} /> },
+  { name: "Proyek", nameEn: "Projects", path: "/projects", icon: <FolderKanban size={17} />, roles: ["admin", "company"] },
   { name: "Kalkulator", nameEn: "Calculator", path: "/calculator", icon: <Calculator size={17} /> },
   { name: "Forum", nameEn: "Forum", path: "/forum", icon: <MessageSquare size={17} /> },
   { name: "Berita", nameEn: "News", path: "/news", icon: <Newspaper size={17} /> },
