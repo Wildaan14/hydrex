@@ -43,6 +43,8 @@ export const RegisterPage: React.FC = () => {
   // Email verification states
   const [isVerifying, setIsVerifying] = useState(false);
 
+  const [otpCode, setOtpCode] = useState("");
+
   const handleSelectType = (type: AccountType) => {
     setAccountType(type);
     setStep("fill-data");
@@ -99,6 +101,38 @@ export const RegisterPage: React.FC = () => {
       }
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otpCode.length !== 6) {
+      setError("Kode verifikasi harus 6 digit");
+      return;
+    }
+
+    setIsVerifying(true);
+    setError("");
+
+    try {
+      const apiUrl = (import.meta as any).env.VITE_API_URL || "https://hydrex.vercel.app";
+      const response = await fetch(`${apiUrl}/api/auth/verify-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: otpCode }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Success
+        navigate("/login", { state: { message: "Email berhasil diverifikasi! Silakan login." } });
+      } else {
+        setError(data.message || "Kode verifikasi salah atau kadaluarsa.");
+      }
+    } catch (err) {
+      setError("Terjadi kesalahan jaringan.");
     } finally {
       setIsVerifying(false);
     }
@@ -579,21 +613,48 @@ export const RegisterPage: React.FC = () => {
                   Verifikasi Email
                 </h2>
                 <p className="mb-1" style={{ color: theme.textSecondary }}>
-                  Kami telah mengirim kode verifikasi ke
+                  Kami telah mengirim 6 digit kode OTP ke email:
                 </p>
-                <p className="font-medium" style={{ color: theme.primary }}>
+                <p className="font-medium mb-6" style={{ color: theme.primary }}>
                   {email}
                 </p>
+
+                <div className="mb-6">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))} // only accept numbers
+                    className="w-full text-center text-3xl tracking-[1em] px-4 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+                    style={{
+                      backgroundColor: theme.bgCard,
+                      border: `2px solid ${theme.border}`,
+                      color: theme.textPrimary,
+                    }}
+                    placeholder="------"
+                  />
+                  <p className="text-xs mt-3" style={{ color: theme.textSecondary }}>
+                    Masukkan 6 digit kode yang dikirim ke email Anda. Silakan cek folder Spam jika tidak ditemukan.
+                  </p>
+                </div>
               </div>
 
               <button
-                onClick={() => navigate("/login")}
-                className="w-full mt-6 py-3 px-4 rounded-xl font-semibold text-white transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                onClick={handleVerifyOtp}
+                disabled={isVerifying || otpCode.length !== 6}
+                className="w-full mt-2 py-3 px-4 rounded-xl font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                 style={{
                   background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
                 }}
               >
-                Ke Halaman Login
+                {isVerifying ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Memverifikasi...
+                  </>
+                ) : (
+                  "Verifikasi Kode OTP"
+                )}
               </button>
             </motion.div>
           )}

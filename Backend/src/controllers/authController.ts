@@ -14,46 +14,56 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       req.body;
 
     // Check if user exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      res.status(400).json({
-        success: false,
-        message: "User already exists with this email",
+    let user = await User.findOne({ email });
+    if (user) {
+      if (user.isEmailVerified) {
+        res.status(400).json({
+          success: false,
+          message: "User already exists with this email and is verified. Please log in.",
+        });
+        return;
+      }
+
+      // If user exists but NOT verified, update their info with new registration details
+      user.password = password;
+      user.name = name;
+      user.company = company;
+      user.role = role || "individual";
+      user.phone = phone;
+      user.address = address;
+      user.country = country;
+    } else {
+      // Create a brand new user
+      user = new User({
+        email,
+        password,
+        name,
+        company,
+        role: role || "individual",
+        phone,
+        address,
+        country,
       });
-      return;
     }
 
-    // Create user
-    const user = await User.create({
-      email,
-      password,
-      name,
-      company,
-      role: role || "individual",
-      phone,
-      address,
-      country,
-    });
-
-    // Generate Verification Token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    user.verificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    // Generate 6-Digit OTP Verification Token
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    user.verificationToken = crypto.createHash('sha256').update(verificationCode).digest('hex');
     user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours expires
     await user.save({ validateBeforeSave: false });
 
-    // Send email
-    const verifyUrl = `${process.env.FRONTEND_URL || 'https://hydrex.vercel.app'}/verify-email?token=${verificationToken}`;
-    const message = `Halo ${user.name},\n\nTerima kasih telah mendaftar di HydrEx! Silakan klik link berikut untuk memverifikasi akun Anda:\n\n${verifyUrl}\n\nLink ini akan kadaluarsa dalam 24 jam.`;
+    // Send email with the OTP code
+    const message = `Halo ${user.name},\n\nTerima kasih telah mendaftar di HydrEx! Kode Verifikasi Anda adalah:\n\n${verificationCode}\n\nMasukkan 6-angka di atas ke halaman registrasi Anda. Kode ini berlaku selamanya hingga akun terverifikasi.`;
 
     try {
       await sendEmail({
         email: user.email,
-        subject: 'Verifikasi Akun HydrEx Anda',
+        subject: 'Kode Verifikasi HydrEx Anda',
         message
       });
       res.status(201).json({
         success: true,
-        message: "Registrasi berhasil! Silakan cek email Anda untuk instruksi verifikasi.",
+        message: "Registrasi berhasil! Kode verifikasi telah dikirimkan ke email Anda.",
       });
     } catch (err) {
       console.warn("⚠️ Email gagal dikirim (mungkin SMTP belum di-setting). User otomatis terverifikasi.");
