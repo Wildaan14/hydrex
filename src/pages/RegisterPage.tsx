@@ -89,7 +89,7 @@ export const RegisterPage: React.FC = () => {
 
     setIsVerifying(true);
     try {
-      const role: UserRole = accountType === "company" ? "company" : "user";
+      const role: UserRole = accountType === "company" ? "company" : "individual";
       const res = await register(name, email, password, role);
 
       if (res.success) {
