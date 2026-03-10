@@ -22,9 +22,9 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{success: boolean; message: string}>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
-  register: (name: string, email: string, password: string, role: UserRole, company?: string, phone?: string, address?: string, country?: string) => Promise<{success: boolean; message: string}>;
+  register: (name: string, email: string, password: string, role: UserRole, company?: string, phone?: string, address?: string, country?: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,7 +71,7 @@ const defaultUsers: StoredUser[] = [
 // Get users from localStorage or use defaults
 const getStoredUsers = (): StoredUser[] => {
   if (typeof window === "undefined") return defaultUsers;
-  
+
   const stored = localStorage.getItem("hydrex-users");
   if (stored) {
     try {
@@ -80,7 +80,7 @@ const getStoredUsers = (): StoredUser[] => {
       return defaultUsers;
     }
   }
-  
+
   // Initialize with default users
   localStorage.setItem("hydrex-users", JSON.stringify(defaultUsers));
   return defaultUsers;
@@ -102,7 +102,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Use Vite env variable or fallback
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const API_URL = (import.meta as any).env.VITE_API_URL || "https://hydrex.vercel.app";
+
 
   // Check for existing session on mount
   useEffect(() => {
@@ -129,7 +130,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, [API_URL]);
 
-  const login = async (email: string, password: string): Promise<{success: boolean; message: string}> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
     setIsLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/auth/login`, {
@@ -164,7 +165,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     phone?: string,
     address?: string,
     country?: string
-  ): Promise<{success: boolean; message: string}> => {
+  ): Promise<{ success: boolean; message: string }> => {
     setIsLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/auth/register`, {

@@ -6,7 +6,7 @@ export const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
-  
+
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Memverifikasi email Anda...");
 
@@ -19,7 +19,7 @@ export const VerifyEmailPage = () => {
 
     const verifyEmail = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const apiUrl = (import.meta as any).env.VITE_API_URL || "https://hydrex.vercel.app";
         const response = await fetch(`${apiUrl}/api/auth/verify-email`, {
           method: "POST",
           headers: {
