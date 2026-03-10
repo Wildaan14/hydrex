@@ -88,13 +88,15 @@ app.use(
   },
 );
 
-// Start server
+// Start server only in development/local
 const PORT = config.port;
 
-app.listen(PORT, () => {
-  console.log(`🚀 HydrEx Backend running on port ${PORT}`);
-  console.log(`📊 Environment: ${config.nodeEnv}`);
-  console.log(`🗄️  MongoDB: ${config.mongoUri}`);
-});
+if (config.nodeEnv !== "production") {
+  app.listen(PORT, () => {
+    console.log(`🚀 HydrEx Backend running on port ${PORT}`);
+    console.log(`📊 Environment: ${config.nodeEnv}`);
+    console.log(`🗄️  MongoDB: ${config.mongoUri}`);
+  });
+}
 
 export default app;

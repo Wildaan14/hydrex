@@ -5,13 +5,19 @@ const connectDB = async (): Promise<void> => {
     const mongoURI =
       process.env.MONGODB_URI || "mongodb://localhost:27017/hydrex";
 
-    const conn = await mongoose.connect(mongoURI);
+    // Set serverSelectionTimeoutMS so it doesn't hang Vercel lambdas for 30s
+    const conn = await mongoose.connect(mongoURI, {
+      serverSelectionTimeoutMS: 5000,
+    });
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error(`MongoDB Connection Error: ${error}`);
-    process.exit(1);
+    if (process.env.NODE_ENV !== "production") {
+      process.exit(1);
+    }
   }
 };
 
 export default connectDB;
+
