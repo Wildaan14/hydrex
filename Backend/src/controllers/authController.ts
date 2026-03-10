@@ -159,11 +159,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Login error details:", error);
     res.status(500).json({
       success: false,
-      message: "Error logging in",
-      error: error instanceof Error ? error.message : "Unknown error",
+      message: "Error logging in - DEBUG",
+      error: error instanceof Error ? error.stack || error.message : String(error),
     });
   }
 };
