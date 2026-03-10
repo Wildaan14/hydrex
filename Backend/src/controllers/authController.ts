@@ -56,10 +56,20 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         message: "Registrasi berhasil! Silakan cek email Anda untuk instruksi verifikasi.",
       });
     } catch (err) {
+      console.warn("⚠️ Email gagal dikirim (mungkin SMTP belum di-setting). User otomatis terverifikasi.");
+      // Skip email verification if SMTP fails
+      user.verified = true;
+      user.isEmailVerified = true;
       user.verificationToken = undefined;
       user.verificationTokenExpires = undefined;
       await user.save({ validateBeforeSave: false });
-      res.status(500).json({ success: false, message: 'Gagal mengirim email verifikasi.' });
+
+      // Return success anyway so they can login immediately
+      res.status(201).json({
+        success: true,
+        message: 'Registrasi berhasil! Anda sudah dapat menskip verifikasi dan langsung Login.',
+        autoVerified: true
+      });
     }
   } catch (error) {
     console.error("Register error:", error);
@@ -154,7 +164,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const hashedToken = crypto.createHash('sha256').update(req.body.token).digest('hex');
-    const user = (await User.findOne({ 
+    const user = (await User.findOne({
       verificationToken: hashedToken,
       verificationTokenExpires: { $gt: new Date() }
     })) as any;

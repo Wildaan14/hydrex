@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  AlertCircle, 
-  Loader2, 
-  ArrowLeft, 
-  CheckCircle, 
+import {
+  AlertCircle,
+  Loader2,
+  ArrowLeft,
+  CheckCircle,
   Mail,
   Shield,
   Clock
@@ -39,7 +39,7 @@ export const RegisterPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Email verification states
   const [isVerifying, setIsVerifying] = useState(false);
 
@@ -122,8 +122,8 @@ export const RegisterPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white flex-shrink-0"
-                style={{ 
-                  backgroundColor: step !== "select-type" ? theme.primary : theme.primary 
+                style={{
+                  backgroundColor: step !== "select-type" ? theme.primary : theme.primary
                 }}
               >
                 {step !== "select-type" ? (
@@ -161,8 +161,8 @@ export const RegisterPage: React.FC = () => {
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
                 style={{
-                  backgroundColor: step === "verify-email" ? theme.primary : 
-                                  step === "fill-data" ? theme.primary : theme.bgCard,
+                  backgroundColor: step === "verify-email" ? theme.primary :
+                    step === "fill-data" ? theme.primary : theme.bgCard,
                   color: step === "fill-data" || step === "verify-email" ? "white" : theme.textMuted,
                   border: step === "fill-data" || step === "verify-email" ? "none" : `1px solid ${theme.border}`,
                 }}
@@ -409,10 +409,11 @@ export const RegisterPage: React.FC = () => {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                     style={{
                       backgroundColor: theme.bgCard,
                       border: `1px solid ${theme.border}`,
+                      color: theme.textPrimary,
                     }}
                     placeholder="Masukkan nama lengkap"
                   />
@@ -429,10 +430,11 @@ export const RegisterPage: React.FC = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                     style={{
                       backgroundColor: theme.bgCard,
                       border: `1px solid ${theme.border}`,
+                      color: theme.textPrimary,
                     }}
                     placeholder="email@contoh.com"
                   />
@@ -449,10 +451,11 @@ export const RegisterPage: React.FC = () => {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                     style={{
                       backgroundColor: theme.bgCard,
                       border: `1px solid ${theme.border}`,
+                      color: theme.textPrimary,
                     }}
                     placeholder="Minimal 6 karakter"
                   />
@@ -469,12 +472,13 @@ export const RegisterPage: React.FC = () => {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                     style={{
                       backgroundColor: theme.bgCard,
                       border: `1px solid ${theme.border}`,
+                      color: theme.textPrimary,
                     }}
-                    placeholder="Konfirmasi kata sandi"
+                    placeholder="Ulangi kata sandi"
                   />
                 </div>
 
