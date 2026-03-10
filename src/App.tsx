@@ -31,202 +31,202 @@ import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 function App() {
   return (
     <ThemeProvider>
-    <HashRouter>
-      <LanguageProvider>
-        <AuthProvider>
-          <ProjectProvider>
-            <MarketplaceProvider>
-              <ESGProvider>
-                {" "}
-                {/* ← TAMBAHAN: Wrap ESGProvider */}
-                <Routes>
-                  {/* ==================== PUBLIC ROUTES ==================== */}
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <HashRouter>
+        <LanguageProvider>
+          <AuthProvider>
+            <ProjectProvider>
+              <MarketplaceProvider>
+                <ESGProvider>
+                  {" "}
+                  {/* ← TAMBAHAN: Wrap ESGProvider */}
+                  <Routes>
+                    {/* ==================== PUBLIC ROUTES ==================== */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-                  {/* ==================== PROTECTED ROUTES WITH LAYOUT ==================== */}
-                  <Route element={<AppLayout />}>
-                    {/* HOME - All authenticated users */}
-                    <Route
-                      path="/home"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "company", "user"]}
-                        >
-                          <HomePage />
-                        </ProtectedRoute>
-                      }
-                    />
+                    {/* ==================== PROTECTED ROUTES WITH LAYOUT ==================== */}
+                    <Route element={<AppLayout />}>
+                      {/* HOME - All authenticated users */}
+                      <Route
+                        path="/home"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "company", "user", "individual", "vvb"]}
+                          >
+                            <HomePage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* ==================== MAIN MENU ==================== */}
+                      {/* ==================== MAIN MENU ==================== */}
 
-                    {/* MARKETPLACE - All users */}
-                    <Route
-                      path="/marketplace"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "company", "user"]}
-                        >
-                          <MarketplacePage />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* MARKETPLACE - All users */}
+                      <Route
+                        path="/marketplace"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "company", "user", "individual", "vvb"]}
+                          >
+                            <MarketplacePage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* PROJECTS - Admin & Company only */}
-                    <Route
-                      path="/projects"
-                      element={
-                        <ProtectedRoute allowedRoles={["admin", "company"]}>
-                          <ProjectsPage />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* PROJECTS - Admin & Company only */}
+                      <Route
+                        path="/projects"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin", "company"]}>
+                            <ProjectsPage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* CALCULATOR - All authenticated users */}
-                    <Route
-                      path="/calculator"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "company", "user"]}
-                        >
-                          <CalculatorPage />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* CALCULATOR - All authenticated users */}
+                      <Route
+                        path="/calculator"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "company", "user", "individual", "vvb"]}
+                          >
+                            <CalculatorPage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* REGULATIONS - All authenticated users */}
-                    <Route
-                      path="/regulations"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "company", "user"]}
-                        >
-                          <WaterPricingRegulations />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* REGULATIONS - All authenticated users */}
+                      <Route
+                        path="/regulations"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "company", "user", "individual", "vvb"]}
+                          >
+                            <WaterPricingRegulations />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* ==================== COMMUNITY ==================== */}
+                      {/* ==================== COMMUNITY ==================== */}
 
-                    {/* FORUM - All authenticated users */}
-                    <Route
-                      path="/forum"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "company", "user"]}
-                        >
-                          <ForumPage />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* FORUM - All authenticated users */}
+                      <Route
+                        path="/forum"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "company", "user", "individual", "vvb"]}
+                          >
+                            <ForumPage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* NEWS - All authenticated users */}
-                    <Route
-                      path="/news"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "company", "user"]}
-                        >
-                          <NewsPage />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* NEWS - All authenticated users */}
+                      <Route
+                        path="/news"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "company", "user", "individual", "vvb"]}
+                          >
+                            <NewsPage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* EDUCATION - All authenticated users */}
-                    <Route
-                      path="/education"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "company", "user"]}
-                        >
-                          <EducationPage />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* EDUCATION - All authenticated users */}
+                      <Route
+                        path="/education"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "company", "user", "individual", "vvb"]}
+                          >
+                            <EducationPage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* ==================== REPORTS & ANALYTICS ==================== */}
+                      {/* ==================== REPORTS & ANALYTICS ==================== */}
 
-                    {/* REPORTS - Admin & Company only */}
-                    <Route
-                      path="/reports"
-                      element={
-                        <ProtectedRoute allowedRoles={["admin", "company"]}>
-                          <ReportsPage />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* REPORTS - Admin & Company only */}
+                      <Route
+                        path="/reports"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin", "company"]}>
+                            <ReportsPage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* MRV DASHBOARD - Admin & Company only */}
-                    <Route
-                      path="/mrv-dashboard"
-                      element={
-                        <ProtectedRoute allowedRoles={["admin", "company"]}>
-                          <MRVDashboardPage />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* MRV DASHBOARD - Admin & Company only */}
+                      <Route
+                        path="/mrv-dashboard"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin", "company"]}>
+                            <MRVDashboardPage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* ESG SCORING - Admin & Company only */}
-                    <Route
-                      path="/esg-scoring"
-                      element={
-                        <ProtectedRoute allowedRoles={["admin", "company"]}>
-                          <ESGScoringPage />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* ESG SCORING - Admin & Company only */}
+                      <Route
+                        path="/esg-scoring"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin", "company"]}>
+                            <ESGScoringPage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* ==================== ADMIN ==================== */}
+                      {/* ==================== ADMIN ==================== */}
 
-                    {/* ADMIN PAGE - Admin only */}
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute allowedRoles={["admin"]}>
-                          <AdminPage />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* ADMIN PAGE - Admin only */}
+                      <Route
+                        path="/admin"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminPage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* ==================== USER ==================== */}
+                      {/* ==================== USER ==================== */}
 
-                    {/* PROFILE - All authenticated users */}
-                    <Route
-                      path="/profile"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "company", "user"]}
-                        >
-                          <ProfilePage />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* PROFILE - All authenticated users */}
+                      <Route
+                        path="/profile"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "company", "user", "individual", "vvb"]}
+                          >
+                            <ProfilePage />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* SETTINGS - All authenticated users */}
-                    <Route
-                      path="/settings"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "company", "user"]}
-                        >
-                          <SettingsPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                  </Route>
+                      {/* SETTINGS - All authenticated users */}
+                      <Route
+                        path="/settings"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "company", "user", "individual", "vvb"]}
+                          >
+                            <SettingsPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                    </Route>
 
-                  {/* ==================== DEFAULT REDIRECTS ==================== */}
-                  <Route path="/" element={<Navigate to="/login" replace />} />
-                  <Route path="*" element={<Navigate to="/home" replace />} />
-                </Routes>
-              </ESGProvider>{" "}
-              {/* ← TAMBAHAN: Tutup ESGProvider */}
-            </MarketplaceProvider>
-          </ProjectProvider>
-        </AuthProvider>
-      </LanguageProvider>
-    </HashRouter>
+                    {/* ==================== DEFAULT REDIRECTS ==================== */}
+                    <Route path="/" element={<Navigate to="/login" replace />} />
+                    <Route path="*" element={<Navigate to="/home" replace />} />
+                  </Routes>
+                </ESGProvider>{" "}
+                {/* ← TAMBAHAN: Tutup ESGProvider */}
+              </MarketplaceProvider>
+            </ProjectProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </HashRouter>
     </ThemeProvider>
   );
 }
