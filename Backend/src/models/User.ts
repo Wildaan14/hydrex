@@ -11,6 +11,12 @@ export interface IUserModel extends Document {
   phone?: string;
   address?: string;
   country?: string;
+  preferences: {
+    email: boolean;
+    push: boolean;
+    transaction: boolean;
+    newsletter: boolean;
+  };
   verified: boolean;
   isEmailVerified: boolean;
   verificationToken?: string;
@@ -60,6 +66,12 @@ const UserSchema = new Schema<IUserModel>(
     },
     country: {
       type: String,
+    },
+    preferences: {
+      email: { type: Boolean, default: true },
+      push: { type: Boolean, default: true },
+      transaction: { type: Boolean, default: true },
+      newsletter: { type: Boolean, default: false },
     },
     verified: {
       type: Boolean,

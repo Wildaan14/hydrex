@@ -22,6 +22,8 @@ import {
 import { useLanguage } from "../context/LanguageContext";
 import { useTheme } from "../components/ThemeProvider";
 import { lightPageTheme, darkPageTheme } from "../utils/appTheme";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 // Simple Toggle Component dengan warna HIJAU
 const Toggle: React.FC<{
@@ -58,13 +60,15 @@ export const SettingsPage: React.FC = () => {
   const { language } = useLanguage();
   const { theme: colorTheme } = useTheme();
   const theme = colorTheme === "dark" ? darkPageTheme : lightPageTheme;
+  const { user, updatePreferences, changePassword, deleteAccount } = useAuth();
+  const navigate = useNavigate();
 
   // States
   const [notifications, setNotifications] = useState({
-    email: true,
-    push: true,
-    transaction: true,
-    newsletter: false,
+    email: user?.preferences?.email ?? true,
+    push: user?.preferences?.push ?? true,
+    transaction: user?.preferences?.transaction ?? true,
+    newsletter: user?.preferences?.newsletter ?? false,
   });
 
   const [darkMode, setDarkMode] = useState(true);
@@ -89,13 +93,18 @@ export const SettingsPage: React.FC = () => {
 
   const handleSaveSettings = async () => {
     setSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const result = await updatePreferences(notifications);
     setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+
+    if (result.success) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } else {
+      alert(result.message);
+    }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
       alert(language === "id" ? "Password tidak cocok!" : "Passwords don't match!");
       return;
@@ -108,11 +117,28 @@ export const SettingsPage: React.FC = () => {
       );
       return;
     }
-    alert(language === "id" ? "Password berhasil diubah!" : "Password changed successfully!");
-    setShowChangePassword(false);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+
+    const result = await changePassword(currentPassword, newPassword);
+
+    if (result.success) {
+      alert(language === "id" ? "Password berhasil diubah!" : "Password changed successfully!");
+      setShowChangePassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } else {
+      alert(result.message);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const result = await deleteAccount();
+    if (result.success) {
+      alert(language === "id" ? "Akun berhasil dihapus." : "Account successfully deleted.");
+      navigate("/login");
+    } else {
+      alert(result.message);
+    }
   };
 
   return (
@@ -299,8 +325,8 @@ export const SettingsPage: React.FC = () => {
                       ? "Menggunakan tema gelap"
                       : "Menggunakan tema terang"
                     : darkMode
-                    ? "Using dark theme"
-                    : "Using light theme"}
+                      ? "Using dark theme"
+                      : "Using light theme"}
                 </p>
               </div>
             </div>
@@ -618,7 +644,7 @@ export const SettingsPage: React.FC = () => {
                 {language === "id" ? "Batal" : "Cancel"}
               </button>
               <button
-                onClick={() => alert(language === "id" ? "Akun dihapus" : "Account deleted")}
+                onClick={handleDeleteAccount}
                 className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
               >
                 {language === "id" ? "Ya, Hapus Akun Saya" : "Yes, Delete My Account"}

@@ -307,3 +307,81 @@ export const changePassword = async (
     });
   }
 };
+
+// @desc    Update user preferences
+// @route   PUT /api/auth/preferences
+// @access  Private
+export const updatePreferences = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { email, push, transaction, newsletter } = req.body;
+
+    const user = await User.findById(req.user?._id);
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    // Merge preferences
+    user.preferences = {
+      ...user.preferences,
+      email: email !== undefined ? email : user.preferences?.email ?? true,
+      push: push !== undefined ? push : user.preferences?.push ?? true,
+      transaction: transaction !== undefined ? transaction : user.preferences?.transaction ?? true,
+      newsletter: newsletter !== undefined ? newsletter : user.preferences?.newsletter ?? false,
+    };
+
+    await user.save({ validateBeforeSave: false });
+
+    res.json({
+      success: true,
+      message: "Preferences updated successfully",
+      data: { preferences: user.preferences }
+    });
+  } catch (error) {
+    console.error("Update preferences error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating preferences",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+// @desc    Delete user account
+// @route   DELETE /api/auth/account
+// @access  Private
+export const deleteAccount = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const user = await User.findByIdAndDelete(req.user?._id);
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: "Account deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete account error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting account",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};

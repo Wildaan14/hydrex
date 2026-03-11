@@ -10,6 +10,12 @@ export interface User {
   avatar?: string;
   company?: string;
   createdAt: string;
+  preferences?: {
+    email: boolean;
+    push: boolean;
+    transaction: boolean;
+    newsletter: boolean;
+  };
 }
 
 interface StoredUser {
@@ -25,6 +31,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   register: (name: string, email: string, password: string, role: UserRole, company?: string, phone?: string, address?: string, country?: string) => Promise<{ success: boolean; message: string }>;
+  updatePreferences: (preferences: Partial<User["preferences"]>) => Promise<{ success: boolean; message: string }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
+  deleteAccount: () => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -182,6 +191,74 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updatePreferences = async (preferences: Partial<User["preferences"]>) => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("hydrex-token");
+      const res = await fetch(`${API_URL}/api/auth/preferences`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(preferences),
+      });
+      const data = await res.json();
+      if (data.success && user) {
+        // Optimistically update local user state
+        setUser({ ...user, preferences: data.data.preferences });
+      }
+      return { success: data.success, message: data.message };
+    } catch (err) {
+      return { success: false, message: "Terjadi kesalahan jaringan" };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("hydrex-token");
+      const res = await fetch(`${API_URL}/api/auth/password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      return { success: data.success, message: data.message };
+    } catch (err) {
+      return { success: false, message: "Terjadi kesalahan jaringan" };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteAccount = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("hydrex-token");
+      const res = await fetch(`${API_URL}/api/auth/account`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (data.success) {
+        logout();
+      }
+      return { success: data.success, message: data.message };
+    } catch (err) {
+      return { success: false, message: "Terjadi kesalahan jaringan" };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -191,6 +268,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         login,
         logout,
         register,
+        updatePreferences,
+        changePassword,
+        deleteAccount,
       }}
     >
       {children}

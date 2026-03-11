@@ -6,6 +6,8 @@ import {
   updateProfile,
   changePassword,
   verifyEmail,
+  updatePreferences,
+  deleteAccount,
 } from "../controllers/authController";
 import { protect } from "../middleware/auth";
 
@@ -17,5 +19,7 @@ router.post("/verify-email", verifyEmail);
 router.get("/me", protect, getMe);
 router.put("/profile", protect, updateProfile);
 router.put("/password", protect, changePassword);
+router.put("/preferences", protect, updatePreferences);
+router.delete("/account", protect, deleteAccount);
 
 export default router;
