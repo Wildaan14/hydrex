@@ -314,23 +314,24 @@ export const seedLocalStorage = (): boolean => {
   const rawEdu = (newsEduData as any)[eduKey] || [];
   const processedEdu = rawEdu.map((e: any) => ({
     id: e["Resource ID"],
-    title: e["Topic / Title"],
-    titleEn: e["Topic / Title"],
-    description: e["Key Concept / Summary"],
-    descriptionEn: e["Key Concept / Summary"],
-    type: String(e["Format"]).toLowerCase().includes("video") ? "video" : "article",
-    category: String(e["Complexity"]).toLowerCase().includes("basic") ? "basics" : 
-              String(e["Complexity"]).toLowerCase().includes("advanced") ? "advanced" : "practical",
-    duration: e["Read Time / Duration"],
-    thumbnail: e["Cover Image URL"] || "https://images.unsplash.com/photo-1543039625-14cbd3802e7d?w=600",
+    title: e["Title"] || e["Topic / Title"],
+    titleEn: e["Title"] || e["Topic / Title"],
+    description: e["Description / Summary"] || e["Key Concept / Summary"],
+    descriptionEn: e["Description / Summary"] || e["Key Concept / Summary"],
+    type: String(e["Type"] || e["Format"]).toLowerCase().includes("video") ? "video" : "article",
+    category: String(e["Level"] || e["Category"] || e["Complexity"]).toLowerCase().includes("beginner") || 
+              String(e["Level"] || e["Category"] || e["Complexity"]).toLowerCase().includes("basic") ? "basics" : 
+              String(e["Level"] || e["Category"] || e["Complexity"]).toLowerCase().includes("advanced") ? "advanced" : "practical",
+    duration: e["Duration/Pages"] || e["Read Time / Duration"],
+    thumbnail: e["Thumbnail URL"] || e["Cover Image URL"] || "https://images.unsplash.com/photo-1543039625-14cbd3802e7d?w=600",
     url: e["URL (Free Access)"],
-    source: e["Publisher / Provider"],
+    source: e["Publisher / Source"] || e["Publisher / Provider"],
     isNew: true,
-    isFeatured: String(e["Relevance"]).includes("Essential")
+    isFeatured: String(e["Relevance"] || "").includes("Essential")
   }));
   localStorage.setItem("hydrex-education-v1", JSON.stringify(processedEdu));
 
-  localStorage.setItem('hydrex-seeded-v7', 'true');
-  console.log("Successfully seeded localStorage with Safe Photos and News/Edu (v7)!");
+  localStorage.setItem('hydrex-seeded-v8', 'true');
+  console.log("Successfully seeded localStorage with Safe Photos and News/Edu (v8)!");
   return true;
 };
