@@ -1,69 +1,106 @@
 import { masterData } from '../data/masterData';
 
+const safeCommunityImages = [
+    "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&q=80", // Nature water
+    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80", // Mountain lake
+    "https://images.unsplash.com/photo-1437482078695-73f5bd6f4e24?w=800&q=80", // River stream
+    "https://images.unsplash.com/photo-1470071131384-001b85755536?w=800&q=80", // Forest lake
+    "https://images.unsplash.com/photo-1542224566-6e85f2e10ce3?w=800&q=80", // Waterfall
+    "https://images.unsplash.com/photo-1505228395891-9a51e7e86bf6?w=800&q=80", // Ocean
+    "https://images.unsplash.com/photo-1439405326854-01460775a2d1?w=800&q=80", // Coastal / Wetlands
+    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80", // Clear water lake
+    "https://images.unsplash.com/photo-1456082902841-3335005c3082?w=800&q=80", // Dam / Reservoir
+    "https://images.unsplash.com/photo-1518182170546-076616fdceae?w=800&q=80"  // Rainwater feeling
+];
+
+const safeCorporateImages = [
+    "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80", // Corp building
+    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80", // Business building
+    "https://images.unsplash.com/photo-1516937941344-00b4e0337589?w=800&q=80", // Industrial
+    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80", // Industrial plant
+    "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&q=80", // Lab/Industry
+    "https://images.unsplash.com/photo-1536244636800-a3f74db0f3cf?w=800&q=80", // Pipes/Water station
+    "https://images.unsplash.com/photo-1581093458791-9d09c8a3a7b6?w=800&q=80", // Factory equipment
+    "https://images.unsplash.com/photo-1590856029826-c7a73142bbf1?w=800&q=80", // Water treatment plant
+    "https://images.unsplash.com/photo-1533483595632-c5f0e57a1936?w=800&q=80", // Water bottles/production
+    "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=800&q=80"  // Filtration
+];
+
 export const seedLocalStorage = (): boolean => {
   if (!masterData) return false;
   
-  // If already seeded, skip
-  if (localStorage.getItem('hydrex-seeded-v3') === 'true') {
-     return false; // already seeded
+  if (localStorage.getItem('hydrex-seeded-v5') === 'true') {
+     return false; 
   }
   
-  console.log("Seeding local storage from master data (v3)...");
+  console.log("Seeding local storage from master data (v5, strict verifications)...");
   const md = masterData as any;
 
+  let totalMapped = 0; // Out of 20 exactly
+
   // 1. Map Projects
-  const communityProjects = (md['01_Community_Projects'] || []).map((p:any, i:number) => ({
-      id: p['Project ID'] || `PROJ-C-${i}`,
-      category: "community",
-      title: p['Project Name'] || "Unknown Project",
-      description: p['Project Description'] || `Community conservation project in ${p['Province'] || "Unknown location"}.`,
-      projectType: "conservation",
-      location: { 
-          province: p['Province'] || "Kalimantan", 
-          regency: p['Regency'] || "", 
-          district: p['District'] || "", 
-          village: p['Village'] || "", 
-          coordinates: { lat: Number(p['Lat Center'] || 0), lng: Number(p['Lon Center'] || 0) } 
-      },
-      areaHectares: Number(p['Area (ha)'] || 1000),
-      startDate: p['Start Date'] ? new Date(p['Start Date']).toISOString() : new Date().toISOString(),
-      endDate: p['End Date'] ? new Date(p['End Date']).toISOString() : new Date(Date.now() + 10 * 365 * 24 * 3600 * 1000).toISOString(),
-      creditingPeriodYears: Number(p['Duration (yr)'] || 10),
-      status: p['Status'] === 'Active' ? 'verified' : 'under_verification',
-      progress: p['Status'] === 'Active' ? 100 : 50,
-      waterData: {
-          estimatedCredits: Number(p['Est. Credits/yr (m³)'] || 0),
-          verifiedCredits: p['Status'] === 'Active' ? Number(p['Net Credits/yr (m³)'] || 0) : 0,
-          baselineConsumption: Number(p['Baseline m³/yr (avg)'] || 0),
-          projectConsumption: 0,
-          leakageConsumption: 0,
-          netReduction: Number(p['Net Credits/yr (m³)'] || 0) || Number(p['Est. Credits/yr (m³)'] || 0),
-          pricePerCredit: Number(p['Price/m³ (USD)'] || 10),
-          creditsAvailable: Number(p['Net Credits/yr (m³)'] || p['Est. Credits/yr (m³)'] || 0)
-      },
-      currency: "USD",
-      certificationStandard: p['Cert. Standard'] || "Verra VCS",
-      methodology: p['Methodology'] || "Wetland & Mangrove Restoration",
-      owner: p['Developer Org'] || "Unknown Developer",
-      ownerEmail: p['Developer Contact'] || "admin@hydrex.com",
-      ownerCompany: p['Developer Org'] || "Unknown",
-      ownerRole: "company",
-      team: [],
-      coverImage: p['Cover Photo URL'] || (i % 2 === 0 ? "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=800" : "https://images.unsplash.com/photo-1586348943529-beaae6c28db9?w=800"),
-      galleryImages: [p['Field Photo URL']].filter(Boolean),
-      documents: [p['Land Cert Doc'], p['Env Permit Doc']].filter(Boolean),
-      verificationStatus: p['3rd Party Verified'] === 'Ya' ? 'verified' : 'pending',
-      verificationSteps: [],
-      verificationHistory: [],
-      listedInMarketplace: true,
-      sellerVerified: true,
-      blockchainRecords: [],
-      createdAt: p['Submission Date'] ? new Date(p['Submission Date']).toISOString() : new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-  }));
+  const communityProjects = (md['01_Community_Projects'] || []).map((p:any, i:number) => {
+      // Force 17 VERIFIED and 3 PENDING globally: we will make the LAST 3 projects (totalMapped 17, 18, 19) pending.
+      // With 10 community and 10 corporate, the pending ones will be the last 3 corporate ones.
+      const isVerified = totalMapped < 17;
+      totalMapped++;
+
+      return {
+          id: p['Project ID'] || `PROJ-C-${i}`,
+          category: "community",
+          title: p['Project Name'] || "Unknown Project",
+          description: p['Project Description'] || `Community conservation project in ${p['Province'] || "Unknown location"}.`,
+          projectType: "conservation",
+          location: { 
+              province: p['Province'] || "Kalimantan", 
+              regency: p['Regency'] || "", 
+              district: p['District'] || "", 
+              village: p['Village'] || "", 
+              coordinates: { lat: Number(p['Lat Center'] || 0), lng: Number(p['Lon Center'] || 0) } 
+          },
+          areaHectares: Number(p['Area (ha)'] || 1000),
+          startDate: p['Start Date'] ? new Date(p['Start Date']).toISOString() : new Date().toISOString(),
+          endDate: p['End Date'] ? new Date(p['End Date']).toISOString() : new Date(Date.now() + 10 * 365 * 24 * 3600 * 1000).toISOString(),
+          creditingPeriodYears: Number(p['Duration (yr)'] || 10),
+          status: isVerified ? 'verified' : 'under_verification',
+          progress: isVerified ? 100 : 50,
+          waterData: {
+              estimatedCredits: Number(p['Est. Credits/yr (m³)'] || 0),
+              verifiedCredits: isVerified ? Number(p['Net Credits/yr (m³)'] || p['Est. Credits/yr (m³)'] || 0) : 0,
+              baselineConsumption: Number(p['Baseline m³/yr (avg)'] || 0),
+              projectConsumption: 0,
+              leakageConsumption: 0,
+              netReduction: Number(p['Net Credits/yr (m³)'] || 0) || Number(p['Est. Credits/yr (m³)'] || 0),
+              pricePerCredit: Number(p['Price/m³ (USD)'] || 10),
+              creditsAvailable: Number(p['Net Credits/yr (m³)'] || p['Est. Credits/yr (m³)'] || 0)
+          },
+          currency: "USD",
+          certificationStandard: p['Cert. Standard'] || "Verra VCS",
+          methodology: p['Methodology'] || "Wetland & Mangrove Restoration",
+          owner: p['Developer Org'] || "Unknown Developer",
+          ownerEmail: p['Developer Contact'] || "admin@hydrex.com",
+          ownerCompany: p['Developer Org'] || "Unknown",
+          ownerRole: "company",
+          team: [],
+          coverImage: safeCommunityImages[i % safeCommunityImages.length],
+          galleryImages: [],
+          documents: [p['Land Cert Doc'], p['Env Permit Doc']].filter(Boolean),
+          verificationStatus: isVerified ? 'verified' : 'pending',
+          verificationSteps: [],
+          verificationHistory: [],
+          listedInMarketplace: true,
+          sellerVerified: true,
+          blockchainRecords: [],
+          createdAt: p['Submission Date'] ? new Date(p['Submission Date']).toISOString() : new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+      };
+  });
 
   const corporateProjects = (md['02_Corporate_Projects'] || []).map((p:any, i:number) => {
     const isBuyer = p['Trading Intent'] === 'Buy Quota';
+    const isVerified = totalMapped < 17;
+    totalMapped++;
+
     return {
       id: p['Program ID'] || `PROJ-Corp-${i}`,
       category: "corporate",
@@ -75,11 +112,11 @@ export const seedLocalStorage = (): boolean => {
       startDate: new Date().toISOString(),
       endDate: new Date().toISOString(),
       creditingPeriodYears: 1,
-      status: "verified",
-      progress: 100,
+      status: isVerified ? "verified" : "under_verification",
+      progress: isVerified ? 100 : 50,
       waterData: {
           estimatedCredits: isBuyer ? 0 : Number(p['Surplus (+) / Deficit (-) m³'] || 0),
-          verifiedCredits: isBuyer ? 0 : Number(p['Surplus Available for Market'] || 0),
+          verifiedCredits: isVerified ? (isBuyer ? 0 : Number(p['Surplus Available for Market'] || 0)) : 0,
           baselineConsumption: Number(p['Official Quota (m³/yr)'] || 0),
           projectConsumption: Number(p['Actual Consumption (m³/yr)'] || 0),
           leakageConsumption: 0,
@@ -95,10 +132,10 @@ export const seedLocalStorage = (): boolean => {
       ownerCompany: p['Company Legal Name'],
       ownerRole: "company",
       team: [],
-      coverImage: p['Cover Photo URL'] || "https://images.unsplash.com/photo-1581093458791-9d09c8a3a7b6?w=800",
-      galleryImages: [p['Field Photo URL']].filter(Boolean),
+      coverImage: safeCorporateImages[i % safeCorporateImages.length],
+      galleryImages: [],
       documents: [p['Supporting Documents']].filter(Boolean),
-      verificationStatus: p['Verification Status'] === 'Approved' ? 'verified' : 'pending',
+      verificationStatus: isVerified ? 'verified' : 'pending',
       verificationSteps: [],
       verificationHistory: [],
       listedInMarketplace: !isBuyer,
@@ -124,6 +161,7 @@ export const seedLocalStorage = (): boolean => {
   // 2. Map Listings
   const marketplaceListings = (md['10_Marketplace_Listings'] || md['04_Marketplace'] || []).map((l:any, i:number) => {
       const isCorp = l['Proj. Type'] === 'Corporate';
+      const imgPool = isCorp ? safeCorporateImages : safeCommunityImages;
       return {
           id: l['Listing ID'] || `LIST-${i}`,
           listingCategory: isCorp ? "corporate" : "community",
@@ -142,7 +180,7 @@ export const seedLocalStorage = (): boolean => {
           isVerified: true,
           verificationDate: l['Listed Date'] ? new Date(l['Listed Date']).toISOString() : new Date().toISOString(),
           verificationBody: l['VVB/Auditor'] || "HydrEx Authorized VVB",
-          coverImage: l['Cover Photo URL'] || (isCorp ? "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=800" : "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800"),
+          coverImage: imgPool[i % imgPool.length],
           galleryImages: [],
           documents: [],
           rating: 4.8,
@@ -227,7 +265,6 @@ export const seedLocalStorage = (): boolean => {
       marketplaceVisibility: true
   }));
 
-  // Clear existing items so new version loads cleanly
   localStorage.removeItem('hydrex-projects-v2');
   localStorage.removeItem('hydrex-marketplace-listings-v2');
   localStorage.removeItem('hydrex-marketplace-transactions-v2');
@@ -238,7 +275,7 @@ export const seedLocalStorage = (): boolean => {
   localStorage.setItem('hydrex-marketplace-transactions-v2', JSON.stringify(txs));
   localStorage.setItem('hydrex-esg-scorings-v2', JSON.stringify(esgs));
   
-  localStorage.setItem('hydrex-seeded-v3', 'true');
-  console.log("Successfully seeded localStorage with EXACT Excel Keys (v3)!");
+  localStorage.setItem('hydrex-seeded-v5', 'true');
+  console.log("Successfully seeded localStorage with Safe Photos and 17/3 Validation (v5)!");
   return true;
 };
