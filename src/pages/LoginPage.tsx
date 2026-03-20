@@ -244,30 +244,7 @@ export const LoginPage: React.FC = () => {
             </Link>
           </p>
 
-          {/* Social proof */}
-          <div
-            className="mt-8 pt-6 text-center"
-            style={{ borderTop: `1px solid ${theme.border}` }}
-          >
-            <p className="text-xs mb-3" style={{ color: theme.textMuted }}>
-              Dipercaya oleh perusahaan di Indonesia
-            </p>
-            <div className="flex items-center justify-center gap-1.5 flex-wrap">
-              {["AWS Certified", "ISO 14046", "WWF Partner", "Verified"].map((label) => (
-                <span
-                  key={label}
-                  className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
-                  style={{
-                    backgroundColor: colorTheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-                    color: theme.textSecondary,
-                    border: `1px solid ${theme.border}`,
-                  }}
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
-          </div>
+
         </motion.div>
       </div>
 

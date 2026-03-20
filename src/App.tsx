@@ -19,6 +19,7 @@ import { Loader2 } from "lucide-react";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+import { LandingPage } from "./pages/LandingPage";
 
 // Lazy loading pages for better performance
 const HomePage = React.lazy(() => import("./pages/HomePage"));
@@ -316,7 +317,7 @@ function App() {
                           </Route>
 
                           {/* ==================== DEFAULT REDIRECTS ==================== */}
-                          <Route path="/" element={<Navigate to="/login" replace />} />
+                          <Route path="/" element={<LandingPage />} />
                           <Route path="*" element={<Navigate to="/home" replace />} />
                         </Routes>
                       </ErrorBoundary>
