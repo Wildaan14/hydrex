@@ -282,7 +282,8 @@ export const seedLocalStorage = (): boolean => {
   localStorage.setItem('hydrex-esg-scorings-v2', JSON.stringify(esgs));
   
   // 5. News & Articles
-  const rawNews = (newsEduData as any)["📰 News & Articles"] || [];
+  const newsKey = Object.keys(newsEduData).find(k => k.toLowerCase().includes('news')) || '';
+  const rawNews = (newsEduData as any)[newsKey] || [];
   const processedNews = rawNews.map((n: any) => ({
     id: n["Article ID"],
     title: {
@@ -300,7 +301,7 @@ export const seedLocalStorage = (): boolean => {
     author: n["Author"],
     date: n["Publish Date"],
     readTime: { id: "4 min", en: "4 min" },
-    featured: n["Relevance to HydrEx"]?.includes("Direct"),
+    featured: String(n["Relevance to HydrEx"]).includes("Direct"),
     imageUrl: n["Cover Image URL"] || "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=600",
     sourceUrl: n["URL (Free Access)"],
     sourceName: n["Publisher / Source"],
@@ -309,26 +310,27 @@ export const seedLocalStorage = (): boolean => {
   localStorage.setItem("hydrex-news-v1", JSON.stringify(processedNews));
 
   // 6. Education Content
-  const rawEdu = (newsEduData as any)["🎓 Education & Resources"] || [];
+  const eduKey = Object.keys(newsEduData).find(k => k.toLowerCase().includes('education')) || '';
+  const rawEdu = (newsEduData as any)[eduKey] || [];
   const processedEdu = rawEdu.map((e: any) => ({
     id: e["Resource ID"],
     title: e["Topic / Title"],
     titleEn: e["Topic / Title"],
     description: e["Key Concept / Summary"],
     descriptionEn: e["Key Concept / Summary"],
-    type: e["Format"]?.toLowerCase().includes("video") ? "video" : "article",
-    category: e["Complexity"]?.toLowerCase().includes("basic") ? "basics" : 
-              e["Complexity"]?.toLowerCase().includes("advanced") ? "advanced" : "practical",
+    type: String(e["Format"]).toLowerCase().includes("video") ? "video" : "article",
+    category: String(e["Complexity"]).toLowerCase().includes("basic") ? "basics" : 
+              String(e["Complexity"]).toLowerCase().includes("advanced") ? "advanced" : "practical",
     duration: e["Read Time / Duration"],
     thumbnail: e["Cover Image URL"] || "https://images.unsplash.com/photo-1543039625-14cbd3802e7d?w=600",
     url: e["URL (Free Access)"],
     source: e["Publisher / Provider"],
     isNew: true,
-    isFeatured: e["Relevance"]?.includes("Essential")
+    isFeatured: String(e["Relevance"]).includes("Essential")
   }));
   localStorage.setItem("hydrex-education-v1", JSON.stringify(processedEdu));
 
-  localStorage.setItem('hydrex-seeded-v6', 'true');
-  console.log("Successfully seeded localStorage with Safe Photos and News/Edu (v6)!");
+  localStorage.setItem('hydrex-seeded-v7', 'true');
+  console.log("Successfully seeded localStorage with Safe Photos and News/Edu (v7)!");
   return true;
 };
