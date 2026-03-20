@@ -81,6 +81,11 @@ const categoryConfig = {
   },
 };
 
+const getCategoryConfig = (cat: string | undefined) => {
+  if (!cat) return categoryConfig.basics;
+  return categoryConfig[cat as keyof typeof categoryConfig] || categoryConfig.basics;
+};
+
 export const EducationPage: React.FC = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
@@ -288,15 +293,11 @@ export const EducationPage: React.FC = () => {
                   )}
                   <div className="absolute top-3 left-3">
                     <span
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                        categoryConfig[resource.category as keyof typeof categoryConfig].bg
-                      } ${
-                        categoryConfig[resource.category as keyof typeof categoryConfig].color
-                      } backdrop-blur-md border border-white/20`}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold ${getCategoryConfig(resource.category).bg} ${getCategoryConfig(resource.category).color} backdrop-blur-md border border-white/20`}
                     >
                       {language === "id"
-                        ? categoryConfig[resource.category as keyof typeof categoryConfig].label
-                        : categoryConfig[resource.category as keyof typeof categoryConfig].labelEn}
+                        ? getCategoryConfig(resource.category).label
+                        : getCategoryConfig(resource.category).labelEn}
                     </span>
                   </div>
                   {/* Type icon + Delete button */}
@@ -500,15 +501,11 @@ export const EducationPage: React.FC = () => {
                   )}
                   <div className="absolute top-2 left-2 flex gap-1">
                     <span
-                      className={`px-2 py-1 rounded-lg text-xs font-medium ${
-                        categoryConfig[resource.category as keyof typeof categoryConfig].bg
-                      } ${
-                        categoryConfig[resource.category as keyof typeof categoryConfig].color
-                      } backdrop-blur-md`}
+                      className={`px-2 py-1 rounded-lg text-xs font-medium ${getCategoryConfig(resource.category).bg} ${getCategoryConfig(resource.category).color} backdrop-blur-md`}
                     >
                       {language === "id"
-                        ? categoryConfig[resource.category as keyof typeof categoryConfig].label
-                        : categoryConfig[resource.category as keyof typeof categoryConfig].labelEn}
+                        ? getCategoryConfig(resource.category).label
+                        : getCategoryConfig(resource.category).labelEn}
                     </span>
                     {resource.isNew && (
                       <span className="px-2 py-1 rounded-lg text-xs font-medium bg-green-500/20 text-green-400 backdrop-blur-md">

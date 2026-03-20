@@ -2144,7 +2144,7 @@ const ListingDetailModal: React.FC<{
                   {/* Community: certification */}
                   {isCommunityListing(listing) && (
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${certificationColors[listing.certificationStandard].bg} ${certificationColors[listing.certificationStandard].text}`}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${getCertColor(listing.certificationStandard).bg} ${getCertColor(listing.certificationStandard).text}`}
                     >
                       {listing.certificationStandard}
                     </span>

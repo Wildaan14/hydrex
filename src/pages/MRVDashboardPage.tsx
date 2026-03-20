@@ -60,6 +60,11 @@ const verificationColors: Record<
   },
 };
 
+const getVerificationColor = (status: string | undefined) => {
+  if (!status) return verificationColors.pending;
+  return verificationColors[status as VerificationStatus] || verificationColors.pending;
+};
+
 // Leaflet Map Component
 const ProjectMap: React.FC<{
   projects: Project[];
@@ -831,13 +836,11 @@ export const MRVDashboardPage: React.FC = () => {
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${verificationColors[project.verificationStatus].bg} ${verificationColors[project.verificationStatus].text}`}
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${getVerificationColor(project.verificationStatus).bg} ${getVerificationColor(project.verificationStatus).text}`}
                         >
                           {language === "id"
-                            ? verificationColors[project.verificationStatus]
-                                .label
-                            : verificationColors[project.verificationStatus]
-                                .labelEn}
+                            ? getVerificationColor(project.verificationStatus).label
+                            : getVerificationColor(project.verificationStatus).labelEn}
                         </span>
                         <span
                           className="text-xs"
