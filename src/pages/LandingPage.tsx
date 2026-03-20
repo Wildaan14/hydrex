@@ -7,6 +7,32 @@ export const LandingPage: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [lang, setLang] = useState<"en" | "id">("en");
   const [activeProjectTab, setActiveProjectTab] = useState<"community" | "corporate">("community");
+  const [dynamicProjects, setDynamicProjects] = useState<any[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('hydrex-projects-v2') || '[]');
+      if (stored && stored.length > 0) {
+        const coms = stored.filter((p:any) => p.category === 'community').slice(0,3);
+        const corps = stored.filter((p:any) => p.category === 'corporate').slice(0,3);
+        const mapped = [...coms, ...corps].map((p:any) => {
+           const isCorp = p.category === 'corporate';
+           return {
+              type: p.category,
+              name: p.title,
+              location: p.location?.regency ? `${p.location.regency}, ${p.location.province}` : p.location?.province,
+              industry: p.corporateData?.industry || 'Manufacturing',
+              impact: isCorp 
+                       ? `${p.corporateData?.surplusDeficit >= 0 ? 'Surplus' : 'Deficit'}: ${Math.abs(p.corporateData?.surplusDeficit || 0).toLocaleString()} m³`
+                       : `${Number(p.waterData?.estimatedCredits || 0).toLocaleString()} m³/yr`,
+              status: p.status === 'verified' ? (isCorp ? 'Approved Quota' : 'Verified / Active') : (isCorp ? 'Pending Compliance' : 'Under Verification'),
+              img: p.coverImage
+           };
+        });
+        setDynamicProjects(mapped);
+      }
+    } catch (e) {}
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -369,7 +395,7 @@ export const LandingPage: React.FC = () => {
               transition={{ duration: 0.3 }}
               className="grid md:grid-cols-3 gap-8"
             >
-              {current.projects.items.filter(item => item.type === activeProjectTab).map((proj, idx) => (
+              { (dynamicProjects.length > 0 ? dynamicProjects : current.projects.items).filter(item => item.type === activeProjectTab).map((proj, idx) => (
                 <div key={idx} className="rounded-[30px] overflow-hidden transition-all hover:-translate-y-2" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)" }}>
                   <div className="h-48 w-full relative">
                     <img src={proj.img} alt={proj.name} className="w-full h-full object-cover" />
