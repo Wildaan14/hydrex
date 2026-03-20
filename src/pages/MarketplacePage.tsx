@@ -60,22 +60,20 @@ const semanticColors = {
 // ============================================================================
 const IDR_TO_USD = 16000;
 
-const formatUSD = (idrAmount: number): string => {
-  const usd = idrAmount / IDR_TO_USD;
-  if (usd < 0.01) return `$${usd.toFixed(4)}`;
-  if (usd < 1) return `$${usd.toFixed(3)}`;
-  if (usd < 1000) return `$${usd.toFixed(2)}`;
-  return `$${(usd / 1000).toFixed(2)}K`;
+const formatUSD = (usdAmount: number): string => {
+  if (usdAmount < 0.01) return `$${usdAmount.toFixed(4)}`;
+  if (usdAmount < 1) return `$${usdAmount.toFixed(3)}`;
+  if (usdAmount < 1000) return `$${usdAmount.toFixed(2)}`;
+  return `$${(usdAmount / 1000).toFixed(2)}K`;
 };
 
-const formatUSDFull = (idrAmount: number): string => {
-  const usd = idrAmount / IDR_TO_USD;
+const formatUSDFull = (usdAmount: number): string => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(usd);
+  }).format(usdAmount);
 };
 
 // ============================================================================

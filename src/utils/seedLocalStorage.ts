@@ -1,39 +1,40 @@
 import { masterData } from '../data/masterData';
+import { newsEduData } from '../data/newsEduData';
 
 const safeCommunityImages = [
-    "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&q=80", // Nature water
-    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80", // Mountain lake
-    "https://images.unsplash.com/photo-1437482078695-73f5bd6f4e24?w=800&q=80", // River stream
-    "https://images.unsplash.com/photo-1470071131384-001b85755536?w=800&q=80", // Forest lake
-    "https://images.unsplash.com/photo-1542224566-6e85f2e10ce3?w=800&q=80", // Waterfall
-    "https://images.unsplash.com/photo-1505228395891-9a51e7e86bf6?w=800&q=80", // Ocean
-    "https://images.unsplash.com/photo-1439405326854-01460775a2d1?w=800&q=80", // Coastal / Wetlands
-    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80", // Clear water lake
-    "https://images.unsplash.com/photo-1456082902841-3335005c3082?w=800&q=80", // Dam / Reservoir
-    "https://images.unsplash.com/photo-1518182170546-076616fdceae?w=800&q=80"  // Rainwater feeling
+    "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80", // River/Nature
+    "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=800&q=80", // Misty Forest/Lake
+    "https://images.unsplash.com/photo-1439405326854-01460775a2d1?w=800&q=80", // Wetlands/Ocean
+    "https://images.unsplash.com/photo-1542224566-6e85f2e10ce3?w=800&q=80", // Waterfall/Stream
+    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80", // Mountain/Water
+    "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80", // Field/Nature
+    "https://images.unsplash.com/photo-1504208434309-cb69f4fe52b0?w=800&q=80", // Lake/Peaceful
+    "https://images.unsplash.com/photo-1561484930-974b10b2f7b3?w=800&q=80", // Forest/River
+    "https://images.unsplash.com/photo-1534559733674-bf7b2d759ed1?w=800&q=80", // Snow/Water
+    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80"  // Beach/Ocean
 ];
 
 const safeCorporateImages = [
-    "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80", // Corp building
-    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80", // Business building
-    "https://images.unsplash.com/photo-1516937941344-00b4e0337589?w=800&q=80", // Industrial
-    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80", // Industrial plant
-    "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&q=80", // Lab/Industry
-    "https://images.unsplash.com/photo-1536244636800-a3f74db0f3cf?w=800&q=80", // Pipes/Water station
-    "https://images.unsplash.com/photo-1581093458791-9d09c8a3a7b6?w=800&q=80", // Factory equipment
-    "https://images.unsplash.com/photo-1590856029826-c7a73142bbf1?w=800&q=80", // Water treatment plant
-    "https://images.unsplash.com/photo-1533483595632-c5f0e57a1936?w=800&q=80", // Water bottles/production
-    "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=800&q=80"  // Filtration
+    "https://images.unsplash.com/photo-1581093458791-9d09c8a3a7b6?w=800&q=80", // Industry/Pipes
+    "https://images.unsplash.com/photo-1590856029826-c7a73142bbf1?w=800&q=80", // Water Treatment
+    "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=800&q=80", // Filtration/Lab
+    "https://images.unsplash.com/photo-1533483595632-c5f0e57a1936?w=800&q=80", // Water Bottling
+    "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&q=80", // Water Meters
+    "https://images.unsplash.com/photo-1581093196867-ca4e6ed5ed38?w=800&q=80", // Engineering
+    "https://images.unsplash.com/photo-1580100586938-02822d99c4a8?w=800&q=80", // Laboratory
+    "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=800&q=80", // Modern Building
+    "https://images.unsplash.com/photo-1563207153-f403bf289096?w=800&q=80", // Clean Infrastructure
+    "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80"  // Tech/Corporate
 ];
 
 export const seedLocalStorage = (): boolean => {
   if (!masterData) return false;
   
-  if (localStorage.getItem('hydrex-seeded-v5') === 'true') {
+  if (localStorage.getItem('hydrex-seeded-v6') === 'true') {
      return false; 
   }
   
-  console.log("Seeding local storage from master data (v5, strict verifications)...");
+  console.log("Seeding local storage from master data (v6, with News & Education)...");
   const md = masterData as any;
 
   let totalMapped = 0; // Out of 20 exactly
@@ -82,7 +83,9 @@ export const seedLocalStorage = (): boolean => {
           ownerCompany: p['Developer Org'] || "Unknown",
           ownerRole: "company",
           team: [],
-          coverImage: safeCommunityImages[i % safeCommunityImages.length],
+          coverImage: p['Cover Photo URL'] && p['Cover Photo URL'].includes("unsplash") && !p['Cover Photo URL'].includes("1534361960057") && !p['Cover Photo URL'].includes("1539109136881")
+              ? p['Cover Photo URL']
+              : safeCommunityImages[i % safeCommunityImages.length],
           galleryImages: [],
           documents: [p['Land Cert Doc'], p['Env Permit Doc']].filter(Boolean),
           verificationStatus: isVerified ? 'verified' : 'pending',
@@ -132,7 +135,9 @@ export const seedLocalStorage = (): boolean => {
       ownerCompany: p['Company Legal Name'],
       ownerRole: "company",
       team: [],
-      coverImage: safeCorporateImages[i % safeCorporateImages.length],
+      coverImage: p['Cover Photo URL'] && p['Cover Photo URL'].includes("unsplash") && !p['Cover Photo URL'].includes("1534361960057") && !p['Cover Photo URL'].includes("1539109136881")
+          ? p['Cover Photo URL']
+          : safeCorporateImages[i % safeCorporateImages.length],
       galleryImages: [],
       documents: [p['Supporting Documents']].filter(Boolean),
       verificationStatus: isVerified ? 'verified' : 'pending',
@@ -162,6 +167,7 @@ export const seedLocalStorage = (): boolean => {
   const marketplaceListings = (md['10_Marketplace_Listings'] || md['04_Marketplace'] || []).map((l:any, i:number) => {
       const isCorp = l['Proj. Type'] === 'Corporate';
       const imgPool = isCorp ? safeCorporateImages : safeCommunityImages;
+      const project = allProjects.find((p) => p.id === l['Project ID']);
       return {
           id: l['Listing ID'] || `LIST-${i}`,
           listingCategory: isCorp ? "corporate" : "community",
@@ -180,7 +186,7 @@ export const seedLocalStorage = (): boolean => {
           isVerified: true,
           verificationDate: l['Listed Date'] ? new Date(l['Listed Date']).toISOString() : new Date().toISOString(),
           verificationBody: l['VVB/Auditor'] || "HydrEx Authorized VVB",
-          coverImage: imgPool[i % imgPool.length],
+          coverImage: project?.coverImage || imgPool[i % imgPool.length],
           galleryImages: [],
           documents: [],
           rating: 4.8,
@@ -275,7 +281,54 @@ export const seedLocalStorage = (): boolean => {
   localStorage.setItem('hydrex-marketplace-transactions-v2', JSON.stringify(txs));
   localStorage.setItem('hydrex-esg-scorings-v2', JSON.stringify(esgs));
   
-  localStorage.setItem('hydrex-seeded-v5', 'true');
-  console.log("Successfully seeded localStorage with Safe Photos and 17/3 Validation (v5)!");
+  // 5. News & Articles
+  const rawNews = (newsEduData as any)["📰 News & Articles"] || [];
+  const processedNews = rawNews.map((n: any) => ({
+    id: n["Article ID"],
+    title: {
+      id: n["Language"] === "Indonesia" ? n["Title"] : n["Title"],
+      en: n["Language"] === "English" ? n["Title"] : n["Title"]
+    },
+    excerpt: {
+      id: n["Summary / Excerpt"],
+      en: n["Summary / Excerpt"]
+    },
+    category: {
+      id: n["Category"],
+      en: n["Category"]
+    },
+    author: n["Author"],
+    date: n["Publish Date"],
+    readTime: { id: "4 min", en: "4 min" },
+    featured: n["Relevance to HydrEx"]?.includes("Direct"),
+    imageUrl: n["Cover Image URL"] || "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=600",
+    sourceUrl: n["URL (Free Access)"],
+    sourceName: n["Publisher / Source"],
+    views: Math.floor(Math.random() * 5000)
+  }));
+  localStorage.setItem("hydrex-news-v1", JSON.stringify(processedNews));
+
+  // 6. Education Content
+  const rawEdu = (newsEduData as any)["🎓 Education & Resources"] || [];
+  const processedEdu = rawEdu.map((e: any) => ({
+    id: e["Resource ID"],
+    title: e["Topic / Title"],
+    titleEn: e["Topic / Title"],
+    description: e["Key Concept / Summary"],
+    descriptionEn: e["Key Concept / Summary"],
+    type: e["Format"]?.toLowerCase().includes("video") ? "video" : "article",
+    category: e["Complexity"]?.toLowerCase().includes("basic") ? "basics" : 
+              e["Complexity"]?.toLowerCase().includes("advanced") ? "advanced" : "practical",
+    duration: e["Read Time / Duration"],
+    thumbnail: e["Cover Image URL"] || "https://images.unsplash.com/photo-1543039625-14cbd3802e7d?w=600",
+    url: e["URL (Free Access)"],
+    source: e["Publisher / Provider"],
+    isNew: true,
+    isFeatured: e["Relevance"]?.includes("Essential")
+  }));
+  localStorage.setItem("hydrex-education-v1", JSON.stringify(processedEdu));
+
+  localStorage.setItem('hydrex-seeded-v6', 'true');
+  console.log("Successfully seeded localStorage with Safe Photos and News/Edu (v6)!");
   return true;
 };

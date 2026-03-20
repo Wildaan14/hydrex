@@ -351,17 +351,70 @@ export const SettingsPage: React.FC = () => {
             </div>
             <select
               value={language}
-              className="px-4 py-2 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => { /* language logic is handled by context if updated there, but let's assume it works */ }}
+              className="px-4 py-2 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none cursor-pointer text-sm"
               style={{
                 backgroundColor: theme.bgCard,
                 border: `1px solid ${theme.border}`,
                 color: theme.textPrimary,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='${encodeURIComponent(theme.textMuted)}'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 0.75rem center',
+                backgroundSize: '1rem',
+                paddingRight: '2.5rem'
               }}
             >
               <option value="id">🇮🇩 Indonesia</option>
               <option value="en">🇬🇧 English</option>
             </select>
           </div>
+        </div>
+      </motion.div>
+
+      {/* ============ BANTUAN & DUKUNGAN ============ */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="rounded-2xl p-6"
+        style={{
+          backgroundColor: theme.bgCard,
+          border: `1px solid ${theme.border}`,
+        }}
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-3 rounded-xl" style={{ backgroundColor: `${theme.secondary}20` }}>
+            <Globe className="w-6 h-6" style={{ color: theme.secondary }} />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold" style={{ color: theme.textPrimary }}>
+              {language === "id" ? "Bantuan & Dukungan" : "Help & Support"}
+            </h3>
+            <p className="text-sm" style={{ color: theme.textMuted }}>
+              {language === "id" ? "Pusat bantuan dan informasi" : "Help center and information"}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-3">
+          {[
+            { label: language === "id" ? "Pusat Bantuan" : "Help Center", icon: <Book className="w-5 h-5" /> },
+            { label: language === "id" ? "Kebijakan Privasi" : "Privacy Policy", icon: <Shield className="w-5 h-5" /> },
+            { label: language === "id" ? "Syarat & Ketentuan" : "Terms of Service", icon: <Check className="w-5 h-5" /> },
+            { label: language === "id" ? "Hubungi Kami" : "Contact Us", icon: <Mail className="w-5 h-5" /> }
+          ].map((item, idx) => (
+            <button
+              key={idx}
+              className="flex items-center justify-between p-4 rounded-xl transition-all hover:bg-white hover:bg-opacity-5"
+              style={{ backgroundColor: `${theme.border}30` }}
+            >
+              <div className="flex items-center gap-3">
+                <div style={{ color: theme.textMuted }}>{item.icon}</div>
+                <span className="font-medium" style={{ color: theme.textPrimary }}>{item.label}</span>
+              </div>
+              <ChevronRight className="w-5 h-5" style={{ color: theme.textMuted }} />
+            </button>
+          ))}
         </div>
       </motion.div>
 

@@ -87,7 +87,18 @@ export const NewsPage: React.FC = () => {
     sourceName: "",
     imageUrl: "",
   });
-  const [localNews, setLocalNews] = useState<NewsItem[]>(newsItems);
+  const [localNews, setLocalNews] = useState<NewsItem[]>([]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("hydrex-news-v1");
+    if (stored) {
+      try {
+        setLocalNews(JSON.parse(stored));
+      } catch (e) {
+        console.error("Failed to parse news", e);
+      }
+    }
+  }, []);
 
   const toggleSaveArticle = (id: string) => {
     setSavedArticles((prev) =>

@@ -93,7 +93,18 @@ export const EducationPage: React.FC = () => {
   const theme = colorTheme === "dark" ? darkPageTheme : lightPageTheme;
   const isAdmin = user?.role === "admin";
 
-  const [localResources, setLocalResources] = useState<EducationResource[]>(initialResources);
+  const [localResources, setLocalResources] = useState<EducationResource[]>([]);
+
+  React.useEffect(() => {
+    const stored = localStorage.getItem("hydrex-education-v1");
+    if (stored) {
+      try {
+        setLocalResources(JSON.parse(stored));
+      } catch (e) {
+        console.error("Failed to parse education resources", e);
+      }
+    }
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
