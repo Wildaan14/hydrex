@@ -82,14 +82,27 @@ const formatUSDFull = (idrAmount: number): string => {
 // CERTIFICATION BADGE COLORS
 // ============================================================================
 const certificationColors: Record<
-  CertificationStandard,
+  string,
   { bg: string; text: string }
 > = {
   "Gold Standard": { bg: "bg-yellow-500/10", text: "text-yellow-400" },
   "Verra VCS": { bg: "bg-blue-500/10", text: "text-blue-400" },
+  "Verra VCS + CCBS": { bg: "bg-blue-500/10", text: "text-blue-400" },
+  "Verra VCS + CCB": { bg: "bg-blue-500/10", text: "text-blue-400" },
   "Plan Vivo": { bg: "bg-purple-500/10", text: "text-purple-400" },
-  AWS: { bg: "bg-green-500/10", text: "text-green-400" },
+  "Plan Vivo Standard": { bg: "bg-purple-500/10", text: "text-purple-400" },
+  "Gold Standard GS4GG": { bg: "bg-yellow-500/10", text: "text-yellow-400" },
+  "AWS": { bg: "bg-green-500/10", text: "text-green-400" },
   "ISO 14046": { bg: "bg-orange-500/10", text: "text-orange-400" },
+  "ISO 14046 + VWBA": { bg: "bg-orange-500/10", text: "text-orange-400" },
+  default: { bg: "bg-slate-500/10", text: "text-slate-400" }
+};
+
+const getCertColor = (cert: string) => {
+  if (!cert) return certificationColors.default;
+  // Try exact match or close match
+  const match = Object.keys(certificationColors).find(k => cert.includes(k) && k !== 'default');
+  return match ? certificationColors[match] : certificationColors.default;
 };
 
 // ============================================================================
@@ -765,7 +778,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
           {/* Community: certification badge */}
           {isCommunityListing(listing) && (
             <span
-              className={`px-3 py-1 rounded-full text-xs font-semibold ${certificationColors[listing.certificationStandard].bg} ${certificationColors[listing.certificationStandard].text}`}
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${getCertColor(listing.certificationStandard).bg} ${getCertColor(listing.certificationStandard).text}`}
             >
               {listing.certificationStandard}
             </span>

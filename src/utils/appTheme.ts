@@ -2,12 +2,12 @@
 // Used across all dashboard pages
 
 export const darkPageTheme = {
-  primary: "#10b981",
+  primary: "#10b981",    // Emerald 500
   primaryLight: "#34d399",
   primaryDark: "#059669",
-  secondary: "#1f6feb",
-  secondaryLight: "#58a6ff",
-  secondaryDark: "#1558d6",
+  secondary: "#0d9488",   // Teal 600 (Replaces Blue)
+  secondaryLight: "#14b8a6",
+  secondaryDark: "#0f766e",
   bgDark: "#0a0e12",
   bgCard: "#161b22",
   bgCardHover: "#1a1f26",
@@ -19,21 +19,22 @@ export const darkPageTheme = {
   textSecondary: "#8b949e",
   textMuted: "#6e7681",
   // Glow
+  // Glow
   primaryGlow: "rgba(16, 185, 129, 0.2)",
-  secondaryGlow: "rgba(31, 111, 235, 0.2)",
+  secondaryGlow: "rgba(13, 148, 136, 0.2)",
   // Login/public page specific
-  primaryLight2: "#42a5f5",
-  secondaryLogin: "#0891b2",
-  secondaryLightLogin: "#06b6d4",
+  primaryLight2: "#2dd4bf",
+  secondaryLogin: "#0f766e",
+  secondaryLightLogin: "#14b8a6",
 };
 
 export const lightPageTheme = {
-  primary: "#059669",
+  primary: "#059669",    // Emerald 600
   primaryLight: "#10b981",
   primaryDark: "#047857",
-  secondary: "#2563eb",
-  secondaryLight: "#3b82f6",
-  secondaryDark: "#1d4ed8",
+  secondary: "#0f766e",  // Teal 700 (Replaces Blue)
+  secondaryLight: "#0d9488",
+  secondaryDark: "#115e59",
   bgDark: "#f8fafc",
   bgCard: "#ffffff",
   bgCardHover: "#f8fafc",
@@ -45,10 +46,11 @@ export const lightPageTheme = {
   textSecondary: "#475569",
   textMuted: "#94a3b8",
   // Glow
+  // Glow
   primaryGlow: "rgba(5, 150, 105, 0.15)",
-  secondaryGlow: "rgba(37, 99, 235, 0.15)",
+  secondaryGlow: "rgba(15, 118, 110, 0.15)",
   // Login/public page specific
-  primaryLight2: "#3b82f6",
-  secondaryLogin: "#0891b2",
-  secondaryLightLogin: "#06b6d4",
+  primaryLight2: "#0d9488",
+  secondaryLogin: "#0f766e",
+  secondaryLightLogin: "#14b8a6",
 };
