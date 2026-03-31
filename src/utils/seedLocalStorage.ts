@@ -2,29 +2,29 @@ import { masterData } from '../data/masterData';
 import { newsEduData } from '../data/newsEduData';
 
 const safeCommunityImages = [
-    "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80", // River/Nature
-    "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=800&q=80", // Misty Forest/Lake
-    "https://images.unsplash.com/photo-1439405326854-01460775a2d1?w=800&q=80", // Wetlands/Ocean
-    "https://images.unsplash.com/photo-1542224566-6e85f2e10ce3?w=800&q=80", // Waterfall/Stream
-    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80", // Mountain/Water
-    "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80", // Field/Nature
-    "https://images.unsplash.com/photo-1504208434309-cb69f4fe52b0?w=800&q=80", // Lake/Peaceful
-    "https://images.unsplash.com/photo-1561484930-974b10b2f7b3?w=800&q=80", // Forest/River
-    "https://images.unsplash.com/photo-1534559733674-bf7b2d759ed1?w=800&q=80", // Snow/Water
-    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80"  // Beach/Ocean
+    "/foto/1 (2).jpg",
+    "/foto/1 (3).jpg",
+    "/foto/1 (4).jpg",
+    "/foto/1 (5).jpg",
+    "/foto/1 (6).jpg",
+    "/foto/1 (7).jpg",
+    "/foto/1 (8).jpg",
+    "/foto/1 (9).jpg",
+    "/foto/1 (10).jpg",
+    "/foto/1 (11).jpg"
 ];
 
 const safeCorporateImages = [
-    "https://images.unsplash.com/photo-1581093458791-9d09c8a3a7b6?w=800&q=80", // Industry/Pipes
-    "https://images.unsplash.com/photo-1590856029826-c7a73142bbf1?w=800&q=80", // Water Treatment
-    "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=800&q=80", // Filtration/Lab
-    "https://images.unsplash.com/photo-1533483595632-c5f0e57a1936?w=800&q=80", // Water Bottling
-    "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&q=80", // Water Meters
-    "https://images.unsplash.com/photo-1581093196867-ca4e6ed5ed38?w=800&q=80", // Engineering
-    "https://images.unsplash.com/photo-1580100586938-02822d99c4a8?w=800&q=80", // Laboratory
-    "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=800&q=80", // Modern Building
-    "https://images.unsplash.com/photo-1563207153-f403bf289096?w=800&q=80", // Clean Infrastructure
-    "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80"  // Tech/Corporate
+    "/foto/1 (12).jpg",
+    "/foto/1 (13).jpg",
+    "/foto/1 (14).jpg",
+    "/foto/1 (15).jpg",
+    "/foto/1 (16).jpg",
+    "/foto/1 (17).jpg",
+    "/foto/1 (18).jpg",
+    "/foto/1 (19).jpg",
+    "/foto/1 (20).jpg",
+    "/foto/1 (21).jpg"
 ];
 
 export const seedLocalStorage = (): boolean => {

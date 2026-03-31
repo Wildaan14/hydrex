@@ -130,13 +130,13 @@ export const LandingPage: React.FC = () => {
         },
         items: [
           // Community
-          { type: 'community', name: "East Kalimantan Wetland & Peatland", location: "Kutai Kartanegara, Indonesia", impact: "85,000 m³/yr", status: "Under Verification", img: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=800&q=85" },
-          { type: 'community', name: "Citarum Hulu Drip Irrigation", location: "Bandung, Indonesia", impact: "42,000 m³/yr", status: "Active Participant", img: "https://images.unsplash.com/photo-1586348943529-beaae6c28db9?w=800&q=85" },
-          { type: 'community', name: "Bali Subak Traditional Irrigation", location: "Tabanan, Indonesia", impact: "22,000 m³/yr", status: "Active Participant", img: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=85" },
+          { type: 'community', name: "East Kalimantan Wetland & Peatland", location: "Kutai Kartanegara, Indonesia", impact: "85,000 m³/yr", status: "Under Verification", img: "/foto/1 (2).jpg" },
+          { type: 'community', name: "Citarum Hulu Drip Irrigation", location: "Bandung, Indonesia", impact: "42,000 m³/yr", status: "Active Participant", img: "/foto/1 (3).jpg" },
+          { type: 'community', name: "Bali Subak Traditional Irrigation", location: "Tabanan, Indonesia", impact: "22,000 m³/yr", status: "Active Participant", img: "/foto/1 (4).jpg" },
           // Corporate
-          { type: 'corporate', name: "PT Semen Gresik Water Efficiency", industry: "Cement Manufacturing", impact: "Surplus: 850,000 m³ (Seller)", status: "Approved Quota", img: "https://images.unsplash.com/photo-1581093458791-9d09c8a3a7b6?w=800&q=85" },
-          { type: 'corporate', name: "Danone AQUA Water Stewardship", industry: "Food & Beverage", impact: "Deficit: -320,000 m³ (Buyer)", status: "Pending Compliance", img: "https://images.unsplash.com/photo-1533483595632-c5f0e57a1936?w=800&q=85" },
-          { type: 'corporate', name: "PT Krakatau Steel Reduction", industry: "Iron & Steel Production", impact: "Surplus: 3,100,000 m³ (Seller)", status: "Approved Quota", img: "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=800&q=85" }
+          { type: 'corporate', name: "PT Semen Gresik Water Efficiency", industry: "Cement Manufacturing", impact: "Surplus: 850,000 m³ (Seller)", status: "Approved Quota", img: "/foto/1 (5).jpg" },
+          { type: 'corporate', name: "Danone AQUA Water Stewardship", industry: "Food & Beverage", impact: "Deficit: -320,000 m³ (Buyer)", status: "Pending Compliance", img: "/foto/1 (6).jpg" },
+          { type: 'corporate', name: "PT Krakatau Steel Reduction", industry: "Iron & Steel Production", impact: "Surplus: 3,100,000 m³ (Seller)", status: "Approved Quota", img: "/foto/1 (7).jpg" }
         ]
       },
       contact: {
@@ -197,13 +197,13 @@ export const LandingPage: React.FC = () => {
         },
         items: [
           // Community
-          { type: 'community', name: "Restorasi Gambut Kutai Kartanegara", location: "Kutai Kartanegara, Indonesia", impact: "85.000 m³/tahun", status: "Dalam Verifikasi", img: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=800&q=85" },
-          { type: 'community', name: "Efisiensi Irigasi Tetes Citarum Hulu", location: "Bandung, Indonesia", impact: "42.000 m³/tahun", status: "Aktif Berjalan", img: "https://images.unsplash.com/photo-1586348943529-beaae6c28db9?w=800&q=85" },
-          { type: 'community', name: "Efisiensi Irigasi Subak Bali", location: "Tabanan, Indonesia", impact: "22.000 m³/tahun", status: "Aktif Berjalan", img: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=85" },
+          { type: 'community', name: "Restorasi Gambut Kutai Kartanegara", location: "Kutai Kartanegara, Indonesia", impact: "85.000 m³/tahun", status: "Dalam Verifikasi", img: "/foto/1 (2).jpg" },
+          { type: 'community', name: "Efisiensi Irigasi Tetes Citarum Hulu", location: "Bandung, Indonesia", impact: "42.000 m³/tahun", status: "Aktif Berjalan", img: "/foto/1 (3).jpg" },
+          { type: 'community', name: "Efisiensi Irigasi Subak Bali", location: "Tabanan, Indonesia", impact: "22.000 m³/tahun", status: "Aktif Berjalan", img: "/foto/1 (4).jpg" },
           // Corporate
-          { type: 'corporate', name: "Efisiensi Air PT Semen Gresik", industry: "Manufaktur Semen", impact: "Surplus: 850.000 m³ (Penjual)", status: "Kuota Disetujui", img: "https://images.unsplash.com/photo-1581093458791-9d09c8a3a7b6?w=800&q=85" },
-          { type: 'corporate', name: "Danone AQUA Water Stewardship", industry: "Makanan & Minuman", impact: "Defisit: -320.000 m³ (Pembeli)", status: "Wajib Beli Offset", img: "https://images.unsplash.com/photo-1533483595632-c5f0e57a1936?w=800&q=85" },
-          { type: 'corporate', name: "Reduksi Air PT Krakatau Steel", industry: "Produksi Besi & Baja", impact: "Surplus: 3.100.000 m³ (Penjual)", status: "Kuota Disetujui", img: "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=800&q=85" }
+          { type: 'corporate', name: "Efisiensi Air PT Semen Gresik", industry: "Manufaktur Semen", impact: "Surplus: 850.000 m³ (Penjual)", status: "Kuota Disetujui", img: "/foto/1 (5).jpg" },
+          { type: 'corporate', name: "Danone AQUA Water Stewardship", industry: "Makanan & Minuman", impact: "Deficit: -320.000 m³ (Pembeli)", status: "Wajib Beli Offset", img: "/foto/1 (6).jpg" },
+          { type: 'corporate', name: "Reduksi Air PT Krakatau Steel", industry: "Produksi Besi & Baja", impact: "Surplus: 3.100.000 m³ (Penjual)", status: "Kuota Disetujui", img: "/foto/1 (7).jpg" }
         ]
       },
       contact: {
@@ -272,7 +272,7 @@ export const LandingPage: React.FC = () => {
           <div 
             className="absolute inset-0"
             style={{ 
-              backgroundImage: 'url("/images/20-08-28-1852_original.webp")',
+              backgroundImage: 'url("/foto/1 (1).jpg")',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat'
