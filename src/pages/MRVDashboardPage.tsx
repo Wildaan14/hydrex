@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -74,189 +74,191 @@ const ProjectMap: React.FC<{
   const theme = colorTheme === "dark" ? darkPageTheme : lightPageTheme;
   const mapRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMountedRef = useRef(true);
   const [mapReady, setMapReady] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-    let L: any = null;
-    let markersLayer: any = null;
+  const initMap = useCallback(() => {
+    if (!isMountedRef.current) return;
+    
+    const L = (window as any).L;
+    if (!L) {
+      console.log("Leaflet not loaded yet");
+      return;
+    }
 
-    const initMap = () => {
-      if (!isMounted) return;
+    const container = containerRef.current;
+    if (!container) {
+      console.log("Map container ref not found");
+      return;
+    }
+
+    // If map already exists, remove it first
+    if (mapRef.current) {
+      try {
+        mapRef.current.remove();
+      } catch (e) {
+        console.error("Error removing existing map:", e);
+      }
+      mapRef.current = null;
+    }
+
+    // Ensure container is clean
+    if (container) {
+      // Clear inner HTML as a defensive measure
+      container.innerHTML = "";
       
-      L = (window as any).L;
-      if (!L) {
-        console.log("Leaflet not loaded yet");
-        return;
-      }
-
-      const container = containerRef.current;
-      if (!container) {
-        console.log("Map container ref not found");
-        return;
-      }
-
-      // If map already exists, remove it first
-      if (mapRef.current) {
-        try {
-          mapRef.current.remove();
-        } catch (e) {
-          console.error("Error removing existing map:", e);
-        }
-        mapRef.current = null;
-      }
-
-      // Ensure container is clean (Leaflet marker for "already initialized")
+      // Leaflet marker for "already initialized"
       if ((container as any)._leaflet_id) {
-        // This is a last resort if the mapRef didn't catch it
         (container as any)._leaflet_id = null;
       }
+    }
 
-      console.log("Initializing Leaflet map...");
+    console.log("Initializing Leaflet map...");
 
-      // Create map and store ref for cleanup
-      const mapInstance = L.map(container, {
-        center: [-2.5, 118],
-        zoom: 5,
-        zoomControl: true,
-        scrollWheelZoom: false,
-        doubleClickZoom: true,
+    // Create map and store ref for cleanup
+    const mapInstance = L.map(container, {
+      center: [-2.5, 118],
+      zoom: 5,
+      zoomControl: true,
+      scrollWheelZoom: false,
+      doubleClickZoom: true,
+    });
+
+    mapRef.current = mapInstance;
+
+    // Add tile layer based on current theme
+    const tileStyle = colorTheme === "dark" ? "dark_all" : "light_all";
+    L.tileLayer(
+      `https://{s}.basemaps.cartocdn.com/${tileStyle}/{z}/{x}/{y}{r}.png`,
+      {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 18,
+      },
+    ).addTo(mapInstance);
+
+    // Create a layer group for markers
+    const markersLayer = L.layerGroup().addTo(mapInstance);
+
+    console.log(`📍 Map initialized with ${projects.length} projects`);
+
+    // Add markers for each project
+    let validProjectCount = 0;
+    projects.forEach((project) => {
+      if (
+        !project.location?.coordinates?.lat ||
+        !project.location?.coordinates?.lng
+      ) {
+        console.log(`⚠️ Project ${project.title} missing coordinates`);
+        return;
+      }
+
+      validProjectCount++;
+
+      const color =
+        project.verificationStatus === "verified"
+          ? "#22c55e"
+          : project.verificationStatus === "rejected"
+            ? "#ef4444"
+            : project.verificationStatus === "pending" ||
+                project.verificationStatus === "under_review"
+              ? "#eab308"
+              : "#3b82f6";
+
+      // Create custom icon
+      const icon = L.divIcon({
+        className: "custom-div-icon",
+        html: `
+          <div style="
+            width: 30px;
+            height: 30px;
+            background-color: ${color};
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+          ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </div>
+        `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 30],
+        popupAnchor: [0, -30],
       });
 
-      mapRef.current = mapInstance;
+      try {
+        const marker = L.marker(
+          [
+            project.location.coordinates.lat,
+            project.location.coordinates.lng,
+          ],
+          { icon },
+        ).addTo(markersLayer);
 
-      // Add tile layer based on current theme
-      const tileStyle = colorTheme === "dark" ? "dark_all" : "light_all";
-      L.tileLayer(
-        `https://{s}.basemaps.cartocdn.com/${tileStyle}/{z}/{x}/{y}{r}.png`,
-        {
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-          maxZoom: 18,
-        },
-      ).addTo(mapInstance);
-
-      // Create a layer group for markers
-      markersLayer = L.layerGroup().addTo(mapInstance);
-
-      console.log(`📍 Map initialized with ${projects.length} projects`);
-
-      // Add markers for each project
-      let validProjectCount = 0;
-      projects.forEach((project) => {
-        if (
-          !project.location?.coordinates?.lat ||
-          !project.location?.coordinates?.lng
-        ) {
-          console.log(`⚠️ Project ${project.title} missing coordinates`);
-          return;
-        }
-
-        validProjectCount++;
-
-        const color =
-          project.verificationStatus === "verified"
-            ? "#22c55e"
-            : project.verificationStatus === "rejected"
-              ? "#ef4444"
-              : project.verificationStatus === "pending" ||
-                  project.verificationStatus === "under_review"
-                ? "#eab308"
-                : "#3b82f6";
-
-        // Create custom icon
-        const icon = L.divIcon({
-          className: "custom-div-icon",
-          html: `
-            <div style="
-              width: 30px;
-              height: 30px;
-              background-color: ${color};
-              border: 3px solid white;
-              border-radius: 50%;
-              box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              cursor: pointer;
-            ">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
+        // Popup content
+        const popupContent = `
+          <div style="min-width: 220px; padding: 5px;">
+            <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1f2937;">
+              ${project.title}
+            </h4>
+            <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">
+              📍 ${project.location.province}
             </div>
-          `,
-          iconSize: [30, 30],
-          iconAnchor: [15, 30],
-          popupAnchor: [0, -30],
+            <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">
+              📐 ${project.areaHectares.toLocaleString()} Hektar
+            </div>
+            <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">
+              🌱 ${project.waterData.estimatedCredits.toLocaleString()} m³
+            </div>
+            <div style="
+              display: inline-block;
+              padding: 4px 10px;
+              border-radius: 12px;
+              font-size: 11px;
+              font-weight: 600;
+              background-color: ${project.verificationStatus === "verified" ? "#dcfce7" : "#fef3c7"};
+              color: ${project.verificationStatus === "verified" ? "#166534" : "#92400e"};
+            ">
+              ${project.verificationStatus === "verified" ? "✓ Terverifikasi" : "⏳ Menunggu"}
+            </div>
+          </div>
+        `;
+
+        marker.bindPopup(popupContent);
+        marker.on("click", () => {
+          console.log("Project clicked:", project.title);
+          onSelectProject(project);
         });
 
-        try {
-          const marker = L.marker(
-            [
-              project.location.coordinates.lat,
-              project.location.coordinates.lng,
-            ],
-            { icon },
-          ).addTo(markersLayer);
-
-          // Popup content
-          const popupContent = `
-            <div style="min-width: 220px; padding: 5px;">
-              <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1f2937;">
-                ${project.title}
-              </h4>
-              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">
-                📍 ${project.location.province}
-              </div>
-              <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">
-                📐 ${project.areaHectares.toLocaleString()} Hektar
-              </div>
-              <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">
-                🌱 ${project.waterData.estimatedCredits.toLocaleString()} m³
-              </div>
-              <div style="
-                display: inline-block;
-                padding: 4px 10px;
-                border-radius: 12px;
-                font-size: 11px;
-                font-weight: 600;
-                background-color: ${project.verificationStatus === "verified" ? "#dcfce7" : "#fef3c7"};
-                color: ${project.verificationStatus === "verified" ? "#166534" : "#92400e"};
-              ">
-                ${project.verificationStatus === "verified" ? "✓ Terverifikasi" : "⏳ Menunggu"}
-              </div>
-            </div>
-          `;
-
-          marker.bindPopup(popupContent);
-          marker.on("click", () => {
-            console.log("Project clicked:", project.title);
-            onSelectProject(project);
-          });
-
-          // Draw area polygon if available
-          if (
-            (project.location as any).polygon &&
-            (project.location as any).polygon.length > 0
-          ) {
-            L.polygon((project.location as any).polygon, {
-              color: color,
-              fillColor: color,
-              fillOpacity: 0.15,
-              weight: 2,
-            }).addTo(markersLayer);
-          }
-
-          console.log(`✅ Added marker for: ${project.title}`);
-        } catch (error) {
-          console.error(`❌ Error adding marker for ${project.title}:`, error);
+        // Draw area polygon if available
+        if (
+          (project.location as any).polygon &&
+          (project.location as any).polygon.length > 0
+        ) {
+          L.polygon((project.location as any).polygon, {
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.15,
+            weight: 2,
+          }).addTo(markersLayer);
         }
-      });
+      } catch (error) {
+        console.error(`❌ Error adding marker for ${project.title}:`, error);
+      }
+    });
 
-      console.log(`✅ Successfully added ${validProjectCount} markers to map`);
-      setMapReady(true);
-    };
+    console.log(`✅ Successfully added ${validProjectCount} markers to map`);
+    setMapReady(true);
+  }, [projects, onSelectProject, colorTheme]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
 
     // Load Leaflet
     const loadLeaflet = () => {
@@ -272,29 +274,37 @@ const ProjectMap: React.FC<{
 
       // Add JS if not present, then init
       if (!(window as any).L) {
-        const script = document.createElement("script");
-        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-        script.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
-        script.crossOrigin = "";
-        script.onload = () => {
-          if (isMounted) initMap();
-        };
-        document.head.appendChild(script);
+        const scriptId = "leaflet-js-script";
+        let script = document.getElementById(scriptId) as HTMLScriptElement;
+        
+        if (!script) {
+          script = document.createElement("script");
+          script.id = scriptId;
+          script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+          script.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
+          script.crossOrigin = "";
+          document.head.appendChild(script);
+        }
+
+        if ((script as any).complete || (window as any).L) {
+          if (isMountedRef.current) initMap();
+        } else {
+          script.onload = () => {
+            if (isMountedRef.current) initMap();
+          };
+        }
       } else {
-        // Delay slightly to ensure DOM is ready
+        // Delay slightly to ensure DOM is ready and any pending cleanups are finished
         setTimeout(() => {
-          if (isMounted) initMap();
-        }, 50);
+          if (isMountedRef.current) initMap();
+        }, 100);
       }
     };
 
     loadLeaflet();
 
     return () => {
-      isMounted = false;
-      if (markersLayer && mapRef.current) {
-        markersLayer.clearLayers();
-      }
+      isMountedRef.current = false;
       if (mapRef.current) {
         try {
           mapRef.current.remove();
@@ -304,7 +314,7 @@ const ProjectMap: React.FC<{
         mapRef.current = null;
       }
     };
-  }, [projects, onSelectProject, colorTheme]);
+  }, [initMap]);
 
   return (
     <div className="relative w-full h-full">
