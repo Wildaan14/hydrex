@@ -132,11 +132,11 @@ export const LandingPage: React.FC = () => {
           // Community
           { type: 'community', name: "East Kalimantan Wetland & Peatland", location: "Kutai Kartanegara, Indonesia", impact: "85,000 m³/yr", status: "Under Verification", img: "/foto/1 (2).jpg" },
           { type: 'community', name: "Citarum Hulu Drip Irrigation", location: "Bandung, Indonesia", impact: "42,000 m³/yr", status: "Active Participant", img: "/foto/1 (3).jpg" },
-          { type: 'community', name: "Bali Subak Traditional Irrigation", location: "Tabanan, Indonesia", impact: "22,000 m³/yr", status: "Active Participant", img: "/foto/1 (4).jpg" },
+          { type: 'community', name: "Bali Subak Traditional Irrigation", location: "Tabanan, Indonesia", impact: "22,000 m³/yr", status: "Active Participant", img: "/foto/1 (9).jpg" },
           // Corporate
-          { type: 'corporate', name: "PT Semen Gresik Water Efficiency", industry: "Cement Manufacturing", impact: "Surplus: 850,000 m³ (Seller)", status: "Approved Quota", img: "/foto/1 (5).jpg" },
-          { type: 'corporate', name: "Danone AQUA Water Stewardship", industry: "Food & Beverage", impact: "Deficit: -320,000 m³ (Buyer)", status: "Pending Compliance", img: "/foto/1 (6).jpg" },
-          { type: 'corporate', name: "PT Krakatau Steel Reduction", industry: "Iron & Steel Production", impact: "Surplus: 3,100,000 m³ (Seller)", status: "Approved Quota", img: "/foto/1 (7).jpg" }
+          { type: 'corporate', name: "PT Semen Gresik Water Efficiency", industry: "Cement Manufacturing", impact: "Surplus: 850,000 m³ (Seller)", status: "Approved Quota", img: "/foto/1 (12).jpg" },
+          { type: 'corporate', name: "Danone AQUA Water Stewardship", industry: "Food & Beverage", impact: "Deficit: -320.000 m³ (Buyer)", status: "Pending Compliance", img: "/foto/1 (13).jpg" },
+          { type: 'corporate', name: "PT Krakatau Steel Reduction", industry: "Iron & Steel Production", impact: "Surplus: 3,100,000 m³ (Seller)", status: "Approved Quota", img: "/foto/1 (14).jpg" }
         ]
       },
       contact: {
@@ -199,11 +199,11 @@ export const LandingPage: React.FC = () => {
           // Community
           { type: 'community', name: "Restorasi Gambut Kutai Kartanegara", location: "Kutai Kartanegara, Indonesia", impact: "85.000 m³/tahun", status: "Dalam Verifikasi", img: "/foto/1 (2).jpg" },
           { type: 'community', name: "Efisiensi Irigasi Tetes Citarum Hulu", location: "Bandung, Indonesia", impact: "42.000 m³/tahun", status: "Aktif Berjalan", img: "/foto/1 (3).jpg" },
-          { type: 'community', name: "Efisiensi Irigasi Subak Bali", location: "Tabanan, Indonesia", impact: "22.000 m³/tahun", status: "Aktif Berjalan", img: "/foto/1 (4).jpg" },
+          { type: 'community', name: "Efisiensi Irigasi Subak Bali", location: "Tabanan, Indonesia", impact: "22.000 m³/tahun", status: "Aktif Berjalan", img: "/foto/1 (9).jpg" },
           // Corporate
-          { type: 'corporate', name: "Efisiensi Air PT Semen Gresik", industry: "Manufaktur Semen", impact: "Surplus: 850.000 m³ (Penjual)", status: "Kuota Disetujui", img: "/foto/1 (5).jpg" },
-          { type: 'corporate', name: "Danone AQUA Water Stewardship", industry: "Makanan & Minuman", impact: "Deficit: -320.000 m³ (Pembeli)", status: "Wajib Beli Offset", img: "/foto/1 (6).jpg" },
-          { type: 'corporate', name: "Reduksi Air PT Krakatau Steel", industry: "Produksi Besi & Baja", impact: "Surplus: 3.100.000 m³ (Penjual)", status: "Kuota Disetujui", img: "/foto/1 (7).jpg" }
+          { type: 'corporate', name: "Efisiensi Air PT Semen Gresik", industry: "Manufaktur Semen", impact: "Surplus: 850.000 m³ (Penjual)", status: "Kuota Disetujui", img: "/foto/1 (12).jpg" },
+          { type: 'corporate', name: "Danone AQUA Water Stewardship", industry: "Makanan & Minuman", impact: "Deficit: -320.000 m³ (Pembeli)", status: "Wajib Beli Offset", img: "/foto/1 (13).jpg" },
+          { type: 'corporate', name: "Reduksi Air PT Krakatau Steel", industry: "Produksi Besi & Baja", impact: "Surplus: 3.100.000 m³ (Penjual)", status: "Kuota Disetujui", img: "/foto/1 (14).jpg" }
         ]
       },
       contact: {

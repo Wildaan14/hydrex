@@ -83,9 +83,7 @@ export const seedLocalStorage = (): boolean => {
           ownerCompany: p['Developer Org'] || "Unknown",
           ownerRole: "company",
           team: [],
-          coverImage: p['Cover Photo URL'] && p['Cover Photo URL'].includes("unsplash") && !p['Cover Photo URL'].includes("1534361960057") && !p['Cover Photo URL'].includes("1539109136881")
-              ? p['Cover Photo URL']
-              : safeCommunityImages[i % safeCommunityImages.length],
+          coverImage: `/foto/1 (${2 + i}).jpg`, // Sequential: 1 (2), 1 (3), ..., 1 (11)
           galleryImages: [],
           documents: [p['Land Cert Doc'], p['Env Permit Doc']].filter(Boolean),
           verificationStatus: isVerified ? 'verified' : 'pending',
@@ -135,9 +133,7 @@ export const seedLocalStorage = (): boolean => {
       ownerCompany: p['Company Legal Name'],
       ownerRole: "company",
       team: [],
-      coverImage: p['Cover Photo URL'] && p['Cover Photo URL'].includes("unsplash") && !p['Cover Photo URL'].includes("1534361960057") && !p['Cover Photo URL'].includes("1539109136881")
-          ? p['Cover Photo URL']
-          : safeCorporateImages[i % safeCorporateImages.length],
+      coverImage: `/foto/1 (${12 + i}).jpg`, // Sequential: 1 (12), 1 (13), ..., 1 (21)
       galleryImages: [],
       documents: [p['Supporting Documents']].filter(Boolean),
       verificationStatus: isVerified ? 'verified' : 'pending',
@@ -331,7 +327,7 @@ export const seedLocalStorage = (): boolean => {
   }));
   localStorage.setItem("hydrex-education-v1", JSON.stringify(processedEdu));
 
-  localStorage.setItem('hydrex-seeded-v8', 'true');
+  localStorage.setItem('hydrex-seeded-v10', 'true');
   console.log("Successfully seeded localStorage with Safe Photos and News/Edu (v8)!");
   return true;
 };
