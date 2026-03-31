@@ -25,6 +25,8 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../components/ThemeProvider";
 import { lightPageTheme, darkPageTheme } from "../utils/appTheme";
 
+import { newsEduData } from "../data/newsEduData";
+
 interface EducationResource {
   id: string;
   title: string;
@@ -41,7 +43,23 @@ interface EducationResource {
   isFeatured?: boolean;
 }
 
-const initialResources: EducationResource[] = [];
+const rawEdu = newsEduData["🎓 Education Center"] || [];
+
+const initialResources: EducationResource[] = rawEdu.map((item: any, index: number) => ({
+  id: item["Resource ID"] || String(index),
+  title: item["Title"],
+  titleEn: item["Title"],
+  description: item["Description / Summary"],
+  descriptionEn: item["Description / Summary"],
+  type: (item["Type"] || "article").toLowerCase() as "article" | "video",
+  category: (item["Category"] || "basics").toLowerCase() as any,
+  duration: item["Duration/Pages"] || "5 min",
+  thumbnail: item["Thumbnail URL"] || "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600",
+  url: item["URL (Free Access)"] || "#",
+  source: item["Publisher / Source"] || "HydrEx",
+  isNew: index < 5,
+  isFeatured: index < 3,
+}));
 
 const categoryConfig = {
   all: {
@@ -97,13 +115,17 @@ export const EducationPage: React.FC = () => {
 
   React.useEffect(() => {
     const stored = localStorage.getItem("hydrex-education-v1");
+    let baseResources = [...initialResources];
     if (stored) {
       try {
-        setLocalResources(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        const storedIds = new Set(parsed.map((r: EducationResource) => r.id));
+        baseResources = [...parsed, ...initialResources.filter(r => !storedIds.has(r.id))];
       } catch (e) {
         console.error("Failed to parse education resources", e);
       }
     }
+    setLocalResources(baseResources);
   }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");

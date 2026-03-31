@@ -23,6 +23,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useTheme } from "../components/ThemeProvider";
 import { lightPageTheme, darkPageTheme } from "../utils/appTheme";
+import { newsEduData } from "../data/newsEduData";
 
 interface NewsItem {
   id: string;
@@ -51,7 +52,34 @@ interface NewsItem {
   views?: number;
 }
 
-const newsItems: NewsItem[] = [];
+const rawNews = newsEduData["📰 News & Articles"] || [];
+
+const newsItems: NewsItem[] = rawNews.map((item: any, index: number) => ({
+  id: item["Article ID"] || String(index),
+  title: {
+    id: item["Title"],
+    en: item["Title"],
+  },
+  excerpt: {
+    id: item["Summary / Excerpt"],
+    en: item["Summary / Excerpt"],
+  },
+  category: {
+    id: item["Category"],
+    en: item["Category"],
+  },
+  author: item["Author"] || "Editorial",
+  date: item["Publish Date"] || new Date().toISOString().split("T")[0],
+  readTime: {
+    id: "3 menit",
+    en: "3 min",
+  },
+  featured: index < 1, // Make the first one featured
+  imageUrl: item["Cover Image URL"] || "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=600&fit=crop",
+  sourceUrl: item["URL (Free Access)"] || "#",
+  sourceName: item["Publisher / Source"] || "HydrEx",
+  views: Math.floor(Math.random() * 1000) + 100,
+}));
 
 const categories = {
   id: ["Semua", "Kebijakan", "Proyek", "Industri", "Teknologi", "Konservasi"],
@@ -91,13 +119,18 @@ export const NewsPage: React.FC = () => {
 
   useEffect(() => {
     const stored = localStorage.getItem("hydrex-news-v1");
+    let initialNews = [...newsItems];
     if (stored) {
       try {
-        setLocalNews(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        // Avoid duplicates if they exist in both
+        const storedIds = new Set(parsed.map((n: NewsItem) => n.id));
+        initialNews = [...parsed, ...newsItems.filter(n => !storedIds.has(n.id))];
       } catch (e) {
         console.error("Failed to parse news", e);
       }
     }
+    setLocalNews(initialNews);
   }, []);
 
   const toggleSaveArticle = (id: string) => {

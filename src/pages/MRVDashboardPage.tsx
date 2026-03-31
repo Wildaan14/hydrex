@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -72,44 +72,58 @@ const ProjectMap: React.FC<{
 }> = ({ projects, onSelectProject }) => {
   const { theme: colorTheme } = useTheme();
   const theme = colorTheme === "dark" ? darkPageTheme : lightPageTheme;
-  const mapContainerId = "mrv-map-container";
+  const mapRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
-    let map: any = null;
+    let isMounted = true;
     let L: any = null;
     let markersLayer: any = null;
 
     const initMap = () => {
+      if (!isMounted) return;
+      
       L = (window as any).L;
       if (!L) {
         console.log("Leaflet not loaded yet");
         return;
       }
 
-      const container = document.getElementById(mapContainerId);
+      const container = containerRef.current;
       if (!container) {
-        console.log("Map container not found");
+        console.log("Map container ref not found");
         return;
       }
 
-      // Remove existing map instance if it exists
-      if ((container as any)._leaflet_id) {
-        const existingMap = (window as any).existingMRVMap;
-        if (existingMap) {
-          existingMap.remove();
-          (window as any).existingMRVMap = null;
+      // If map already exists, remove it first
+      if (mapRef.current) {
+        try {
+          mapRef.current.remove();
+        } catch (e) {
+          console.error("Error removing existing map:", e);
         }
+        mapRef.current = null;
       }
 
+      // Ensure container is clean (Leaflet marker for "already initialized")
+      if ((container as any)._leaflet_id) {
+        // This is a last resort if the mapRef didn't catch it
+        (container as any)._leaflet_id = null;
+      }
+
+      console.log("Initializing Leaflet map...");
+
       // Create map and store ref for cleanup
-      map = L.map(mapContainerId, {
+      const mapInstance = L.map(container, {
         center: [-2.5, 118],
         zoom: 5,
         zoomControl: true,
         scrollWheelZoom: false,
         doubleClickZoom: true,
       });
+
+      mapRef.current = mapInstance;
 
       // Add tile layer based on current theme
       const tileStyle = colorTheme === "dark" ? "dark_all" : "light_all";
@@ -120,14 +134,12 @@ const ProjectMap: React.FC<{
             '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
           maxZoom: 18,
         },
-      ).addTo(map);
-
-      (window as any).existingMRVMap = map;
+      ).addTo(mapInstance);
 
       // Create a layer group for markers
-      markersLayer = L.layerGroup().addTo(map);
+      markersLayer = L.layerGroup().addTo(mapInstance);
 
-      console.log(`📍 Initializing map with ${projects.length} projects`);
+      console.log(`📍 Map initialized with ${projects.length} projects`);
 
       // Add markers for each project
       let validProjectCount = 0;
@@ -248,7 +260,7 @@ const ProjectMap: React.FC<{
 
     // Load Leaflet
     const loadLeaflet = () => {
-      // Add CSS
+      // Add CSS if not present
       if (!document.querySelector('link[href*="leaflet.css"]')) {
         const css = document.createElement("link");
         css.rel = "stylesheet";
@@ -258,30 +270,38 @@ const ProjectMap: React.FC<{
         document.head.appendChild(css);
       }
 
-      // Add JS
+      // Add JS if not present, then init
       if (!(window as any).L) {
         const script = document.createElement("script");
         script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-        script.integrity =
-          "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
+        script.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
         script.crossOrigin = "";
         script.onload = () => {
-          setTimeout(initMap, 200);
+          if (isMounted) initMap();
         };
         document.head.appendChild(script);
       } else {
-        setTimeout(initMap, 100);
+        // Delay slightly to ensure DOM is ready
+        setTimeout(() => {
+          if (isMounted) initMap();
+        }, 50);
       }
     };
 
     loadLeaflet();
 
     return () => {
-      if (markersLayer) {
+      isMounted = false;
+      if (markersLayer && mapRef.current) {
         markersLayer.clearLayers();
       }
-      if (map) {
-        map.remove();
+      if (mapRef.current) {
+        try {
+          mapRef.current.remove();
+        } catch (e) {
+          console.error("Cleanup error:", e);
+        }
+        mapRef.current = null;
       }
     };
   }, [projects, onSelectProject, colorTheme]);
@@ -289,7 +309,7 @@ const ProjectMap: React.FC<{
   return (
     <div className="relative w-full h-full">
       <div
-        id={mapContainerId}
+        ref={containerRef}
         className="w-full h-full"
         style={{ backgroundColor: theme.bgDark, minHeight: "400px" }}
       />
