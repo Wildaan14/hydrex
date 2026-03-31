@@ -14,6 +14,7 @@ import mrvRoutes from "./routes/mrvRoutes";
 import blockchainRoutes from "./routes/blockchainRoutes";
 import forumRoutes from "./routes/forumRoutes";
 import newsRoutes from "./routes/newsRoutes";
+import contactRoutes from "./routes/contactRoutes";
 
 // Initialize express
 const app = express();
@@ -42,6 +43,7 @@ app.use("/api/mrv", mrvRoutes);
 app.use("/api/blockchain", blockchainRoutes);
 app.use("/api/forum", forumRoutes);
 app.use("/api/news", newsRoutes);
+app.use("/api/contact", contactRoutes);
 
 // Health check route
 app.get("/api/health", (req, res) => {
@@ -59,6 +61,7 @@ app.get("/api/health", (req, res) => {
       "/api/blockchain",
       "/api/forum",
       "/api/news",
+      "/api/contact",
     ],
   });
 });
