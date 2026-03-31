@@ -297,10 +297,10 @@ export const LandingPage: React.FC = () => {
                 </span>
               </div>
               
-              <h1 className="text-6xl md:text-8xl lg:text-[7rem] font-black leading-tight drop-shadow-2xl mb-4" style={{ color: "#ffffff", textShadow: "0 4px 20px rgba(0,0,0,0.8)" }}>
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-tight drop-shadow-2xl mb-4" style={{ color: "#ffffff", textShadow: "0 4px 20px rgba(0,0,0,0.8)" }}>
                 {current.hero.title}
               </h1>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-8 drop-shadow-xl" style={{ color: "#e2e8f0", textShadow: "0 4px 15px rgba(0,0,0,0.8)" }}>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 drop-shadow-xl" style={{ color: "#e2e8f0", textShadow: "0 4px 15px rgba(0,0,0,0.8)" }}>
                 {current.hero.subtitle}
               </h2>
 
@@ -323,7 +323,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* ----------------- ABOUT SECTION ----------------- */}
-      <section id="about" className="min-h-screen py-24 flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: "#ffffff" }}>
+      <section id="about" className="py-20 md:py-32 flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: "#ffffff" }}>
         <div className="relative z-10 max-w-5xl mx-auto px-6">
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
@@ -355,7 +355,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* ----------------- SOLUTIONS (FEATURES) SECTION ----------------- */}
-      <section id="solution" className="min-h-screen py-24 flex flex-col justify-center" style={{ backgroundColor: "#f1f5f9" }}>
+      <section id="solution" className="py-20 md:py-32 flex flex-col justify-center" style={{ backgroundColor: "#f1f5f9" }}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-4xl mx-auto mb-20">
             <h2 className="text-base font-black tracking-widest uppercase mb-4" style={{ color: "#059669" }}>{current.solutions.title}</h2>
@@ -371,7 +371,7 @@ export const LandingPage: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="rounded-[30px] p-10 transition-all hover:-translate-y-2 group"
+                className="rounded-[30px] p-8 md:p-10 transition-all hover:-translate-y-2 group"
                 style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)" }}
               >
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 transition-colors" style={{ backgroundColor: "#ecfdf5" }}>
@@ -388,7 +388,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* ----------------- FEATURED PROJECTS AREA ----------------- */}
-      <section id="projects" className="min-h-screen py-24 flex flex-col justify-center" style={{ backgroundColor: "#ffffff" }}>
+      <section id="projects" className="py-20 md:py-32 flex flex-col justify-center" style={{ backgroundColor: "#ffffff" }}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-4xl mx-auto mb-16">
             <h2 className="text-base font-black tracking-widest uppercase mb-4" style={{ color: "#059669" }}>{current.projects.title}</h2>
@@ -431,16 +431,16 @@ export const LandingPage: React.FC = () => {
               className="grid md:grid-cols-3 gap-8"
             >
               { (dynamicProjects.length > 0 ? dynamicProjects : current.projects.items).filter(item => item.type === activeProjectTab).map((proj, idx) => (
-                <div key={idx} className="rounded-[30px] overflow-hidden transition-all hover:-translate-y-2" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)" }}>
-                  <div className="h-48 w-full relative">
+                <div key={idx} className="rounded-[30px] overflow-hidden transition-all hover:-translate-y-2 flex flex-col h-full" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)" }}>
+                  <div className="h-44 w-full relative shrink-0">
                     <img src={proj.img} alt={proj.name} className="w-full h-full object-cover" />
                     <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: "rgba(255,255,255,0.9)", color: "#0f172a" }}>
                       {proj.status}
                     </div>
                   </div>
-                  <div className="p-8">
-                    <h4 className="text-xl font-black mb-4 h-14" style={{ color: "#0f172a" }}>{proj.name}</h4>
-                    <div className="space-y-3">
+                  <div className="p-6 md:p-8 flex-grow flex flex-col justify-between">
+                    <h4 className="text-xl font-black mb-4 min-h-[3.5rem]" style={{ color: "#0f172a" }}>{proj.name}</h4>
+                    <div className="space-y-2">
                       <div className="flex items-center gap-3 text-sm font-medium" style={{ color: "#475569" }}>
                         {activeProjectTab === "community" ? <MapPin className="w-4 h-4 text-emerald-500" /> : <Building2 className="w-4 h-4 text-blue-500" />}
                         <span>{activeProjectTab === "community" ? current.projects.metrics.location : current.projects.metrics.industry} <b>{(proj as any).location || (proj as any).industry}</b></span>
@@ -459,13 +459,13 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* ----------------- CONTACT SECTION ----------------- */}
-      <section id="contact" className="min-h-screen py-24 flex items-center justify-center relative" style={{ backgroundColor: "#0f172a" }}>
+      <section id="contact" className="py-20 md:py-32 flex items-center justify-center relative" style={{ backgroundColor: "#0f172a" }}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center mb-16">
             
             <div>
               <h2 className="text-base font-black tracking-widest uppercase mb-4" style={{ color: "#34d399" }}>{current.contact.title}</h2>
-              <h3 className="text-4xl md:text-6xl font-black mb-8 leading-tight" style={{ color: "#ffffff" }}>{current.contact.heading}</h3>
+              <h3 className="text-4xl md:text-5xl font-black mb-6 leading-tight" style={{ color: "#ffffff" }}>{current.contact.heading}</h3>
               <p className="text-xl mb-12 font-medium leading-relaxed" style={{ color: "#94a3b8" }}>
                 {current.contact.desc}
               </p>
